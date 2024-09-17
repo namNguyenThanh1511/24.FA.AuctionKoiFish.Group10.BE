@@ -28,4 +28,17 @@ public class KoiFishAPI {
         List<KoiFish> koiFishList = koiFishRepository.findAll();
         return ResponseEntity.ok(koiFishList);
     }
+    @GetMapping("/{koi_id}")
+    public ResponseEntity<KoiFish> getKoiFish(@PathVariable Long koi_id){
+        KoiFish koiFish = koiFishRepository.findByKoiId(koi_id);
+        return ResponseEntity.ok(koiFish);
+
+    }
+
+    @GetMapping("/getKoiByName/{name}")
+    public ResponseEntity<List<KoiFish>> getKoiFishByKoiName(@PathVariable String name){
+        List<KoiFish> koiFishList = koiFishRepository.findKoiFishByName(name);
+        return ResponseEntity.ok(koiFishList);
+    }
+
 }
