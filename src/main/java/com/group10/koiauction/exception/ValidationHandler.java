@@ -17,4 +17,9 @@ public class ValidationHandler {
         }
         return new ResponseEntity(msg , HttpStatus.BAD_REQUEST);
     }
+    @ExceptionHandler(DuplicatedEntity.class)
+    public ResponseEntity handleValidation (DuplicatedEntity exception){
+        // mỗi khi gặp lỗi này lập tức gọi
+        return new ResponseEntity(exception, HttpStatus.BAD_REQUEST);
+    }
 }
