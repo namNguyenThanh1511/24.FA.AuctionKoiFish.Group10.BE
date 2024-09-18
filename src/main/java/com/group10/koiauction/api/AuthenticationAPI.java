@@ -1,6 +1,7 @@
 package com.group10.koiauction.api;
 
 import com.group10.koiauction.entity.Account;
+import com.group10.koiauction.entity.request.LoginAccountRequest;
 import com.group10.koiauction.entity.request.RegisterAccountRequest;
 import com.group10.koiauction.service.AuthenticationController;
 import jakarta.validation.Valid;
@@ -20,5 +21,11 @@ public class AuthenticationAPI {
     public ResponseEntity register(@Valid @RequestBody RegisterAccountRequest registerAccountRequest) {
             Account newAccount = authenticationController.register(registerAccountRequest);
             return ResponseEntity.ok(newAccount);
+    }
+
+    @PostMapping("login")
+    public  ResponseEntity<String> login(@Valid @RequestBody LoginAccountRequest loginAccountRequest) {
+        Account account = authenticationController.login(loginAccountRequest);
+        return ResponseEntity.ok("login successful");
     }
 }
