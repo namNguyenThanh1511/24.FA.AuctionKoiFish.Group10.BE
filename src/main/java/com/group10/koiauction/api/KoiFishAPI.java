@@ -19,12 +19,12 @@ public class KoiFishAPI {
     KoiFishController koiFishController;
     @Autowired
     KoiFishRepository koiFishRepository;
-    @PostMapping("create")
+    @PostMapping()
     public ResponseEntity<KoiFish> createKoiFish(@Valid @RequestBody KoiFishRequest koiFishRequest) {
         KoiFish koiFish = koiFishController.createKoiFish(koiFishRequest);
         return ResponseEntity.ok(koiFish);
     }
-    @GetMapping("getAll")
+    @GetMapping("/all")
     public  ResponseEntity<List<KoiFish>> getAllKoiFish (){
         List<KoiFish> koiFishList = koiFishRepository.findAll();
         return ResponseEntity.ok(koiFishList);
@@ -43,8 +43,8 @@ public class KoiFishAPI {
     }
     @DeleteMapping("/{koi_id}")
     public ResponseEntity<KoiFish> deleteKoiFish(@PathVariable Long koi_id){
-        KoiFish deteleKoi = koiFishController.deleteKoiFish(koi_id);
-        return ResponseEntity.ok(deteleKoi);
+        KoiFish deleteKoi = koiFishController.deleteKoiFish(koi_id);
+        return ResponseEntity.ok(deleteKoi);
     }
     @DeleteMapping("/deleteDB/{koi_id}")
     public ResponseEntity<String> deleteKoiFishDB(@PathVariable Long koi_id){

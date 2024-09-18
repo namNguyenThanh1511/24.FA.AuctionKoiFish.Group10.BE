@@ -2,7 +2,7 @@ package com.group10.koiauction.service;
 
 
 import com.group10.koiauction.entity.Account;
-import com.group10.koiauction.entity.request.AccountRequest;
+import com.group10.koiauction.entity.request.RegisterAccountRequest;
 import com.group10.koiauction.exception.DuplicatedEntity;
 import com.group10.koiauction.repository.AccountRepository;
 import jakarta.validation.ConstraintViolationException;
@@ -13,21 +13,21 @@ import org.springframework.stereotype.Service;
 public class AuthenticationController {
     @Autowired
     AccountRepository accountRepository;
-    public Account register(AccountRequest accountRequest) {
+    public Account register(RegisterAccountRequest registerAccountRequest) {
         try {
             Account account = new Account();
-            account.setUsername(accountRequest.getUsername());
-            account.setPassword(accountRequest.getPassword());
-            account.setFirstName(accountRequest.getFirstName());
-            account.setLastName(accountRequest.getLastName());
-            account.setEmail(accountRequest.getEmail());
-            account.setPhoneNumber(accountRequest.getPhoneNumber());
-            account.setAddress(accountRequest.getAddress());
+            account.setUsername(registerAccountRequest.getUsername());
+            account.setPassword(registerAccountRequest.getPassword());
+            account.setFirstName(registerAccountRequest.getFirstName());
+            account.setLastName(registerAccountRequest.getLastName());
+            account.setEmail(registerAccountRequest.getEmail());
+            account.setPhoneNumber(registerAccountRequest.getPhoneNumber());
+            account.setAddress(registerAccountRequest.getAddress());
             return accountRepository.save(account);
-        }catch (ConstraintViolationException e) {
-            if (e.getMessage().contains(accountRequest.getPhoneNumber())) {
+        }catch (Exception e) {
+            if (e.getMessage().contains(registerAccountRequest.getPhoneNumber())) {
                 throw new DuplicatedEntity("Duplicated phone");
-            } else if (e.getMessage().contains(accountRequest.getEmail())) {
+            } else if (e.getMessage().contains(registerAccountRequest.getEmail())) {
                 throw new DuplicatedEntity("Duplicated  email ");
             }
             throw e;
