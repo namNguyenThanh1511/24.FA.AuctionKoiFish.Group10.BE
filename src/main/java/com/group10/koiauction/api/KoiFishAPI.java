@@ -6,6 +6,7 @@ import com.group10.koiauction.repository.KoiFishRepository;
 import com.group10.koiauction.service.KoiFishController;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,5 +41,23 @@ public class KoiFishAPI {
         List<KoiFish> koiFishList = koiFishRepository.findKoiFishByName(name);
         return ResponseEntity.ok(koiFishList);
     }
+    @DeleteMapping("/{koi_id}")
+    public ResponseEntity<KoiFish> deleteKoiFish(@PathVariable Long koi_id){
+        KoiFish deteleKoi = koiFishController.deleteKoiFish(koi_id);
+        return ResponseEntity.ok(deteleKoi);
+    }
+    @DeleteMapping("/deleteDB/{koi_id}")
+    public ResponseEntity<String> deleteKoiFishDB(@PathVariable Long koi_id){
+        String msg = koiFishController.deleteKoiFishDB(koi_id);
+        return ResponseEntity.ok(msg);
+    }
+
+    @PutMapping("/{koi_id}")
+    public ResponseEntity<KoiFish> updateKoiFish( @PathVariable Long koi_id,
+                                            @Valid @RequestBody KoiFishRequest koiFishRequest) {
+        KoiFish updated_koi = koiFishController.updateKoiFish(koi_id, koiFishRequest);
+        return ResponseEntity.ok(updated_koi);
+    }
+
 
 }
