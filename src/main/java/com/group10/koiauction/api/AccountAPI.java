@@ -1,6 +1,7 @@
 package com.group10.koiauction.api;
 
 import com.group10.koiauction.entity.Account;
+import com.group10.koiauction.entity.request.RegisterAccountRequest;
 import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.service.AccountController;
 import jakarta.validation.Valid;
@@ -31,8 +32,8 @@ public class AccountAPI {
         return ResponseEntity.ok(deletedAccount);
     }
     @PutMapping("/{id}")
-    public ResponseEntity<Account> updateAccount(@PathVariable Long id , @Valid @RequestBody Account account) {
-        Account deletedAccount = accountController.deleteAccount(id);
+    public ResponseEntity<Account> updateAccount(@PathVariable Long id , @Valid @RequestBody RegisterAccountRequest account) {
+        Account deletedAccount = accountController.updateAccount(id,account);
         return ResponseEntity.ok(deletedAccount);
     }
 }
