@@ -1,5 +1,6 @@
 package com.group10.koiauction.entity.request;
 
+import com.group10.koiauction.entity.enums.AccountRoleEnum;
 import jakarta.persistence.Column;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -43,4 +44,8 @@ public class RegisterAccountRequest {
     @NotBlank(message = "Address is required")
     @Size(max = 255, message = "Address cannot exceed 255 characters")
     private String address;
+
+    private String roleEnum;
+
+
 }

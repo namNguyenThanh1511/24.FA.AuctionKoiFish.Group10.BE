@@ -71,7 +71,9 @@ public class KoiFish {
     private Double estimatedValue;
 
     @ManyToMany
-    @JoinTable(name = "koi_varieties", joinColumns = @JoinColumn(name = "koi_id"), inverseJoinColumns = @JoinColumn(name = "variety_id"))
+    @JoinTable(name = "koi_varieties"
+            , joinColumns = @JoinColumn(name = "koi_id")
+            , inverseJoinColumns = @JoinColumn(name = "variety_id"))
     Set<Variety> varieties = new HashSet<>();
 
 }

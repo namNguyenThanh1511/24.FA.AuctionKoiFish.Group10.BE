@@ -1,6 +1,7 @@
 package com.group10.koiauction.service;
 
 import com.group10.koiauction.entity.Account;
+import com.group10.koiauction.entity.enums.AccountRoleEnum;
 import com.group10.koiauction.entity.enums.AccountStatusEnum;
 import com.group10.koiauction.entity.request.RegisterAccountRequest;
 import com.group10.koiauction.exception.DuplicatedEntity;
@@ -38,6 +39,7 @@ public class AccountService {
             target.setLastName(account.getLastName());
             target.setPassword(account.getPassword());
             target.setAddress(account.getAddress());
+            target.setRoleEnum(getRoleEnumX(account.getRoleEnum()));
             target.setUpdatedDate(new Date());
             return accountRepository.save(target);
         }catch (Exception e) {
@@ -57,5 +59,14 @@ public class AccountService {
             throw new EntityNotFoundException("Account with id " + id + " not found");
         }
         return account;
+    }
+    public AccountRoleEnum getRoleEnumX(String role) {
+        return switch (role.toLowerCase()) {
+            case "member" -> AccountRoleEnum.MEMBER;
+            case "staff" -> AccountRoleEnum.STAFF;
+            case "manager" -> AccountRoleEnum.MANAGER;
+            case "koi_breeder" -> AccountRoleEnum.KOI_BREEDER;
+            default -> throw new EntityNotFoundException("Invalid role");
+        };
     }
 }
