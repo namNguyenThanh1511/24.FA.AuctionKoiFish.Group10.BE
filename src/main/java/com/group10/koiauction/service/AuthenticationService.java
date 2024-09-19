@@ -7,12 +7,11 @@ import com.group10.koiauction.entity.request.RegisterAccountRequest;
 import com.group10.koiauction.exception.DuplicatedEntity;
 import com.group10.koiauction.exception.EntityNotFoundException;
 import com.group10.koiauction.repository.AccountRepository;
-import jakarta.validation.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AuthenticationController {
+public class AuthenticationService {
     @Autowired
     AccountRepository accountRepository;
 

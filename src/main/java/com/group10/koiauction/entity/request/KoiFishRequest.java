@@ -1,6 +1,7 @@
 package com.group10.koiauction.entity.request;
 
 import com.group10.koiauction.entity.KoiFish;
+import com.group10.koiauction.entity.Variety;
 import com.group10.koiauction.entity.enums.KoiSexEnum;
 import com.group10.koiauction.entity.enums.KoiStatusEnum;
 import jakarta.persistence.*;
@@ -11,6 +12,9 @@ import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -57,4 +61,7 @@ public class KoiFishRequest {
     @Min(value = 0, message = "Estimated value must be a positive number")
 
     private Double estimatedValue;
+
+
+    Set<Long> varietiesID;
 }

@@ -11,6 +11,8 @@ import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -68,5 +70,8 @@ public class KoiFish {
     @Column(name = "estimated_value", nullable = false)
     private Double estimatedValue;
 
+    @ManyToMany
+    @JoinTable(name = "koi_varieties", joinColumns = @JoinColumn(name = "koi_id"), inverseJoinColumns = @JoinColumn(name = "variety_id"))
+    Set<Variety> varieties = new HashSet<>();
 
 }
