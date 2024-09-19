@@ -9,4 +9,7 @@ import org.springframework.data.repository.query.Param;
 public interface AccountRepository extends JpaRepository<Account, Long> {
     @Query("SELECT U FROM Account U WHERE U.user_id = ?1")
     Account findByUser_id(@Param("user_id") Long user_id);// @Param("mapping voi query")
+
+    @Query("SELECT U FROM Account  U  WHERE U.username = ?1 AND U.password = ?2 ")
+    Account findByUsernameAndPassword(@Param("username") String username, @Param("password") String password);
 }

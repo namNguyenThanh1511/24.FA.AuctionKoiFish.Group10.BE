@@ -13,7 +13,7 @@ import java.util.Date;
 import java.util.List;
 
 @Service
-public class AccountController {
+public class AccountService {
     @Autowired
     AccountRepository accountRepository;
 
