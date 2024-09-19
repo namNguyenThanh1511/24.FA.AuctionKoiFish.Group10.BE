@@ -22,7 +22,7 @@ public class VarietyAPI {
         return ResponseEntity.ok(newVariety);
     }
 
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<Set<Variety>> getAllVarieties() {
         Set<Variety> varieties = varietyService.getAllVarieties();
         return ResponseEntity.ok(varieties);
