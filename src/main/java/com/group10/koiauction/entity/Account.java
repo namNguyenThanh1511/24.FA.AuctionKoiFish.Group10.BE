@@ -66,6 +66,6 @@ public class Account {
     @Enumerated(EnumType.STRING)
     private AccountStatusEnum status = AccountStatusEnum.ACTIVE;
     @Enumerated(EnumType.STRING)
-    private AccountRoleEnum roleEnum = AccountRoleEnum.MEMBER;
+    private AccountRoleEnum roleEnum;
 
 }

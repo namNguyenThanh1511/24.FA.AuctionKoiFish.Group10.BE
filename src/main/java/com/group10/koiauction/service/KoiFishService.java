@@ -3,6 +3,7 @@ package com.group10.koiauction.service;
 import com.group10.koiauction.entity.KoiFish;
 import com.group10.koiauction.entity.Variety;
 import com.group10.koiauction.entity.enums.KoiStatusEnum;
+import com.group10.koiauction.entity.enums.VarietyStatusEnum;
 import com.group10.koiauction.entity.request.KoiFishRequest;
 import com.group10.koiauction.exception.DuplicatedEntity;
 import com.group10.koiauction.exception.EntityNotFoundException;
@@ -30,7 +31,12 @@ public class KoiFishService {
             for (Long id : koiFishRequest.getVarietiesID()) { // loop id in request koi fish ,
                 Variety variety = varietyRepository.findById(id)
                         .orElseThrow(() -> new EntityNotFoundException("Variety Not Found with ID: " + id));
-                varieties.add(variety);
+                if(variety.getStatus() == VarietyStatusEnum.ACTIVE){
+                    varieties.add(variety);
+                }else {
+                    throw new EntityNotFoundException("Variety Not Inactive with ID: " + id);
+                }
+
             }
             koiFish.setName(koiFishRequest.getName());
             koiFish.setDescription(koiFishRequest.getDescription());

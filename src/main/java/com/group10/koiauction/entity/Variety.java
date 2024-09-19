@@ -35,7 +35,7 @@ public class Variety {
 
 
     @JsonIgnore
-    @ManyToMany(mappedBy = "varieties")
+    @ManyToMany(mappedBy = "varieties") // mappedBy = "trỏ đến tên của set  bên KoiFish" để ánh xạ qua
     Set<KoiFish> koiFishSet = new HashSet<>();
 
 
