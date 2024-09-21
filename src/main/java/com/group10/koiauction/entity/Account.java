@@ -63,7 +63,7 @@ public class Account implements UserDetails {
     @Past(message = "Creation date time must after current time")
     private Date createdDate = new Date();
 
-    @NotNull(message = "Account creation date is required")
+    @NotNull(message = "Account update date is required")
     @Past(message = "Update date time must after current time")
     private Date updatedDate = new Date();
 

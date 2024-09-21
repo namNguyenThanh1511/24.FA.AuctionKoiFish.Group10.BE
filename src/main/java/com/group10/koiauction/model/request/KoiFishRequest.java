@@ -19,29 +19,22 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 public class KoiFishRequest {
-
-
     @NotBlank(message = "Name is required")
     @Size(max = 100, message = "Name should not exceed 100 characters")
-
     private String name;
 
-    @NotBlank(message = "Breeder is required")
-
-    private String breeder;
-
     @Enumerated(EnumType.STRING) // For enum fields
-
     private KoiSexEnum sex;
-
-    @NotBlank(message = "Variety is required")
-
-    private String variety;
 
     @NotNull(message = "Size in cm is required")
     @Min(value = 1, message = "Size must be greater than 0")
-
     private Double sizeCm;
+
+    @NotNull(message = "Weight in kg is required")
+    @Min(value = 1, message = "Weight must be greater than 0")
+    @Column(name = "weight_kg", nullable = false)
+    private Double weightKg;
+
 
     @NotNull(message = "Date of birth is required")
     @Past(message = "Date of birth must be a past date")
@@ -49,7 +42,6 @@ public class KoiFishRequest {
     private Date bornIn;
 
     @Lob // For large data like image URLs or binary data
-
     private String image_url;
 
     @Column(name = "description")
@@ -63,5 +55,8 @@ public class KoiFishRequest {
     private Double estimatedValue;
 
 
-    Set<Long> varietiesID;
+
+    private Long breeder_id;
+
+    private Set<Long> varietiesID;
 }

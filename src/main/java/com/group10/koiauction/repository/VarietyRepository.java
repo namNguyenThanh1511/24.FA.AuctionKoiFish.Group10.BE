@@ -10,4 +10,6 @@ public interface VarietyRepository extends JpaRepository<Variety, Long> {
     @Query("SELECT U FROM Variety U ")
     public Set<Variety> getAllVarieties();
 
+
+
 }
