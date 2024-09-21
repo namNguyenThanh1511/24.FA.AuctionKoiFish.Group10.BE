@@ -3,11 +3,13 @@ package com.group10.koiauction.service;
 import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.enums.AccountRoleEnum;
 import com.group10.koiauction.entity.enums.AccountStatusEnum;
-import com.group10.koiauction.entity.request.RegisterAccountRequest;
+import com.group10.koiauction.model.request.RegisterAccountRequest;
 import com.group10.koiauction.exception.DuplicatedEntity;
 import com.group10.koiauction.exception.EntityNotFoundException;
 import com.group10.koiauction.repository.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -61,11 +63,11 @@ public class AccountService {
         return account;
     }
     public AccountRoleEnum getRoleEnumX(String role) {
-        return switch (role.toLowerCase()) {
+        return switch (role.toLowerCase().trim()) {
             case "member" -> AccountRoleEnum.MEMBER;
             case "staff" -> AccountRoleEnum.STAFF;
             case "manager" -> AccountRoleEnum.MANAGER;
-            case "koi_breeder" -> AccountRoleEnum.KOI_BREEDER;
+            case "koibreeder" -> AccountRoleEnum.KOI_BREEDER;
             default -> throw new EntityNotFoundException("Invalid role");
         };
     }

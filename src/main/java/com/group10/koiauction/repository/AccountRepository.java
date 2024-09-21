@@ -12,4 +12,7 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     @Query("SELECT U FROM Account  U  WHERE U.username = ?1 AND U.password = ?2 ")
     Account findByUsernameAndPassword(@Param("username") String username, @Param("password") String password);
+
+    Account findByUsername(String username);
+
 }

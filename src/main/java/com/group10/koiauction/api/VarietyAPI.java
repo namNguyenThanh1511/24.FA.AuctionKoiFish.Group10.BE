@@ -1,7 +1,7 @@
 package com.group10.koiauction.api;
 
 import com.group10.koiauction.entity.Variety;
-import com.group10.koiauction.entity.request.VarietyRequest;
+import com.group10.koiauction.model.request.VarietyRequest;
 import com.group10.koiauction.service.VarietyService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;

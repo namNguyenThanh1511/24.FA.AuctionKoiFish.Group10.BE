@@ -1,7 +1,7 @@
 package com.group10.koiauction.api;
 
 import com.group10.koiauction.entity.KoiFish;
-import com.group10.koiauction.entity.request.KoiFishRequest;
+import com.group10.koiauction.model.request.KoiFishRequest;
 import com.group10.koiauction.repository.KoiFishRepository;
 import com.group10.koiauction.service.KoiFishService;
 import jakarta.validation.Valid;

@@ -1,4 +1,4 @@
-package com.group10.koiauction.entity.request;
+package com.group10.koiauction.model.request;
 
 import com.group10.koiauction.entity.KoiFish;
 import com.group10.koiauction.entity.Variety;

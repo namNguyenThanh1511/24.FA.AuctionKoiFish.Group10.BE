@@ -1,4 +1,4 @@
-package com.group10.koiauction.entity.request;
+package com.group10.koiauction.model.request;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
