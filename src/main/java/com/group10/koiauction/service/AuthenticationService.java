@@ -3,31 +3,42 @@ package com.group10.koiauction.service;
 
 import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.enums.AccountRoleEnum;
-import com.group10.koiauction.entity.request.LoginAccountRequest;
-import com.group10.koiauction.entity.request.RegisterAccountRequest;
+import com.group10.koiauction.model.request.LoginAccountRequest;
+import com.group10.koiauction.model.request.RegisterAccountRequest;
 import com.group10.koiauction.exception.DuplicatedEntity;
 import com.group10.koiauction.exception.EntityNotFoundException;
+import com.group10.koiauction.model.response.AccountResponse;
 import com.group10.koiauction.repository.AccountRepository;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AuthenticationService {
+public class AuthenticationService implements UserDetailsService {
     @Autowired
     AccountRepository accountRepository;
+    @Autowired
+    PasswordEncoder passwordEncoder;
 
-    public Account register(RegisterAccountRequest registerAccountRequest) {
+    @Autowired
+    AuthenticationManager authenticationManager;
+
+    @Autowired
+    ModelMapper modelMapper;
+    public AccountResponse register(RegisterAccountRequest registerAccountRequest) {
+        Account newAccount = modelMapper.map(registerAccountRequest, Account.class);// Account.class : tự động new Account() rồi mapping
         try {
-            Account account = new Account();
-            account.setUsername(registerAccountRequest.getUsername());
-            account.setPassword(registerAccountRequest.getPassword());
-            account.setFirstName(registerAccountRequest.getFirstName());
-            account.setLastName(registerAccountRequest.getLastName());
-            account.setEmail(registerAccountRequest.getEmail());
-            account.setPhoneNumber(registerAccountRequest.getPhoneNumber());
-            account.setAddress(registerAccountRequest.getAddress());
-            account.setRoleEnum(getRoleEnum(registerAccountRequest.getRoleEnum()));
-            return accountRepository.save(account);
+            newAccount.setRoleEnum(getRoleEnumX(registerAccountRequest.getRoleEnum()));
+            newAccount.setPassword(passwordEncoder.encode(registerAccountRequest.getPassword()));
+            accountRepository.save(newAccount);
+            return modelMapper.map(newAccount, AccountResponse.class);
         } catch (Exception e) {
             if (e.getMessage().contains(registerAccountRequest.getPhoneNumber())) {
                 throw new DuplicatedEntity("Duplicated phone");
@@ -42,23 +53,38 @@ public class AuthenticationService {
 
     }
 
-    public Account login(LoginAccountRequest loginAccountRequest) {
+    public AccountResponse login(LoginAccountRequest loginAccountRequest) {
 
-        Account account = accountRepository.findByUsernameAndPassword(loginAccountRequest.getUsername(), loginAccountRequest.getPassword());
-        if (account == null) {
+        try{
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+                    loginAccountRequest.getUsername(), loginAccountRequest.getPassword()
+                    // go to loadByUsername check username first
+                    // so sanh password db vs request password
+
+            ));
+            Account account = (Account) authentication.getPrincipal();
+            return modelMapper.map(account, AccountResponse.class);
+        } catch (Exception e) {
             throw new EntityNotFoundException("Username or password are incorrect");
         }
-        return account;
 
     }
 
-    public AccountRoleEnum getRoleEnum(String role) {
-        return switch (role.toLowerCase()) {
+
+    public AccountRoleEnum getRoleEnumX(String role) {
+        String roleX = role.toLowerCase().replaceAll("\\s","");
+        return switch (roleX) {
             case "member" -> AccountRoleEnum.MEMBER;
             case "staff" -> AccountRoleEnum.STAFF;
             case "manager" -> AccountRoleEnum.MANAGER;
-            case "koi_breeder" -> AccountRoleEnum.KOI_BREEDER;
+            case "koibreeder" -> AccountRoleEnum.KOI_BREEDER;
             default -> throw new EntityNotFoundException("Invalid role");
         };
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return accountRepository.findByUsername(username); // find by username config in Account.class
+
     }
 }

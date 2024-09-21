@@ -4,7 +4,7 @@ import com.group10.koiauction.entity.KoiFish;
 import com.group10.koiauction.entity.Variety;
 import com.group10.koiauction.entity.enums.KoiStatusEnum;
 import com.group10.koiauction.entity.enums.VarietyStatusEnum;
-import com.group10.koiauction.entity.request.KoiFishRequest;
+import com.group10.koiauction.model.request.KoiFishRequest;
 import com.group10.koiauction.exception.DuplicatedEntity;
 import com.group10.koiauction.exception.EntityNotFoundException;
 import com.group10.koiauction.repository.KoiFishRepository;

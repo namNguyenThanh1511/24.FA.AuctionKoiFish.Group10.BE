@@ -2,7 +2,7 @@ package com.group10.koiauction.service;
 
 import com.group10.koiauction.entity.Variety;
 import com.group10.koiauction.entity.enums.VarietyStatusEnum;
-import com.group10.koiauction.entity.request.VarietyRequest;
+import com.group10.koiauction.model.request.VarietyRequest;
 import com.group10.koiauction.exception.DuplicatedEntity;
 import com.group10.koiauction.exception.EntityNotFoundException;
 import com.group10.koiauction.repository.VarietyRepository;

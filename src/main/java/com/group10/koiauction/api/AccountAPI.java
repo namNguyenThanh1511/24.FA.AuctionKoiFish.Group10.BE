@@ -1,7 +1,7 @@
 package com.group10.koiauction.api;
 
 import com.group10.koiauction.entity.Account;
-import com.group10.koiauction.entity.request.RegisterAccountRequest;
+import com.group10.koiauction.model.request.RegisterAccountRequest;
 import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.service.AccountService;
 import jakarta.validation.Valid;
