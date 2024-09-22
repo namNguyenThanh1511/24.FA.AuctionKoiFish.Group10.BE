@@ -80,6 +80,7 @@ public class KoiFishService {
 
     public KoiFishResponse deleteKoiFish(Long koi_id) {
         KoiFish target = getKoiFishByID(koi_id);
+        target.setUpdatedDate(new Date());
         target.setKoiStatus(KoiStatusEnum.UNAVAILABLE);
         koiFishRepository.save(target);
         return getKoiMapperResponse(target);
@@ -98,6 +99,24 @@ public class KoiFishService {
             throw new EntityNotFoundException("KoiFish " + " with id : " + koi_id + " not found");
         }
         return koiFish;
+    }
+    public KoiFishResponse getKoiFishResponseByID(Long koi_id) {
+        KoiFish koiFish = koiFishRepository.findByKoiId(koi_id);
+
+        if (koiFish == null) {
+            throw new EntityNotFoundException("KoiFish " + " with id : " + koi_id + " not found");
+        }
+        return getKoiMapperResponse(koiFish);
+    }
+
+    public List<KoiFishResponse> getKoiFishListByName(String name) {
+        List<KoiFish> koiFishList = koiFishRepository.findKoiFishByName(name);
+        List<KoiFishResponse> koiFishResponseList = new ArrayList<>();
+        for (KoiFish koiFish : koiFishList) {
+            KoiFishResponse koiFishResponse = getKoiMapperResponse(koiFish);
+            koiFishResponseList.add(koiFishResponse);
+        }
+        return koiFishResponseList;
     }
 
     public Set<Variety> getVarietiesByID(Set<Long> varieties_id_request) {

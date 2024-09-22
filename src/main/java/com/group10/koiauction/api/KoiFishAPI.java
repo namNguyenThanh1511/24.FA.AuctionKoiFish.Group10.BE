@@ -30,15 +30,15 @@ public class KoiFishAPI {
         return ResponseEntity.ok(koiFishList);
     }
     @GetMapping("/{koi_id}")
-    public ResponseEntity<KoiFish> getKoiFish(@PathVariable Long koi_id){
-        KoiFish koiFish = koiFishRepository.findByKoiId(koi_id);
+    public ResponseEntity<KoiFishResponse> getKoiFish(@PathVariable Long koi_id){
+        KoiFishResponse koiFish = koiFishService.getKoiFishResponseByID(koi_id);
         return ResponseEntity.ok(koiFish);
 
     }
 
     @GetMapping("/getKoiByName/{name}")
-    public ResponseEntity<List<KoiFish>> getKoiFishByKoiName(@PathVariable String name){
-        List<KoiFish> koiFishList = koiFishRepository.findKoiFishByName(name);
+    public ResponseEntity<List<KoiFishResponse>> getKoiFishByKoiName(@PathVariable String name){
+        List<KoiFishResponse> koiFishList = koiFishService.getKoiFishListByName(name);
         return ResponseEntity.ok(koiFishList);
     }
     @DeleteMapping("/{koi_id}")
