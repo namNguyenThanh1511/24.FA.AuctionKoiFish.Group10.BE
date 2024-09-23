@@ -1,6 +1,7 @@
 package com.group10.koiauction.api;
 
 import com.group10.koiauction.entity.Variety;
+import com.group10.koiauction.entity.enums.VarietyStatusEnum;
 import com.group10.koiauction.model.request.VarietyRequest;
 import com.group10.koiauction.service.VarietyService;
 import jakarta.validation.Valid;
@@ -24,7 +25,7 @@ public class VarietyAPI {
 
     @GetMapping("/all")
     public ResponseEntity<Set<Variety>> getAllVarieties() {
-        Set<Variety> varieties = varietyService.getAllVarieties();
+        Set<Variety> varieties = varietyService.getAllVarieties(VarietyStatusEnum.ACTIVE);
         return ResponseEntity.ok(varieties);
     }
 
@@ -42,7 +43,13 @@ public class VarietyAPI {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Variety> deleteVariety(@PathVariable Long id) {
-        Variety updatedVariety = varietyService.deleVariety(id);
+        Variety updatedVariety = varietyService.deleteVariety(id);
+        return ResponseEntity.ok(updatedVariety);
+    }
+
+    @PutMapping("/status/activate/{id}")
+    public ResponseEntity<Variety> activateVariety(@PathVariable Long id) {
+        Variety updatedVariety = varietyService.activateVariety(id);
         return ResponseEntity.ok(updatedVariety);
     }
 

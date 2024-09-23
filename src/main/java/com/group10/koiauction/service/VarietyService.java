@@ -9,6 +9,7 @@ import com.group10.koiauction.repository.VarietyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -17,9 +18,12 @@ public class VarietyService {
     VarietyRepository varietyRepository;
 
     public Variety addVariety(VarietyRequest varietyRequest) {
-        try {
-            Variety newVariety = new Variety();
+        Variety newVariety = new Variety();
+        if(isDuplicateVariety(varietyRequest.getName())){
             newVariety.setName(varietyRequest.getName());
+            newVariety.setStatus(VarietyStatusEnum.ACTIVE);
+        }
+        try {
             return varietyRepository.save(newVariety);
         }catch (Exception e){
             if(e.getMessage().contains("name")){
@@ -30,15 +34,15 @@ public class VarietyService {
 
 
     }
-    public Set<Variety> getAllVarieties(){
+    public Set<Variety> getAllVarieties(VarietyStatusEnum status){
         try {
-            return varietyRepository.getAllVarieties();
+            return varietyRepository.getAllVarietiesByStatus(status);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
     }
 
-    public Variety deleVariety(Long varietyId){
+    public Variety deleteVariety(Long varietyId){
         Variety target = findVarietyById(varietyId);
         target.setStatus(VarietyStatusEnum.INACTIVE);
         return varietyRepository.save(target);
@@ -46,7 +50,15 @@ public class VarietyService {
 
     public Variety updateVariety(Long id, VarietyRequest varietyRequest) {
         Variety target = findVarietyById(id);
-        target.setName(varietyRequest.getName());
+        if(isDuplicateVariety(varietyRequest.getName())){
+            target.setName(varietyRequest.getName());
+        }
+        return varietyRepository.save(target);
+    }
+
+    public Variety activateVariety(Long varietyId){
+        Variety target = findVarietyById(varietyId);
+        target.setStatus(VarietyStatusEnum.ACTIVE);
         return varietyRepository.save(target);
     }
 
@@ -57,4 +69,17 @@ public class VarietyService {
                         "Found"));
         return variety;
     }
+
+    public boolean isDuplicateVariety(String varietyName) {
+        List<Variety> varietyList = varietyRepository.findAll();
+        String requestName = varietyName.trim().toLowerCase();
+        for (Variety variety : varietyList) {
+            if(variety.getName().trim().toLowerCase().equals(requestName)) {
+                throw new DuplicatedEntity("Duplicated variety");
+            }
+        }
+        return true;
+    }
+
+
 }
