@@ -87,5 +87,4 @@ public class KoiFish {
             , inverseJoinColumns = @JoinColumn(name = "variety_id"))  // cột khóa chính của bảng variety
             // 2 khóa chính nối vào bảng trung gian tạo thành 2 khóa ngoại ở bảng trung gian (koi_varieties)
     Set<Variety> varieties = new HashSet<>();
-
 }

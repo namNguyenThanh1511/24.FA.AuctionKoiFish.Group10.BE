@@ -88,7 +88,12 @@ public class KoiFishService {
 
     public String deleteKoiFishDB(Long koi_id) {
         KoiFish target = getKoiFishByID(koi_id);
-        koiFishRepository.delete(target);
+        try{
+            koiFishRepository.delete(target);
+        }catch (Exception e){
+            return e.getMessage();
+        }
+
         return "Deleted Successfully";
     }
 

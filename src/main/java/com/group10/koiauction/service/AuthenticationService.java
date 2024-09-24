@@ -70,6 +70,15 @@ public class AuthenticationService implements UserDetailsService {
 
     }
 
+    public String deleteDB(Long id){
+        Account account= accountRepository.findByUser_id(id);
+        try{
+            accountRepository.delete(account);
+        }catch (Exception e){
+            throw new RuntimeException(e.getMessage());
+        }
+        return "Delete success";
+    }
 
     public AccountRoleEnum getRoleEnumX(String role) {
         String roleX = role.toLowerCase().replaceAll("\\s","");
@@ -87,4 +96,6 @@ public class AuthenticationService implements UserDetailsService {
         return accountRepository.findByUsername(username); // find by username config in Account class
 
     }
+
+
 }

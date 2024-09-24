@@ -46,14 +46,16 @@ public class AuctionRequest
     @Column(name = "response_note")
     private String response_note;
 
+
     @NotNull(message = "Status can not be null")
+    @Enumerated(EnumType.STRING)
     private AuctionRequestStatusEnum status;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
     Account account;
 
-    @OneToOne(cascade = CascadeType.ALL)
+    @ManyToOne // nhieu request -> 1 con ca koi
     @JoinColumn(name = "koi_id")//đặt tên cho khóa ngoại ở bảng AuctionRequest
     KoiFish koiFish;           // ánh xạ tới khóa chính trong bảng koi_fish
 

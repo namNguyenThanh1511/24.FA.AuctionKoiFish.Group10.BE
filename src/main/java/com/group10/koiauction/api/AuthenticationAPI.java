@@ -8,10 +8,7 @@ import com.group10.koiauction.service.AuthenticationService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/")
@@ -29,5 +26,10 @@ public class AuthenticationAPI {
     public  ResponseEntity login(@Valid @RequestBody LoginAccountRequest loginAccountRequest) {
         AccountResponse account = authenticationService.login(loginAccountRequest);
         return ResponseEntity.ok(account);
+    }
+
+    @DeleteMapping("/deleteDB/{id}")
+    public ResponseEntity delete(@PathVariable Long id) {
+        return ResponseEntity.ok(authenticationService.deleteDB(id));
     }
 }
