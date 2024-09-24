@@ -58,7 +58,7 @@ public class KoiFishService {
     public KoiFishResponse updateKoiFish(Long koi_id, KoiFishRequest koiFishRequest) {
         KoiFish oldKoi = getKoiFishByID(koi_id);
         try {
-            Set<Variety> varieties = getVarietiesByID(koiFishRequest.getVarietiesID());
+            Set<Variety> varieties = getVarietiesByID(koiFishRequest.getVarietiesID());//chuyen varieties id input -> varieties
             oldKoi.setName(koiFishRequest.getName());
             oldKoi.setSex(koiFishRequest.getSex());
             oldKoi.setSizeCm(koiFishRequest.getSizeCm());
@@ -88,7 +88,12 @@ public class KoiFishService {
 
     public String deleteKoiFishDB(Long koi_id) {
         KoiFish target = getKoiFishByID(koi_id);
-        koiFishRepository.delete(target);
+        try{
+            koiFishRepository.delete(target);
+        }catch (Exception e){
+            return e.getMessage();
+        }
+
         return "Deleted Successfully";
     }
 
@@ -160,7 +165,9 @@ public class KoiFishService {
         Set<Variety> varieties = koiFish.getVarieties();// lay ra ds varieties tu KoiFish
         Set<Long> varietiesIdSet = new HashSet<>();
         for (Variety variety : varieties) {
-            varietiesIdSet.add(variety.getId());
+            if(variety.getStatus() == VarietyStatusEnum.ACTIVE) { //only get variety which is currently ACTIVE
+                varietiesIdSet.add(variety.getId());
+            }
         }
         return varietiesIdSet;
     }
@@ -168,7 +175,8 @@ public class KoiFishService {
     public KoiFishResponse getKoiMapperResponse(KoiFish koiFish) {
         KoiFishResponse koiFishResponse = modelMapper.map(koiFish, KoiFishResponse.class);
         koiFishResponse.setBreeder_id(koiFish.getAccount().getUser_id());
-        koiFishResponse.setVarietiesID(getVarietiesIdOfKoi(koiFish));
+        koiFishResponse.setVarietiesID(getVarietiesIdOfKoi(koiFish));// return varieties of KoiFish which is
+        // currently ACTIVE
         return koiFishResponse;
     }
 

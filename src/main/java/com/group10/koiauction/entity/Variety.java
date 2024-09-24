@@ -31,7 +31,7 @@ public class Variety {
     @NotNull
     @Enumerated(EnumType.STRING)
     @JsonIgnore
-    private VarietyStatusEnum status = VarietyStatusEnum.ACTIVE;
+    private VarietyStatusEnum status;
 
 
     @JsonIgnore
