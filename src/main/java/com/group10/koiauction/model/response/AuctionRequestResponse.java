@@ -17,6 +17,7 @@ public class AuctionRequestResponse {
     private String title;
     private Date createdDate;
     private String description;
+    private String responseNote;
     private AuctionRequestStatusEnum status;
     private Long breeder_id;
     private Long koi_id;

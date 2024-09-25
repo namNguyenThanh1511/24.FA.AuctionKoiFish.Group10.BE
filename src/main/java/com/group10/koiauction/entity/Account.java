@@ -72,6 +72,10 @@ public class Account implements UserDetails {
     @Enumerated(EnumType.STRING)
     private AccountRoleEnum roleEnum;
 
+    @NotNull(message = "Balance must not be null")
+    @Column(name = "balance",nullable = false)
+    private double balance;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();
