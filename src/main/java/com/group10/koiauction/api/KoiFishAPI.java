@@ -24,7 +24,7 @@ public class KoiFishAPI {
         KoiFishResponse koiFishResponse = koiFishService.createKoiFish(koiFishRequest);
         return ResponseEntity.ok(koiFishResponse);
     }
-    @GetMapping("/all")
+    @GetMapping("/all/available")
     public  ResponseEntity<List<KoiFishResponse>> getAllKoiFish (){
         List<KoiFishResponse> koiFishList = koiFishService.getAllKoiFish("available");
         return ResponseEntity.ok(koiFishList);

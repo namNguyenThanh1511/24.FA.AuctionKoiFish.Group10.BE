@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/auctionRequest")
 public class AuctionRequestAPI {
@@ -29,5 +31,19 @@ public class AuctionRequestAPI {
         AuctionRequestResponse updatedAuctionRequest = auctionRequestService.updateAuctionRequest(id,auctionRequestDTO);
         return ResponseEntity.ok(updatedAuctionRequest);
     }
+
+    @GetMapping("/all/pending")
+    public ResponseEntity<List<AuctionRequestResponse>> getAllPendingAuctionRequests() {
+        List<AuctionRequestResponse> auctionRequestResponseList = auctionRequestService.getAllAuctionRequests(
+                "pending");
+        return ResponseEntity.ok(auctionRequestResponseList);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<AuctionRequestResponse>> getAllAuctionRequests() {
+        List<AuctionRequestResponse> auctionRequestResponseList = auctionRequestService.getAllAuctionRequests();
+        return ResponseEntity.ok(auctionRequestResponseList);
+    }
+
 
 }

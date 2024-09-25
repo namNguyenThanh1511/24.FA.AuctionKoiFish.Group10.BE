@@ -5,14 +5,15 @@ import com.group10.koiauction.entity.KoiFish;
 import com.group10.koiauction.entity.Variety;
 import com.group10.koiauction.entity.enums.KoiStatusEnum;
 import com.group10.koiauction.entity.enums.VarietyStatusEnum;
+import com.group10.koiauction.mapper.KoiMapper;
 import com.group10.koiauction.model.request.KoiFishRequest;
-import com.group10.koiauction.exception.DuplicatedEntity;
+
 import com.group10.koiauction.exception.EntityNotFoundException;
 import com.group10.koiauction.model.response.KoiFishResponse;
 import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.repository.KoiFishRepository;
 import com.group10.koiauction.repository.VarietyRepository;
-import org.modelmapper.ModelMapper;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,17 +29,18 @@ public class KoiFishService {
     private AccountRepository accountRepository;
 
     @Autowired
-    private ModelMapper modelMapper;
+    KoiMapper koiMapper;
 
     public KoiFishResponse createKoiFish(KoiFishRequest koiFishRequest) {
-        KoiFish koiFish = modelMapper.map(koiFishRequest, KoiFish.class);
+        KoiFish koiFish = koiMapper.toKoiFish(koiFishRequest);
+        Set<Variety> varieties = getVarietiesByID(koiFishRequest.getVarietiesID());
+        koiFish.setKoiStatus(KoiStatusEnum.AVAILABLE);
+        koiFish.setAccount(getAccountById(koiFishRequest.getBreeder_id()));
+        koiFish.setVarieties(varieties);
+
         try {
-            Set<Variety> varieties = getVarietiesByID(koiFishRequest.getVarietiesID());
-            koiFish.setKoiStatus(KoiStatusEnum.AVAILABLE);
-            koiFish.setAccount(getAccountById(koiFishRequest.getBreeder_id()));
-            koiFish.setVarieties(varieties);
-            KoiFishResponse koiFishResponse = getKoiMapperResponse(koiFish);
             koiFishRepository.save(koiFish);
+            KoiFishResponse koiFishResponse = getKoiMapperResponse(koiFish);
             return koiFishResponse;
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage()); // Handle other exceptions separately
@@ -173,7 +175,7 @@ public class KoiFishService {
     }
 
     public KoiFishResponse getKoiMapperResponse(KoiFish koiFish) {
-        KoiFishResponse koiFishResponse = modelMapper.map(koiFish, KoiFishResponse.class);
+        KoiFishResponse koiFishResponse = koiMapper.toKoiFishResponse(koiFish);
         koiFishResponse.setBreeder_id(koiFish.getAccount().getUser_id());
         koiFishResponse.setVarietiesID(getVarietiesIdOfKoi(koiFish));// return varieties of KoiFish which is
         // currently ACTIVE

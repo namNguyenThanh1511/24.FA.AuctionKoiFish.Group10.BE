@@ -18,7 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class AuctionRequestService {
@@ -59,6 +61,7 @@ public class AuctionRequestService {
         auctionRequestResponse.setDescription(auctionRequest.getDescription());
         auctionRequestResponse.setBreeder_id(auctionRequestDTO.getBreeder_id());
         auctionRequestResponse.setKoi_id(auctionRequestDTO.getKoiFish_id());
+
         return auctionRequestResponse;
     }
 
@@ -66,9 +69,9 @@ public class AuctionRequestService {
         AuctionRequest auctionRequest = getAuctionRequestById(id);
         auctionRequest.setUpdatedDate(new Date());
         auctionRequest.setStatus(getAuctionRequestStatusEnum(auctionRequestDTO.getStatus()));// update status
-        updateKoiStatus(auctionRequest.getKoiFish().getKoi_id(),
-                getAuctionRequestStatusEnum(auctionRequestDTO.getStatus()));
+        updateKoiStatus(auctionRequest.getKoiFish().getKoi_id(),auctionRequest.getStatus());
         auctionRequest.setAccount(auctionRequest.getAccount());
+        auctionRequest.setResponse_note(auctionRequestDTO.getResponseNote());
         try {
             auctionRequestRepository.save(auctionRequest);
         } catch (Exception e) {
@@ -82,8 +85,32 @@ public class AuctionRequestService {
         auctionRequestResponse.setDescription(auctionRequest.getDescription());
         auctionRequestResponse.setBreeder_id(auctionRequest.getAccount().getUser_id());
         auctionRequestResponse.setKoi_id(auctionRequest.getKoiFish().getKoi_id());
+        auctionRequestResponse.setResponseNote(auctionRequest.getResponse_note());
         return auctionRequestResponse;
 
+    }
+
+    public List<AuctionRequestResponse> getAllAuctionRequests(String status) {
+        List<AuctionRequest> auctionRequests = auctionRequestRepository.findByStatus(getAuctionRequestStatusEnum(status));
+        List<AuctionRequestResponse> auctionRequestResponseList = new ArrayList<>();
+        for (AuctionRequest auctionRequest : auctionRequests) {
+            AuctionRequestResponse auctionRequestResponse = modelMapper.map(auctionRequest, AuctionRequestResponse.class);
+            auctionRequestResponse.setKoi_id(auctionRequest.getKoiFish().getKoi_id());
+            auctionRequestResponse.setBreeder_id(auctionRequest.getAccount().getUser_id());
+            auctionRequestResponseList.add(auctionRequestResponse);
+        }
+        return auctionRequestResponseList;
+    }
+    public List<AuctionRequestResponse> getAllAuctionRequests() {
+        List<AuctionRequest> auctionRequests = auctionRequestRepository.findAll();
+        List<AuctionRequestResponse> auctionRequestResponseList = new ArrayList<>();
+        for (AuctionRequest auctionRequest : auctionRequests) {
+            AuctionRequestResponse auctionRequestResponse = modelMapper.map(auctionRequest, AuctionRequestResponse.class);
+            auctionRequestResponse.setKoi_id(auctionRequest.getKoiFish().getKoi_id());
+            auctionRequestResponse.setBreeder_id(auctionRequest.getAccount().getUser_id());
+            auctionRequestResponseList.add(auctionRequestResponse);
+        }
+        return auctionRequestResponseList;
     }
 
     public Account getAccountById(Long id) {
@@ -120,6 +147,7 @@ public class AuctionRequestService {
 
     public AuctionRequestStatusEnum getAuctionRequestStatusEnum(String status) {
         String statusX = status.toLowerCase().replaceAll("\\s", "");
+
         return switch (statusX) {
             case "pending" -> AuctionRequestStatusEnum.PENDING;
             case "acceptedbystaff" -> AuctionRequestStatusEnum.ACCEPTED_BY_STAFF;
