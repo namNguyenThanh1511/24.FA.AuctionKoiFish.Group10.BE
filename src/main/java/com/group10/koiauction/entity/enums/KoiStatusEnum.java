@@ -1,7 +1,9 @@
 package com.group10.koiauction.entity.enums;
 
 public enum KoiStatusEnum {
-    PENDING , REJECTED,PENDING_AUCTION , SELLING, ORDERED , SOLD,UNAVAILABLE,
+    AVAILABLE,PENDING , REJECTED,PENDING_AUCTION , SELLING, ORDERED , SOLD,UNAVAILABLE,
+    // Chủ trang trại thêm cá vào hệ thống : koi_status = AVAILABLE
+
     //chưa đc đưa vào phiên đấu giá :
     // - chờ duyệt ( PENDING) từ Staff và Manager -> koi_status = PENDING & request_status = PENDING
     //( khi Staff duyệt đơn -> request_status = PROCESSING ( CHỜ MANAGER DUYỆT LẦN CUỐI VÀ SET UP PHIÊN ĐẤU GIÁ ) & koi_status = PENDING
@@ -15,6 +17,10 @@ public enum KoiStatusEnum {
     //-  KHI PHIÊN KẾT THÚC , TÌM RA NGƯỜI THẮNG -> auction_status : CLOSED
     //                                            & koi_status     : ORDERED ( đang trong order , chờ thanh toán )
     //                                            & order_status   : UNPAID
+    //
+    //-  KHI PHIÊN KẾT THÚC , KO AI ĐẤU GIÁ ->    auction_status : CLOSED
+    //                                            & koi_status     :PENDING_AUCTION
+
     //-  NGƯỜI THẮNG THANH TOÁN : order_status : PAID
     //-                         & koi_status   : SOLD
     //-  NGƯỜI THẮNG KO THANH TOÁN : order_status   : OVERDUE

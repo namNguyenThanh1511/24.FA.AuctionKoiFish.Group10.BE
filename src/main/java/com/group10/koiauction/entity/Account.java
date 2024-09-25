@@ -8,14 +8,18 @@ import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @Entity
-public class Account {
+public class Account implements UserDetails {
 
     @Id
     @NotNull
@@ -24,6 +28,7 @@ public class Account {
 
     @NotBlank(message = "Username is required")
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+    @Column(unique = true, nullable = false)
     private String username;
 
     @NotBlank(message = "Password is required")
@@ -58,13 +63,45 @@ public class Account {
     @Past(message = "Creation date time must after current time")
     private Date createdDate = new Date();
 
-    @NotNull(message = "Account creation date is required")
+    @NotNull(message = "Account update date is required")
     @Past(message = "Update date time must after current time")
     private Date updatedDate = new Date();
 
     @Enumerated(EnumType.STRING)
     private AccountStatusEnum status = AccountStatusEnum.ACTIVE;
     @Enumerated(EnumType.STRING)
-    private AccountRoleEnum roleEnum = AccountRoleEnum.MEMBER;
+    private AccountRoleEnum roleEnum;
 
+    @NotNull(message = "Balance must not be null")
+    @Column(name = "balance",nullable = false)
+    private double balance;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of();
+    }
+    @Override
+    public String getUsername() {
+        return this.username;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }

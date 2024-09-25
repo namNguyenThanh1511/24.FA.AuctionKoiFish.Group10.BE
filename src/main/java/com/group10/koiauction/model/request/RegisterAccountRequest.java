@@ -1,5 +1,6 @@
-package com.group10.koiauction.entity.request;
+package com.group10.koiauction.model.request;
 
+import com.group10.koiauction.entity.enums.AccountRoleEnum;
 import jakarta.persistence.Column;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -12,7 +13,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-public class AccountRequest {
+public class RegisterAccountRequest {
     @NotBlank(message = "Username is required")
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
     private String username;
@@ -43,4 +44,8 @@ public class AccountRequest {
     @NotBlank(message = "Address is required")
     @Size(max = 255, message = "Address cannot exceed 255 characters")
     private String address;
+
+    private String roleEnum;
+
+
 }

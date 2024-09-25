@@ -1,12 +1,12 @@
 package com.group10.koiauction.api;
 
 import com.group10.koiauction.entity.KoiFish;
-import com.group10.koiauction.entity.request.KoiFishRequest;
+import com.group10.koiauction.model.request.KoiFishRequest;
+import com.group10.koiauction.model.response.KoiFishResponse;
 import com.group10.koiauction.repository.KoiFishRepository;
-import com.group10.koiauction.service.KoiFishController;
+import com.group10.koiauction.service.KoiFishService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,46 +16,46 @@ import java.util.List;
 @RequestMapping("/api/koiFish")
 public class KoiFishAPI {
     @Autowired
-    KoiFishController koiFishController;
+    KoiFishService koiFishService;
     @Autowired
     KoiFishRepository koiFishRepository;
-    @PostMapping("create")
-    public ResponseEntity<KoiFish> createKoiFish(@Valid @RequestBody KoiFishRequest koiFishRequest) {
-        KoiFish koiFish = koiFishController.createKoiFish(koiFishRequest);
-        return ResponseEntity.ok(koiFish);
+    @PostMapping()
+    public ResponseEntity<KoiFishResponse> createKoiFish(@Valid @RequestBody KoiFishRequest koiFishRequest) {
+        KoiFishResponse koiFishResponse = koiFishService.createKoiFish(koiFishRequest);
+        return ResponseEntity.ok(koiFishResponse);
     }
-    @GetMapping("getAll")
-    public  ResponseEntity<List<KoiFish>> getAllKoiFish (){
-        List<KoiFish> koiFishList = koiFishRepository.findAll();
+    @GetMapping("/all/available")
+    public  ResponseEntity<List<KoiFishResponse>> getAllKoiFish (){
+        List<KoiFishResponse> koiFishList = koiFishService.getAllKoiFish("available");
         return ResponseEntity.ok(koiFishList);
     }
     @GetMapping("/{koi_id}")
-    public ResponseEntity<KoiFish> getKoiFish(@PathVariable Long koi_id){
-        KoiFish koiFish = koiFishRepository.findByKoiId(koi_id);
+    public ResponseEntity<KoiFishResponse> getKoiFish(@PathVariable Long koi_id){
+        KoiFishResponse koiFish = koiFishService.getKoiFishResponseByID(koi_id);
         return ResponseEntity.ok(koiFish);
 
     }
 
     @GetMapping("/getKoiByName/{name}")
-    public ResponseEntity<List<KoiFish>> getKoiFishByKoiName(@PathVariable String name){
-        List<KoiFish> koiFishList = koiFishRepository.findKoiFishByName(name);
+    public ResponseEntity<List<KoiFishResponse>> getKoiFishByKoiName(@PathVariable String name){
+        List<KoiFishResponse> koiFishList = koiFishService.getKoiFishListByName(name);
         return ResponseEntity.ok(koiFishList);
     }
     @DeleteMapping("/{koi_id}")
-    public ResponseEntity<KoiFish> deleteKoiFish(@PathVariable Long koi_id){
-        KoiFish deteleKoi = koiFishController.deleteKoiFish(koi_id);
-        return ResponseEntity.ok(deteleKoi);
+    public ResponseEntity<KoiFishResponse> deleteKoiFish(@PathVariable Long koi_id){
+        KoiFishResponse deleteKoi = koiFishService.deleteKoiFish(koi_id);
+        return ResponseEntity.ok(deleteKoi);
     }
     @DeleteMapping("/deleteDB/{koi_id}")
     public ResponseEntity<String> deleteKoiFishDB(@PathVariable Long koi_id){
-        String msg = koiFishController.deleteKoiFishDB(koi_id);
+        String msg = koiFishService.deleteKoiFishDB(koi_id);
         return ResponseEntity.ok(msg);
     }
 
     @PutMapping("/{koi_id}")
-    public ResponseEntity<KoiFish> updateKoiFish( @PathVariable Long koi_id,
+    public ResponseEntity<KoiFishResponse> updateKoiFish( @PathVariable Long koi_id,
                                             @Valid @RequestBody KoiFishRequest koiFishRequest) {
-        KoiFish updated_koi = koiFishController.updateKoiFish(koi_id, koiFishRequest);
+        KoiFishResponse updated_koi = koiFishService.updateKoiFish(koi_id, koiFishRequest);
         return ResponseEntity.ok(updated_koi);
     }
 
