@@ -74,6 +74,11 @@
 			<artifactId>spring-boot-starter-data-jpa</artifactId> <!-- JPA giúp ta sử dụng đc cơ chế ORM , cơ chế code first -> generate db sau khi code !-->
 			<version>3.3.3</version>
 		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
