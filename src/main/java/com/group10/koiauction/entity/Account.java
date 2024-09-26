@@ -22,7 +22,6 @@ import java.util.List;
 public class Account implements UserDetails {
 
     @Id
-    @NotNull
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long user_id;
 

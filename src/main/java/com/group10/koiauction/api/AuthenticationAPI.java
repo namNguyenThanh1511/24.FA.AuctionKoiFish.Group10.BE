@@ -4,17 +4,24 @@ import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.model.request.LoginAccountRequest;
 import com.group10.koiauction.model.request.RegisterAccountRequest;
 import com.group10.koiauction.model.response.AccountResponse;
+import com.group10.koiauction.service.AccountService;
 import com.group10.koiauction.service.AuthenticationService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/")
+@CrossOrigin("*")
 public class AuthenticationAPI {
     @Autowired
     AuthenticationService authenticationService;
+
+    @Autowired
+    AccountService accountService;
 
     @PostMapping("register")
     public ResponseEntity register(@Valid @RequestBody RegisterAccountRequest registerAccountRequest) {
@@ -32,4 +39,28 @@ public class AuthenticationAPI {
     public ResponseEntity delete(@PathVariable Long id) {
         return ResponseEntity.ok(authenticationService.deleteDB(id));
     }
+    @GetMapping("/account/all")
+
+    public ResponseEntity<List<Account>> getAccounts() {
+        List<Account> accounts = accountService.getAllAccounts();
+        return ResponseEntity.ok(accounts);
+    }
+    @GetMapping("/account/{id}")
+    public ResponseEntity<AccountResponse> getAccountById(@PathVariable Long id) {
+        AccountResponse account = accountService.getAccountResponseById(id);
+        return ResponseEntity.ok(account);
+    }
+
+    @DeleteMapping("/account/{id}")
+    public ResponseEntity<Account> deleteAccount(@PathVariable Long id) {
+        Account deletedAccount = accountService.deleteAccount(id);
+        return ResponseEntity.ok(deletedAccount);
+    }
+    @PutMapping("/account/{id}")
+    public ResponseEntity<Account> updateAccount(@PathVariable Long id , @Valid @RequestBody RegisterAccountRequest account) {
+        Account deletedAccount = accountService.updateAccount(id,account);
+        return ResponseEntity.ok(deletedAccount);
+    }
+
+
 }

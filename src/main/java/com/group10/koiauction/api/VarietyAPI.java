@@ -13,6 +13,7 @@ import java.util.Set;
 
 @RestController
 @RequestMapping("/api/variety")
+@CrossOrigin("*")
 public class VarietyAPI {
     @Autowired
     private VarietyService varietyService;

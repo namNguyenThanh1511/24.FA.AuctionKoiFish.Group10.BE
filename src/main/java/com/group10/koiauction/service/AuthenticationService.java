@@ -80,6 +80,8 @@ public class AuthenticationService implements UserDetailsService {
         return "Delete success";
     }
 
+
+
     public AccountRoleEnum getRoleEnumX(String role) {
         String roleX = role.toLowerCase().replaceAll("\\s","");
         return switch (roleX) {

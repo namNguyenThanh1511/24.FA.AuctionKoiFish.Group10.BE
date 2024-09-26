@@ -14,6 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/koiFish")
+@CrossOrigin("*")
 public class KoiFishAPI {
     @Autowired
     KoiFishService koiFishService;
