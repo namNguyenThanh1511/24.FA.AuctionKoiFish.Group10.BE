@@ -6,6 +6,7 @@ import com.group10.koiauction.model.request.RegisterAccountRequest;
 import com.group10.koiauction.model.response.AccountResponse;
 import com.group10.koiauction.service.AccountService;
 import com.group10.koiauction.service.AuthenticationService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/")
 @CrossOrigin("*")
+@SecurityRequirement(name="api")// để sử dụng token tren swagger
 public class AuthenticationAPI {
     @Autowired
     AuthenticationService authenticationService;

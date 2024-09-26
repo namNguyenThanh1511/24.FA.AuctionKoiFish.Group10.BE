@@ -3,6 +3,7 @@ package com.group10.koiauction.service;
 
 import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.enums.AccountRoleEnum;
+import com.group10.koiauction.mapper.AccountMapper;
 import com.group10.koiauction.model.request.LoginAccountRequest;
 import com.group10.koiauction.model.request.RegisterAccountRequest;
 import com.group10.koiauction.exception.DuplicatedEntity;
@@ -32,6 +33,12 @@ public class AuthenticationService implements UserDetailsService {
 
     @Autowired
     ModelMapper modelMapper;
+
+    @Autowired
+    AccountMapper accountMapper;
+
+    @Autowired
+    TokenService tokenService;
     public AccountResponse register(RegisterAccountRequest registerAccountRequest) {
         Account newAccount = modelMapper.map(registerAccountRequest, Account.class);// Account.class : tự động new Account() rồi mapping
         try {
@@ -60,10 +67,11 @@ public class AuthenticationService implements UserDetailsService {
                     loginAccountRequest.getUsername(), loginAccountRequest.getPassword()
                     // go to loadByUsername check username first
                     // so sanh password db vs request password
-
             ));
             Account account = (Account) authentication.getPrincipal();
-            return modelMapper.map(account, AccountResponse.class);
+            AccountResponse accountResponse = accountMapper.toAccountResponse(account);
+            accountResponse.setToken(tokenService.generateToken(account));// set token response ve` cho front end
+            return accountResponse;
         } catch (Exception e) {
             throw new EntityNotFoundException("Username or password are incorrect");
         }
@@ -79,8 +87,6 @@ public class AuthenticationService implements UserDetailsService {
         }
         return "Delete success";
     }
-
-
 
     public AccountRoleEnum getRoleEnumX(String role) {
         String roleX = role.toLowerCase().replaceAll("\\s","");
