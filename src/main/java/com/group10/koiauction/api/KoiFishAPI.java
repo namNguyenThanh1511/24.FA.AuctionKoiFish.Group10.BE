@@ -5,21 +5,26 @@ import com.group10.koiauction.model.request.KoiFishRequest;
 import com.group10.koiauction.model.response.KoiFishResponse;
 import com.group10.koiauction.repository.KoiFishRepository;
 import com.group10.koiauction.service.KoiFishService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/koiFish")
+@CrossOrigin("*")
+@SecurityRequirement(name="api")// để sử dụng token tren swagger
 public class KoiFishAPI {
     @Autowired
     KoiFishService koiFishService;
     @Autowired
     KoiFishRepository koiFishRepository;
     @PostMapping()
+    @PreAuthorize("hasAuthority('KOI_BREEDER')")
     public ResponseEntity<KoiFishResponse> createKoiFish(@Valid @RequestBody KoiFishRequest koiFishRequest) {
         KoiFishResponse koiFishResponse = koiFishService.createKoiFish(koiFishRequest);
         return ResponseEntity.ok(koiFishResponse);

@@ -8,7 +8,11 @@ import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -20,7 +24,6 @@ import java.util.List;
 public class Account implements UserDetails {
 
     @Id
-    @NotNull
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long user_id;
 
@@ -75,8 +78,12 @@ public class Account implements UserDetails {
     private double balance;
 
     @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+    public Collection<? extends GrantedAuthority> getAuthorities() { // đinh nghĩa quyền hạn account này làm đc
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        if(this.roleEnum != null) {
+            authorities.add(new SimpleGrantedAuthority(this.roleEnum.toString()));
+        }
+        return authorities;
     }
     @Override
     public String getUsername() {
