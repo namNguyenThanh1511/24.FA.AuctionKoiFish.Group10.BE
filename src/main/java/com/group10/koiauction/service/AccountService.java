@@ -3,9 +3,11 @@ package com.group10.koiauction.service;
 import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.enums.AccountRoleEnum;
 import com.group10.koiauction.entity.enums.AccountStatusEnum;
+import com.group10.koiauction.mapper.AccountMapper;
 import com.group10.koiauction.model.request.RegisterAccountRequest;
 import com.group10.koiauction.exception.DuplicatedEntity;
 import com.group10.koiauction.exception.EntityNotFoundException;
+import com.group10.koiauction.model.response.AccountResponse;
 import com.group10.koiauction.repository.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,6 +21,9 @@ import java.util.List;
 public class AccountService {
     @Autowired
     AccountRepository accountRepository;
+
+    @Autowired
+    AccountMapper accountMapper;
 
     public List<Account> getAllAccounts() {
         return accountRepository.findAll();
@@ -53,6 +58,12 @@ public class AccountService {
             throw e;
         }
 
+    }
+
+    public AccountResponse getAccountResponseById(Long id) {
+        Account target = getAccountById(id);
+        AccountResponse accountResponse = accountMapper.toAccountResponse(target);
+        return accountResponse;
     }
 
     public Account getAccountById(Long id) {

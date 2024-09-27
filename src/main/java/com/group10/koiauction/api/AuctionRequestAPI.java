@@ -14,6 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/auctionRequest")
+@CrossOrigin("*")
 public class AuctionRequestAPI {
 
     @Autowired

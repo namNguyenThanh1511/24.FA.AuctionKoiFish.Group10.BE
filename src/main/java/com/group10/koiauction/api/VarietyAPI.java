@@ -4,6 +4,7 @@ import com.group10.koiauction.entity.Variety;
 import com.group10.koiauction.entity.enums.VarietyStatusEnum;
 import com.group10.koiauction.model.request.VarietyRequest;
 import com.group10.koiauction.service.VarietyService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,8 @@ import java.util.Set;
 
 @RestController
 @RequestMapping("/api/variety")
+@CrossOrigin("*")
+@SecurityRequirement(name = "api")
 public class VarietyAPI {
     @Autowired
     private VarietyService varietyService;

@@ -14,5 +14,6 @@ public class AccountResponse {
     private String address;
     private AccountStatusEnum status;
     private AccountRoleEnum roleEnum;
+    private String token;
 
 }

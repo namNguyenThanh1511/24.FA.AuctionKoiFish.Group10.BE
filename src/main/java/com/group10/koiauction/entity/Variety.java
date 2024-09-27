@@ -19,7 +19,6 @@ import java.util.Set;
 @Table(name = "variety")
 public class Variety {
     @Id
-    @NotNull
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
