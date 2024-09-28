@@ -14,6 +14,7 @@ import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.repository.KoiFishRepository;
 import com.group10.koiauction.repository.VarietyRepository;
 
+import com.group10.koiauction.utilities.AccountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -31,11 +32,14 @@ public class KoiFishService {
     @Autowired
     KoiMapper koiMapper;
 
+    @Autowired
+    AccountUtils accountUtils;
+
     public KoiFishResponse createKoiFish(KoiFishRequest koiFishRequest) {
         KoiFish koiFish = koiMapper.toKoiFish(koiFishRequest);
         Set<Variety> varieties = getVarietiesByID(koiFishRequest.getVarietiesID());
         koiFish.setKoiStatus(KoiStatusEnum.AVAILABLE);
-        koiFish.setAccount(getAccountById(koiFishRequest.getBreeder_id()));
+        koiFish.setAccount(accountUtils.getCurrentAccount());
         koiFish.setVarieties(varieties);
 
         try {
@@ -70,7 +74,7 @@ public class KoiFishService {
             oldKoi.setDescription(koiFishRequest.getDescription());
             oldKoi.setEstimatedValue(koiFishRequest.getEstimatedValue());
             oldKoi.setUpdatedDate(new Date());
-            oldKoi.setAccount(getAccountById(koiFishRequest.getBreeder_id()));
+            oldKoi.setAccount(accountUtils.getCurrentAccount());
             oldKoi.setVarieties(varieties);
             koiFishRepository.save(oldKoi);
             KoiFishResponse koiFishResponse = getKoiMapperResponse(oldKoi);

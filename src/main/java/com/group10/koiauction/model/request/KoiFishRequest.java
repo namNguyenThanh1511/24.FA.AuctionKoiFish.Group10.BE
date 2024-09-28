@@ -49,16 +49,10 @@ public class KoiFishRequest {
     @Column(name = "description")
     private String description;
 
-
-
     @NotNull(message = "Estimated value is required")
     @Min(value = 0, message = "Estimated value must be a positive number")
 
     private Double estimatedValue;
-
-
-
-    private Long breeder_id;
 
     private Set<Long> varietiesID;
 }
