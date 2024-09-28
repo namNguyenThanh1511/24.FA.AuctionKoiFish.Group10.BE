@@ -7,6 +7,6 @@ import lombok.Data;
 public class AuctionRequestDTO {
     private String title;
     private String description;
-    private Long breeder_id;
+//    private Long breeder_id;
     private Long koiFish_id;
 }

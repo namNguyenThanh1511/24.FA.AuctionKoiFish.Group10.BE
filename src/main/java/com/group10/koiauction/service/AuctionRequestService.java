@@ -13,6 +13,7 @@ import com.group10.koiauction.model.response.AuctionRequestResponse;
 import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.repository.AuctionRequestRepository;
 import com.group10.koiauction.repository.KoiFishRepository;
+import com.group10.koiauction.utilities.AccountUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -39,13 +40,16 @@ public class AuctionRequestService {
     @Lazy//delay the instantiation of a bean until it is required, which can break the circular dependency.
     private ModelMapper modelMapper;
 
+    @Autowired
+    private AccountUtils accountUtils;
+
 
     public AuctionRequestResponse createAuctionRequest(AuctionRequestDTO auctionRequestDTO) {
         AuctionRequest auctionRequest = new AuctionRequest();
         auctionRequest.setTitle(auctionRequestDTO.getTitle());
         auctionRequest.setDescription(auctionRequestDTO.getDescription());
         auctionRequest.setStatus(AuctionRequestStatusEnum.PENDING);
-        auctionRequest.setAccount(getAccountById(auctionRequestDTO.getBreeder_id()));
+        auctionRequest.setAccount(accountUtils.getCurrentAccount());
         auctionRequest.setKoiFish(getKoiFishByID(auctionRequestDTO.getKoiFish_id(),true));
         updateKoiStatus(auctionRequestDTO.getKoiFish_id(),auctionRequest.getStatus());// ~pending
         try {
@@ -59,7 +63,7 @@ public class AuctionRequestService {
         auctionRequestResponse.setStatus(auctionRequest.getStatus());
         auctionRequestResponse.setTitle(auctionRequest.getTitle());
         auctionRequestResponse.setDescription(auctionRequest.getDescription());
-        auctionRequestResponse.setBreeder_id(auctionRequestDTO.getBreeder_id());
+        auctionRequestResponse.setBreeder_id(accountUtils.getCurrentAccount().getUser_id());
         auctionRequestResponse.setKoi_id(auctionRequestDTO.getKoiFish_id());
 
         return auctionRequestResponse;
@@ -130,8 +134,10 @@ public class AuctionRequestService {
             throw new EntityNotFoundException("KoiFish " + " with id : " + koi_id + " not found");
         } else if (!koiFish.getKoiStatus().equals(KoiStatusEnum.AVAILABLE) && isCreate == true ) { // Chỉ đc lấy những
             // cá Koi
-            // available để tạo AuctionRequest , nếu update == false => Có thể trả về tất cả cá koi ở tất cả status
-            // trừ những cá koi ko tồn tại
+            // available để tạo AuctionRequest , nếu isCreate == true
+            // => khi tạo auction request thì lấy những con koi AVAILABLE , còn khi update trạng thái của request
+            // -> status cá koi cũng thay đổi theo -> đặt biến flag isCreate để mỗi khi tạo cá koi thì điều kiện này vẫn kich hoạt
+            // còn khi update auction request -> có thể thay đổi status cá koi liên tục
             throw new EntityNotFoundException("KoiFish " + " with id : " + koi_id + " is not available");
         }
         return koiFish;
@@ -181,7 +187,7 @@ public class AuctionRequestService {
                 target.setUpdatedDate(new Date());
                 break;
             }case REJECTED_BY_MANAGER:{//Manager thấy cá này ko có chiến lược mang lại lợi nhuận cho sàn , từ chối cá
-                target.setKoiStatus(KoiStatusEnum.UNAVAILABLE);
+                target.setKoiStatus(KoiStatusEnum.AVAILABLE);
                 target.setUpdatedDate(new Date());
                 break;
             }case CANCELLED:{//Khi Koi Breeder rút lại AuctionRequest vì lí do ...
