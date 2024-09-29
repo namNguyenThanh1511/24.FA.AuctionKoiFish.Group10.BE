@@ -11,6 +11,7 @@ import com.group10.koiauction.exception.DuplicatedEntity;
 import com.group10.koiauction.exception.EntityNotFoundException;
 import com.group10.koiauction.model.request.UpdateProfileRequestDTO;
 import com.group10.koiauction.model.response.AccountResponse;
+import com.group10.koiauction.model.response.EmailDetail;
 import com.group10.koiauction.repository.AccountRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,12 +45,25 @@ public class AuthenticationService implements UserDetailsService {
 
     @Autowired
     TokenService tokenService;
+
+    @Autowired
+    EmailService emailService;
+
+
     public AccountResponse register(RegisterAccountRequest registerAccountRequest) {
         Account newAccount = modelMapper.map(registerAccountRequest, Account.class);// Account.class : tự động new Account() rồi mapping
         try {
             newAccount.setRoleEnum(getRoleEnumX(registerAccountRequest.getRoleEnum()));
             newAccount.setPassword(passwordEncoder.encode(registerAccountRequest.getPassword()));
             accountRepository.save(newAccount);
+
+            EmailDetail emailDetail = new EmailDetail();
+            emailDetail.setAccount(newAccount);
+            emailDetail.setSubject("Welcome to my web");
+            emailDetail.setLink("https://www.google.com/");
+
+            emailService.sentEmail(emailDetail);
+
             return modelMapper.map(newAccount, AccountResponse.class);
         } catch (Exception e) {
             if (e.getMessage().contains(registerAccountRequest.getPhoneNumber())) {
