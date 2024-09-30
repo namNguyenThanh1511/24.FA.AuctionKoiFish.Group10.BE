@@ -3,6 +3,7 @@ package com.group10.koiauction.api;
 import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.model.request.LoginAccountRequest;
 import com.group10.koiauction.model.request.RegisterAccountRequest;
+import com.group10.koiauction.model.request.RegisterMemberRequest;
 import com.group10.koiauction.model.request.UpdateProfileRequestDTO;
 import com.group10.koiauction.model.response.AccountResponse;
 import com.group10.koiauction.service.AuthenticationService;
@@ -26,6 +27,13 @@ public class AuthenticationAPI {
     public ResponseEntity register(@Valid @RequestBody RegisterAccountRequest registerAccountRequest) {
             AccountResponse newAccount = authenticationService.register(registerAccountRequest);
             return ResponseEntity.ok(newAccount);
+    }
+
+
+    @PostMapping("register-member")
+    public ResponseEntity registerMember(@Valid @RequestBody RegisterMemberRequest registerAccountRequest) {
+        AccountResponse newAccount = authenticationService.registerMember(registerAccountRequest);
+        return ResponseEntity.ok(newAccount);
     }
 
     @PostMapping("login")
@@ -60,7 +68,11 @@ public class AuthenticationAPI {
         Account deletedAccount = authenticationService.updateAccount(id,account);
         return ResponseEntity.ok(deletedAccount);
     }
-
+    @GetMapping("/account/profile")
+    public ResponseEntity<AccountResponse> getAccountProfile() {
+        AccountResponse accountResponse = authenticationService.getAccountProfile();
+        return ResponseEntity.ok(accountResponse);
+    }
     @PutMapping("/account/update-profile/{id}")
     public ResponseEntity<AccountResponse> updateAccountProfile(@PathVariable Long id ,
      @Valid @RequestBody                                                           UpdateProfileRequestDTO updateProfileRequestDTO){
