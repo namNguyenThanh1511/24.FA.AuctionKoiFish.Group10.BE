@@ -78,6 +78,9 @@ public class KoiFish {
     @Past(message = "Update date time must after current time")
     private Date updatedDate = new Date();
 
+    @Column(name = "video_url")
+    private String video_url;
+
     @ManyToOne // 1 koi breeder co nhieu ca koi
     @JoinColumn(name = "user_id")
     Account account;

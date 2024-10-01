@@ -37,7 +37,7 @@ public class AuctionRequestAPI {
         return ResponseEntity.ok(updatedAuctionRequest);
     }
 
-    @GetMapping("/all/pending")
+    @GetMapping("")
     public ResponseEntity<List<AuctionRequestResponse>> getAllPendingAuctionRequests() {
         List<AuctionRequestResponse> auctionRequestResponseList = auctionRequestService.getAllAuctionRequests(
                 "pending");

@@ -54,5 +54,7 @@ public class KoiFishRequest {
 
     private Double estimatedValue;
 
+    private String video_url;
+
     private Set<Long> varietiesID;
 }
