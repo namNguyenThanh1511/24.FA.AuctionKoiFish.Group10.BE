@@ -28,6 +28,7 @@ public class KoiFishResponse {
     private Double estimatedValue;
     private KoiStatusEnum koiStatus;
     private String video_url;
+    private String healthNote;
     private Long breeder_id;
     private Set<Long> varietiesID;
 }

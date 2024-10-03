@@ -1,7 +1,9 @@
 package com.group10.koiauction.api;
 
 import com.group10.koiauction.entity.KoiFish;
+import com.group10.koiauction.model.request.HealthStatusRequest;
 import com.group10.koiauction.model.request.KoiFishRequest;
+import com.group10.koiauction.model.response.HealthStatusResponse;
 import com.group10.koiauction.model.response.KoiFishResponse;
 import com.group10.koiauction.repository.KoiFishRepository;
 import com.group10.koiauction.service.KoiFishService;
@@ -31,7 +33,7 @@ public class KoiFishAPI {
     }
     @GetMapping("")
     public  ResponseEntity<List<KoiFishResponse>> getAllKoiFish (){
-        List<KoiFishResponse> koiFishList = koiFishService.getAllKoiFish("available");
+        List<KoiFishResponse> koiFishList = koiFishService.getAllKoiFish("");
         return ResponseEntity.ok(koiFishList);
     }
     @GetMapping("/{koi_id}")
@@ -64,5 +66,10 @@ public class KoiFishAPI {
         return ResponseEntity.ok(updated_koi);
     }
 
+    @PutMapping("/health/{koi_id}")
+    public ResponseEntity<HealthStatusResponse> updateKoiHealth(@PathVariable Long koi_id , @RequestBody HealthStatusRequest healthStatusRequest){
+        HealthStatusResponse healthStatusResponse = koiFishService.updateHealthStatus(koi_id, healthStatusRequest);
+        return ResponseEntity.ok(healthStatusResponse);
+    }
 
 }
