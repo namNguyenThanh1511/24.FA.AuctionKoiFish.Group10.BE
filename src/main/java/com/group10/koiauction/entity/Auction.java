@@ -17,7 +17,7 @@ public class Auction {
     @Id
     @NotNull
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String auctionId;
+    private Long auctionId;
 
     @NotNull
     private String title;

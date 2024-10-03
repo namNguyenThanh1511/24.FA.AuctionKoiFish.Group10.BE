@@ -45,7 +45,7 @@ public class AuctionService {
     }
 
     // Delete (by updating status to INACTIVE)
-    public Auction deleteAuction(String auctionId) {
+    public Auction deleteAuction(Long auctionId) {
         Auction auction = auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new EntityNotFoundException("Auction not found with ID: " + auctionId));
 
@@ -59,7 +59,7 @@ public class AuctionService {
     }
 
     // Search auction by ID
-    public Auction getAuctionById(String auctionId) {
+    public Auction getAuctionById(Long auctionId) {
         return auctionRepository.findById(auctionId)
                 .orElseThrow(() -> new EntityNotFoundException("Auction not found with ID: " + auctionId));
     }

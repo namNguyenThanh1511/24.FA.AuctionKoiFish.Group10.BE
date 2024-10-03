@@ -5,13 +5,9 @@ import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.enums.AccountRoleEnum;
 import com.group10.koiauction.entity.enums.AccountStatusEnum;
 import com.group10.koiauction.mapper.AccountMapper;
-import com.group10.koiauction.model.request.CreateBreederAccountRequest;
-import com.group10.koiauction.model.request.LoginAccountRequest;
-import com.group10.koiauction.model.request.RegisterAccountRequest;
+import com.group10.koiauction.model.request.*;
 import com.group10.koiauction.exception.DuplicatedEntity;
 import com.group10.koiauction.exception.EntityNotFoundException;
-import com.group10.koiauction.model.request.RegisterMemberRequest;
-import com.group10.koiauction.model.request.UpdateProfileRequestDTO;
 import com.group10.koiauction.model.response.AccountResponse;
 import com.group10.koiauction.model.response.EmailDetail;
 import com.group10.koiauction.repository.AccountRepository;
@@ -22,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -257,6 +254,34 @@ public class AuthenticationService implements UserDetailsService {
             }
             throw e;
         }
+    }
+
+
+    public Account getCurrentAccount(){
+        Account account = (Account) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        //phai get thong tin user tu database
+
+        return accountRepository.findByUser_id(getCurrentAccount().getUser_id());
+    }
+
+    public void forgotPassword (String email){
+        Account account = accountRepository.findAccountByEmail(email);
+
+        if(account == null){
+            throw new EntityNotFoundException("User not found");
+        }else {
+            EmailDetail emailDetail = new EmailDetail();
+            emailDetail.setAccount(account);
+            emailDetail.setSubject("Reset password");
+            emailDetail.setLink("https://www.facebook.com/?token=" + tokenService.generateToken(account));
+            emailService.sentEmail(emailDetail);
+        }
+    }
+
+    public Account resetPassword(ResetPasswordRequestDTO resetPasswordRequestDTO) {
+        Account account = getCurrentAccount();
+        account.setPassword(passwordEncoder.encode(resetPasswordRequestDTO.getPassword()));
+        return accountRepository.save(account);
     }
 
 
