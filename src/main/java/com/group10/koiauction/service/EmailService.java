@@ -43,4 +43,29 @@ public class EmailService {
             System.out.println("Error sending email");
         }
     }
+
+
+    public void sentEmailBreeder(EmailDetail emailDetail) {
+        try{
+            Context context = new Context();
+            context.setVariable("name", emailDetail.getAccount().getEmail());
+            context.setVariable("button", "Go to website");
+            context.setVariable("link", emailDetail.getLink());
+
+            String tmeplate = templateEngine.process("welcome-breeder-template", context);
+
+            // Creating a simple mail message
+            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage);
+
+            // Setting up necessary details
+            mimeMessageHelper.setFrom("customerserviceinkmelo@gmail.com");
+            mimeMessageHelper.setTo(emailDetail.getAccount().getEmail());
+            mimeMessageHelper.setText(tmeplate, true);
+            mimeMessageHelper.setSubject(emailDetail.getSubject());
+            javaMailSender.send(mimeMessage);
+        }catch (MessagingException e){
+            System.out.println("Error sending email");
+        }
+    }
 }

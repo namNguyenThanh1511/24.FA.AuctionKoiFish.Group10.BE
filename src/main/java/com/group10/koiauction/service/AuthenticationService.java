@@ -5,6 +5,7 @@ import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.enums.AccountRoleEnum;
 import com.group10.koiauction.entity.enums.AccountStatusEnum;
 import com.group10.koiauction.mapper.AccountMapper;
+import com.group10.koiauction.model.request.CreateBreederAccountRequest;
 import com.group10.koiauction.model.request.LoginAccountRequest;
 import com.group10.koiauction.model.request.RegisterAccountRequest;
 import com.group10.koiauction.exception.DuplicatedEntity;
@@ -17,6 +18,7 @@ import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.utilities.AccountUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -223,6 +225,41 @@ public class AuthenticationService implements UserDetailsService {
         }
         return accountMapper.toAccountResponse(target);
     }
+
+    
+    public AccountResponse createBreederAccount(CreateBreederAccountRequest createBreederAccountRequest) {
+        Account newAccount = modelMapper.map(createBreederAccountRequest, Account.class);
+        try {
+            // Automatically set the role to KOI_BREEDER for breeder account creation
+            newAccount.setRoleEnum(AccountRoleEnum.KOI_BREEDER);
+
+            // Set the default password to "123@abc"
+            String defaultPassword = "123@abc";
+            newAccount.setPassword(passwordEncoder.encode(defaultPassword));
+
+            accountRepository.save(newAccount);
+
+            EmailDetail emailDetail = new EmailDetail();
+            emailDetail.setAccount(newAccount);
+            emailDetail.setSubject("Welcome to my web");
+            emailDetail.setLink("https://www.google.com/");
+
+            emailService.sentEmailBreeder(emailDetail);
+
+            return modelMapper.map(newAccount, AccountResponse.class);
+        } catch (Exception e) {
+            if (e.getMessage().contains(createBreederAccountRequest.getPhoneNumber())) {
+                throw new DuplicatedEntity("Duplicated phone");
+            } else if (e.getMessage().contains(createBreederAccountRequest.getEmail())) {
+                throw new DuplicatedEntity("Duplicated email");
+            } else if (e.getMessage().contains(createBreederAccountRequest.getUsername())) {
+                throw new DuplicatedEntity("Username exists");
+            }
+            throw e;
+        }
+    }
+
+
 
     public AccountResponse getAccountResponseById(Long id) {
         Account target = getAccountById(id);
