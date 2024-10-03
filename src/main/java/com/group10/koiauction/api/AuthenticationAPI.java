@@ -1,6 +1,7 @@
 package com.group10.koiauction.api;
 
 import com.group10.koiauction.entity.Account;
+import com.group10.koiauction.model.request.CreateBreederAccountRequest;
 import com.group10.koiauction.model.request.LoginAccountRequest;
 import com.group10.koiauction.model.request.RegisterAccountRequest;
 import com.group10.koiauction.model.request.RegisterMemberRequest;
@@ -11,6 +12,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -77,6 +79,12 @@ public class AuthenticationAPI {
     public ResponseEntity<AccountResponse> updateAccountProfile(@PathVariable Long id ,
      @Valid @RequestBody                                                           UpdateProfileRequestDTO updateProfileRequestDTO){
         AccountResponse accountResponse = authenticationService.updateAccountProfile(id,updateProfileRequestDTO);
+        return ResponseEntity.ok(accountResponse);
+    }
+
+    @PostMapping("/manager/create-breeder-account")
+    public ResponseEntity<AccountResponse> createBreederAccount(@RequestBody CreateBreederAccountRequest createBreederAccountRequest) {
+        AccountResponse accountResponse = authenticationService.createBreederAccount(createBreederAccountRequest);
         return ResponseEntity.ok(accountResponse);
     }
 
