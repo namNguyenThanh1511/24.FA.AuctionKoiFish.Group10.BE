@@ -81,6 +81,9 @@ public class KoiFish {
     @Column(name = "video_url")
     private String video_url;
 
+    @Column(name = "health_note")
+    private String health_note;
+
     @ManyToOne // 1 koi breeder co nhieu ca koi
     @JoinColumn(name = "user_id")
     Account account;
