@@ -14,7 +14,6 @@ import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.utilities.AccountUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -256,35 +255,46 @@ public class AuthenticationService implements UserDetailsService {
         }
     }
 
-
     public Account getCurrentAccount(){
         Account account = (Account) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         //phai get thong tin user tu database
 
-        return accountRepository.findByUser_id(getCurrentAccount().getUser_id());
+        return accountRepository.findByUser_id(account.getUser_id());
     }
 
-    public void forgotPassword (String email){
-        Account account = accountRepository.findAccountByEmail(email);
 
-        if(account == null){
-            throw new EntityNotFoundException("User not found");
-        }else {
-            EmailDetail emailDetail = new EmailDetail();
-            emailDetail.setAccount(account);
-            emailDetail.setSubject("Reset password");
-            emailDetail.setLink("https://www.facebook.com/?token=" + tokenService.generateToken(account));
-            emailService.sentEmail(emailDetail);
+    public void forgotPassword(String email) {
+        Account account = accountRepository.findAccountByEmail(email);
+        if(account == null) {
+            throw new EntityNotFoundException("Account not found");
+        }
+        String token = tokenService.generateToken(account);
+        EmailDetail emailDetail = new EmailDetail();
+        emailDetail.setAccount(account);//set receiver
+        emailDetail.setSubject("Reset password");
+        emailDetail.setLink("https://www.google.com/?token="+token);
+        emailService.sentEmail(emailDetail);
+
+    }
+
+    public void resetPassword(ResetPasswordRequestDTO resetPasswordRequestDTO) {
+        Account account = getCurrentAccount();
+        account.setPassword(passwordEncoder.encode(resetPasswordRequestDTO.getPassword()));
+        try{
+            accountRepository.save(account);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public Account resetPassword(ResetPasswordRequestDTO resetPasswordRequestDTO) {
-        Account account = getCurrentAccount();
-        account.setPassword(passwordEncoder.encode(resetPasswordRequestDTO.getPassword()));
-        return accountRepository.save(account);
+    @Override
+    public UserDetails loadUserByUsername(String phoneNumber) throws UsernameNotFoundException {
+        Account account = accountRepository.findAccountByPhoneNumber(phoneNumber);
+        if (account == null) {
+            throw new EntityNotFoundException("User not found");
+        }
+        return account;
     }
-
-
 
     public AccountResponse getAccountResponseById(Long id) {
         Account target = getAccountById(id);
@@ -310,12 +320,6 @@ public class AuthenticationService implements UserDetailsService {
             case "koibreeder" -> AccountRoleEnum.KOI_BREEDER;
             default -> throw new EntityNotFoundException("Invalid role");
         };
-    }
-
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return accountRepository.findByUsername(username); // find by username config in Account class
-
     }
 
 
