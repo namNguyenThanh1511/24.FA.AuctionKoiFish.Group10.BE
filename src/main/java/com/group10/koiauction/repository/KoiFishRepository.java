@@ -26,6 +26,13 @@ public interface KoiFishRepository extends JpaRepository<KoiFish, Long> {
     @Query("SELECT k.varieties FROM KoiFish k WHERE k.koi_id = :koi_id ")
     Set<Variety> findVarietiesByKoiId(@Param("koi_id") Long koiId);
 
+    @Query("SELECT U FROM KoiFish U WHERE U.account.user_id = :userId ")
+    List<KoiFish> findKoiFishByBreeder(@Param("userId")Long userId);
+
+    @Query("SELECT U FROM KoiFish U WHERE U.account.user_id = :userId AND U.koiStatus = :status ")
+    List<KoiFish> findKoiFishByBreederAndStatus(@Param("userId")Long userId ,@Param("status") KoiStatusEnum status);
+
+
 
 //    @Modifying//This tells Spring Data JPA that this is an UPDATE query and not a SELECT.
 //    @Query("UPDATE KoiFish k SET k.name = :name, k.breeder = :breeder, k.sex = :sex, k.variety = :variety, k.sizeCm = :sizeCm, k.bornIn = :bornIn, k.image_url = :imageUrl, k.description = :description, k.estimatedValue = :estimatedValue WHERE k.koi_id = :koi_id")

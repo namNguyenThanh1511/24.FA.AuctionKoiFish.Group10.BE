@@ -1,6 +1,7 @@
 package com.group10.koiauction.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.group10.koiauction.entity.enums.AccountRoleEnum;
 import com.group10.koiauction.entity.enums.AccountStatusEnum;
 import jakarta.persistence.*;
@@ -12,10 +13,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Getter
 @Setter
@@ -76,6 +74,18 @@ public class Account implements UserDetails {
     @NotNull(message = "Balance must not be null")
     @Column(name = "balance",nullable = false)
     private double balance;
+
+    @OneToMany(mappedBy = "account")
+    @JsonIgnore
+    Set<KoiFish> koiFishSet;
+
+    @OneToMany(mappedBy = "account")
+    @JsonIgnore
+    Set<AuctionRequest> auctionRequestSet;
+
+
+    @OneToMany(mappedBy = "winner")//1 member có thể thắng nhiều phiên đấu giá
+    Set<AuctionSession> auctionSessionSet;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() { // đinh nghĩa quyền hạn account này làm đc
