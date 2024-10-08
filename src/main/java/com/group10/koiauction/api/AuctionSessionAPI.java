@@ -1,9 +1,11 @@
 package com.group10.koiauction.api;
 
 import com.group10.koiauction.entity.Account;
+import com.group10.koiauction.entity.AuctionSession;
 import com.group10.koiauction.entity.enums.AuctionSessionStatus;
 import com.group10.koiauction.entity.enums.AuctionSessionType;
 import com.group10.koiauction.model.request.AuctionSessionRequestDTO;
+import com.group10.koiauction.model.request.UpdateStatusAuctionSessionRequestDTO;
 import com.group10.koiauction.model.response.AuctionSessionResponseDTO;
 import com.group10.koiauction.service.AuctionSessionService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -36,6 +38,12 @@ public class AuctionSessionAPI {
     public ResponseEntity<List<AuctionSessionResponseDTO>> getAllAuctionSessions() {
         List<AuctionSessionResponseDTO> auctionSessionResponseDTOs = auctionSessionService.getAllAuctionSessions();
         return ResponseEntity.ok(auctionSessionResponseDTOs);
+    }
+
+    @PutMapping("/status/{id}")
+    public ResponseEntity<AuctionSessionResponseDTO> updateAuctionSessionStatus(@PathVariable Long id, @RequestBody UpdateStatusAuctionSessionRequestDTO updateStatusAuctionSessionRequestDTO) {
+        AuctionSessionResponseDTO auctionSessionResponseDTO = auctionSessionService.updateAuctionSessionStatus(id, updateStatusAuctionSessionRequestDTO);
+        return ResponseEntity.ok(auctionSessionResponseDTO);
     }
 
 }

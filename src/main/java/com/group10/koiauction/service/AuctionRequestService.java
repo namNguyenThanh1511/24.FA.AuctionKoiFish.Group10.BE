@@ -162,6 +162,8 @@ public class AuctionRequestService {
             // -> status cá koi cũng thay đổi theo -> đặt biến flag isCreate để mỗi khi tạo cá koi thì điều kiện này vẫn kich hoạt
             // còn khi update auction request -> có thể thay đổi status cá koi liên tục
             throw new EntityNotFoundException("KoiFish " + " with id : " + koi_id + " is not available");
+        } else if (!koiFish.getAccount().equals(accountUtils.getCurrentAccount())) {
+            throw new EntityNotFoundException("KoiFish " + " with id : " + koi_id + " is not your fish");
         }
         return koiFish;
     }

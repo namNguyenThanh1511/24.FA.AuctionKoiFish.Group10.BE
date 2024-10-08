@@ -56,6 +56,8 @@ public class AuctionSession {
     @Column(name = "status", nullable = false)
     private AuctionSessionStatus status;
 
+    private String note;
+
     @ManyToOne
     @JoinColumn(name = "winner_id")
     private Account winner;

@@ -82,6 +82,14 @@ public class AuthenticationAPI {
         return ResponseEntity.ok(accountResponse);
     }
 
+    @PutMapping("/account/update-profile-current-user")
+    public ResponseEntity<AccountResponse> updateAccountProfileOfCurrentUser(@Valid @RequestBody UpdateProfileRequestDTO updateProfileRequestDTO){
+        AccountResponse accountResponse = authenticationService.updateAccountProfileOfCurrentUser(updateProfileRequestDTO);
+        return ResponseEntity.ok(accountResponse);
+    }
+
+
+
     @PostMapping("/manager/create-breeder-account")
     public ResponseEntity<AccountResponse> createBreederAccount(@RequestBody CreateBreederAccountRequest createBreederAccountRequest) {
         AccountResponse accountResponse = authenticationService.createBreederAccount(createBreederAccountRequest);

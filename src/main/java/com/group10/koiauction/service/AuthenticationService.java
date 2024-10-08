@@ -226,6 +226,45 @@ public class AuthenticationService implements UserDetailsService {
         return accountMapper.toAccountResponse(target);
     }
 
+    public AccountResponse updateAccountProfileOfCurrentUser(UpdateProfileRequestDTO updateProfileRequestDTO) {
+        Account target = accountUtils.getCurrentAccount();
+        try {
+            if (updateProfileRequestDTO.getUsername() != null && !updateProfileRequestDTO.getUsername().equals(target.getUsername()))
+            {
+                if (accountRepository.existsByUsername(updateProfileRequestDTO.getUsername())) {
+                    throw new DuplicatedEntity("username is already been used ");
+                }
+                target.setUsername(updateProfileRequestDTO.getUsername());
+            }
+            if (updateProfileRequestDTO.getEmail() != null && !updateProfileRequestDTO.getEmail().equals(target.getEmail())) {
+                if (accountRepository.existsByEmail(updateProfileRequestDTO.getEmail())) {
+                    throw new DuplicatedEntity("Email already been used");
+                }
+                target.setEmail(updateProfileRequestDTO.getEmail());
+            }
+            if (updateProfileRequestDTO.getFirstName() != null) {
+                target.setFirstName(updateProfileRequestDTO.getFirstName());
+            }
+            if (updateProfileRequestDTO.getLastName() != null) {
+                target.setLastName(updateProfileRequestDTO.getLastName());
+            }
+            if (updateProfileRequestDTO.getPhoneNumber() != null && !updateProfileRequestDTO.getPhoneNumber().equals(target.getPhoneNumber())) {
+                if (accountRepository.existsByPhoneNumber(updateProfileRequestDTO.getPhoneNumber())) {
+                    throw new DuplicatedEntity("Phone already been used");
+                }
+                target.setPhoneNumber(updateProfileRequestDTO.getPhoneNumber());
+            }
+            accountRepository.save(target);
+        } catch (DuplicatedEntity e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Error updating account profile: " + e.getMessage());
+        }
+        return accountMapper.toAccountResponse(target);
+    }
+
+
+
     
     public AccountResponse createBreederAccount(CreateBreederAccountRequest createBreederAccountRequest) {
         Account newAccount = modelMapper.map(createBreederAccountRequest, Account.class);

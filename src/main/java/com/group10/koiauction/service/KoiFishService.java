@@ -215,10 +215,10 @@ public class KoiFishService {
         return switch (statusX) {
             case "available" -> KoiStatusEnum.AVAILABLE;
             case "pending" -> KoiStatusEnum.PENDING;
-            case "rejected" -> KoiStatusEnum.REJECTED;
+            case "isdeleted" -> KoiStatusEnum.IS_DELETED;
             case "pendingauction" -> KoiStatusEnum.PENDING_AUCTION;
             case "selling" -> KoiStatusEnum.SELLING;
-            case "ordered" -> KoiStatusEnum.ORDERED;
+            case "waitingforpayment" -> KoiStatusEnum.WAITING_FOR_PAYMENT;
             case "sold" -> KoiStatusEnum.SOLD;
             case "unavailable" -> KoiStatusEnum.UNAVAILABLE;
             default -> throw new EntityNotFoundException("Invalid status");
