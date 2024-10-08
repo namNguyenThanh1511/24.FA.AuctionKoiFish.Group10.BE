@@ -12,6 +12,7 @@ import com.group10.koiauction.exception.DuplicatedEntity;
 import com.group10.koiauction.exception.EntityNotFoundException;
 import com.group10.koiauction.model.request.RegisterMemberRequest;
 import com.group10.koiauction.model.request.UpdateProfileRequestDTO;
+import com.group10.koiauction.model.request.ResetPasswordRequestDTO;
 import com.group10.koiauction.model.response.AccountResponse;
 import com.group10.koiauction.model.response.EmailDetail;
 import com.group10.koiauction.repository.AccountRepository;
@@ -226,6 +227,45 @@ public class AuthenticationService implements UserDetailsService {
         return accountMapper.toAccountResponse(target);
     }
 
+    public AccountResponse updateAccountProfileOfCurrentUser(UpdateProfileRequestDTO updateProfileRequestDTO) {
+        Account target = accountUtils.getCurrentAccount();
+        try {
+            if (updateProfileRequestDTO.getUsername() != null && !updateProfileRequestDTO.getUsername().equals(target.getUsername()))
+            {
+                if (accountRepository.existsByUsername(updateProfileRequestDTO.getUsername())) {
+                    throw new DuplicatedEntity("username is already been used ");
+                }
+                target.setUsername(updateProfileRequestDTO.getUsername());
+            }
+            if (updateProfileRequestDTO.getEmail() != null && !updateProfileRequestDTO.getEmail().equals(target.getEmail())) {
+                if (accountRepository.existsByEmail(updateProfileRequestDTO.getEmail())) {
+                    throw new DuplicatedEntity("Email already been used");
+                }
+                target.setEmail(updateProfileRequestDTO.getEmail());
+            }
+            if (updateProfileRequestDTO.getFirstName() != null) {
+                target.setFirstName(updateProfileRequestDTO.getFirstName());
+            }
+            if (updateProfileRequestDTO.getLastName() != null) {
+                target.setLastName(updateProfileRequestDTO.getLastName());
+            }
+            if (updateProfileRequestDTO.getPhoneNumber() != null && !updateProfileRequestDTO.getPhoneNumber().equals(target.getPhoneNumber())) {
+                if (accountRepository.existsByPhoneNumber(updateProfileRequestDTO.getPhoneNumber())) {
+                    throw new DuplicatedEntity("Phone already been used");
+                }
+                target.setPhoneNumber(updateProfileRequestDTO.getPhoneNumber());
+            }
+            accountRepository.save(target);
+        } catch (DuplicatedEntity e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Error updating account profile: " + e.getMessage());
+        }
+        return accountMapper.toAccountResponse(target);
+    }
+
+
+
     
     public AccountResponse createBreederAccount(CreateBreederAccountRequest createBreederAccountRequest) {
         Account newAccount = modelMapper.map(createBreederAccountRequest, Account.class);
@@ -260,6 +300,34 @@ public class AuthenticationService implements UserDetailsService {
     }
 
 
+    public void forgotPassword(String email) {
+        Account account = accountRepository.findAccountByEmail(email);
+        if(account == null) {
+            throw new EntityNotFoundException("Account not found");
+        }
+        String token = tokenService.generateToken(account);
+        EmailDetail emailDetail = new EmailDetail();
+        emailDetail.setAccount(account);//set receiver
+        emailDetail.setSubject("Reset password");
+        emailDetail.setLink("https://www.google.com/?token="+token);
+        emailService.sentEmail(emailDetail);
+
+    }
+
+    public void resetPassword(ResetPasswordRequestDTO resetPasswordRequestDTO) {
+        Account account = accountUtils.getCurrentAccount();
+        account.setPassword(passwordEncoder.encode(resetPasswordRequestDTO.getPassword()));
+        try{
+            accountRepository.save(account);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return accountRepository.findByUsername(username); // find by username config in Account class
+    }
 
     public AccountResponse getAccountResponseById(Long id) {
         Account target = getAccountById(id);
@@ -285,12 +353,6 @@ public class AuthenticationService implements UserDetailsService {
             case "koibreeder" -> AccountRoleEnum.KOI_BREEDER;
             default -> throw new EntityNotFoundException("Invalid role");
         };
-    }
-
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return accountRepository.findByUsername(username); // find by username config in Account class
-
     }
 
 

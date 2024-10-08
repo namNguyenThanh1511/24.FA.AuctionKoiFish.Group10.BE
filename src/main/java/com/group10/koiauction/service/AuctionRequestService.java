@@ -162,6 +162,8 @@ public class AuctionRequestService {
             // -> status cá koi cũng thay đổi theo -> đặt biến flag isCreate để mỗi khi tạo cá koi thì điều kiện này vẫn kich hoạt
             // còn khi update auction request -> có thể thay đổi status cá koi liên tục
             throw new EntityNotFoundException("KoiFish " + " with id : " + koi_id + " is not available");
+        } else if (!koiFish.getAccount().equals(accountUtils.getCurrentAccount())) {
+            throw new EntityNotFoundException("KoiFish " + " with id : " + koi_id + " is not your fish");
         }
         return koiFish;
     }
@@ -202,7 +204,7 @@ public class AuctionRequestService {
                 break;
             }
             case REJECTED_BY_STAFF:{// Staff đã xác minh cá ( estimate value , ngoại hình , sức khỏe ... ) ko hợp lệ , AuctionRequest bị reject
-                target.setKoiStatus(KoiStatusEnum.UNAVAILABLE);
+                target.setKoiStatus(KoiStatusEnum.IS_DELETED);
                 target.setUpdatedDate(new Date());
                 break;
             }case APPROVED_BY_MANAGER:{//Manager duyệt lần cuối thành công
@@ -210,7 +212,7 @@ public class AuctionRequestService {
                 target.setUpdatedDate(new Date());
                 break;
             }case REJECTED_BY_MANAGER:{//Manager thấy cá này ko có chiến lược mang lại lợi nhuận cho sàn , từ chối cá
-                target.setKoiStatus(KoiStatusEnum.AVAILABLE);
+                target.setKoiStatus(KoiStatusEnum.IS_DELETED);
                 target.setUpdatedDate(new Date());
                 break;
             }case CANCELLED:{//Khi Koi Breeder rút lại AuctionRequest vì lí do ...

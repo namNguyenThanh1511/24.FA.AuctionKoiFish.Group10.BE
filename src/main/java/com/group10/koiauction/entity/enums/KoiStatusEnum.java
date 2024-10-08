@@ -1,7 +1,7 @@
 package com.group10.koiauction.entity.enums;
 
 public enum KoiStatusEnum {
-    AVAILABLE,PENDING , REJECTED,PENDING_AUCTION , SELLING, ORDERED , SOLD,UNAVAILABLE,
+    AVAILABLE,PENDING,PENDING_AUCTION , SELLING, WAITING_FOR_PAYMENT , SOLD,UNAVAILABLE,IS_DELETED
     // Chủ trang trại thêm cá vào hệ thống : koi_status = AVAILABLE
 
     //chưa đc đưa vào phiên đấu giá :
