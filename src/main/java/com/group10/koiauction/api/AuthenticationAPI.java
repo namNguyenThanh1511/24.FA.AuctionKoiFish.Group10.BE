@@ -1,11 +1,7 @@
 package com.group10.koiauction.api;
 
 import com.group10.koiauction.entity.Account;
-import com.group10.koiauction.model.request.CreateBreederAccountRequest;
-import com.group10.koiauction.model.request.LoginAccountRequest;
-import com.group10.koiauction.model.request.RegisterAccountRequest;
-import com.group10.koiauction.model.request.RegisterMemberRequest;
-import com.group10.koiauction.model.request.UpdateProfileRequestDTO;
+import com.group10.koiauction.model.request.*;
 import com.group10.koiauction.model.response.AccountResponse;
 import com.group10.koiauction.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -96,5 +92,17 @@ public class AuthenticationAPI {
         return ResponseEntity.ok(accountResponse);
     }
 
+
+    @PostMapping("forgot-password")
+    public  ResponseEntity forgotPassword(@Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) {
+        authenticationService.forgotPassword(forgotPasswordRequest.getEmail());
+        return ResponseEntity.ok("forgot password successfully");
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity resetPassword(@Valid @RequestBody ResetPasswordRequestDTO resetPasswordRequestDTO) {
+        authenticationService.resetPassword(resetPasswordRequestDTO);
+        return ResponseEntity.ok("Password reset successfully");
+    }
 
 }

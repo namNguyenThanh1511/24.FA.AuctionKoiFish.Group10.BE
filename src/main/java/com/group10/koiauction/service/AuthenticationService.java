@@ -12,6 +12,7 @@ import com.group10.koiauction.exception.DuplicatedEntity;
 import com.group10.koiauction.exception.EntityNotFoundException;
 import com.group10.koiauction.model.request.RegisterMemberRequest;
 import com.group10.koiauction.model.request.UpdateProfileRequestDTO;
+import com.group10.koiauction.model.request.ResetPasswordRequestDTO;
 import com.group10.koiauction.model.response.AccountResponse;
 import com.group10.koiauction.model.response.EmailDetail;
 import com.group10.koiauction.repository.AccountRepository;
@@ -299,6 +300,38 @@ public class AuthenticationService implements UserDetailsService {
     }
 
 
+    public void forgotPassword(String email) {
+        Account account = accountRepository.findAccountByEmail(email);
+        if(account == null) {
+            throw new EntityNotFoundException("Account not found");
+        }
+        String token = tokenService.generateToken(account);
+        EmailDetail emailDetail = new EmailDetail();
+        emailDetail.setAccount(account);//set receiver
+        emailDetail.setSubject("Reset password");
+        emailDetail.setLink("https://www.google.com/?token="+token);
+        emailService.sentEmail(emailDetail);
+
+    }
+
+    public void resetPassword(ResetPasswordRequestDTO resetPasswordRequestDTO) {
+        Account account = accountUtils.getCurrentAccount();
+        account.setPassword(passwordEncoder.encode(resetPasswordRequestDTO.getPassword()));
+        try{
+            accountRepository.save(account);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String phoneNumber) throws UsernameNotFoundException {
+        Account account = accountRepository.findAccountByPhoneNumber(phoneNumber);
+        if (account == null) {
+            throw new EntityNotFoundException("User not found");
+        }
+        return account;
+    }
 
     public AccountResponse getAccountResponseById(Long id) {
         Account target = getAccountById(id);
@@ -324,12 +357,6 @@ public class AuthenticationService implements UserDetailsService {
             case "koibreeder" -> AccountRoleEnum.KOI_BREEDER;
             default -> throw new EntityNotFoundException("Invalid role");
         };
-    }
-
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return accountRepository.findByUsername(username); // find by username config in Account class
-
     }
 
 
