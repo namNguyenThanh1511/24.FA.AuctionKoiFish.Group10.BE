@@ -204,7 +204,7 @@ public class AuctionRequestService {
                 break;
             }
             case REJECTED_BY_STAFF:{// Staff đã xác minh cá ( estimate value , ngoại hình , sức khỏe ... ) ko hợp lệ , AuctionRequest bị reject
-                target.setKoiStatus(KoiStatusEnum.UNAVAILABLE);
+                target.setKoiStatus(KoiStatusEnum.IS_DELETED);
                 target.setUpdatedDate(new Date());
                 break;
             }case APPROVED_BY_MANAGER:{//Manager duyệt lần cuối thành công
@@ -212,7 +212,7 @@ public class AuctionRequestService {
                 target.setUpdatedDate(new Date());
                 break;
             }case REJECTED_BY_MANAGER:{//Manager thấy cá này ko có chiến lược mang lại lợi nhuận cho sàn , từ chối cá
-                target.setKoiStatus(KoiStatusEnum.AVAILABLE);
+                target.setKoiStatus(KoiStatusEnum.IS_DELETED);
                 target.setUpdatedDate(new Date());
                 break;
             }case CANCELLED:{//Khi Koi Breeder rút lại AuctionRequest vì lí do ...

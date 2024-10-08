@@ -325,12 +325,8 @@ public class AuthenticationService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String phoneNumber) throws UsernameNotFoundException {
-        Account account = accountRepository.findAccountByPhoneNumber(phoneNumber);
-        if (account == null) {
-            throw new EntityNotFoundException("User not found");
-        }
-        return account;
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return accountRepository.findByUsername(username); // find by username config in Account class
     }
 
     public AccountResponse getAccountResponseById(Long id) {

@@ -40,8 +40,7 @@ public class Filter extends OncePerRequestFilter {
             "/api/login",
             "/api/register",
             "/api/register-member",
-            "/api/forgot-password",
-            "/api/reset-password"
+            "/api/forgot-password"
 //            "/api/account/{id}",
 //            "/api/account/update-profile/{id}",
 //
