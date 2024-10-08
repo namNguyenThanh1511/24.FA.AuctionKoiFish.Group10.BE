@@ -6,16 +6,21 @@ import com.group10.koiauction.entity.Variety;
 import com.group10.koiauction.entity.enums.KoiStatusEnum;
 import com.group10.koiauction.entity.enums.VarietyStatusEnum;
 import com.group10.koiauction.mapper.KoiMapper;
+import com.group10.koiauction.model.request.HealthStatusRequest;
 import com.group10.koiauction.model.request.KoiFishRequest;
 
 import com.group10.koiauction.exception.EntityNotFoundException;
+import com.group10.koiauction.model.response.HealthStatusResponse;
 import com.group10.koiauction.model.response.KoiFishResponse;
+import com.group10.koiauction.model.response.KoiFishResponsePagination;
 import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.repository.KoiFishRepository;
 import com.group10.koiauction.repository.VarietyRepository;
 
 import com.group10.koiauction.utilities.AccountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -52,11 +57,46 @@ public class KoiFishService {
     }
 
     public List<KoiFishResponse> getAllKoiFish(String status) {
-        List<KoiFish> koiFishList = koiFishRepository.findByKoiStatusEnum(getKoiStatusEnum(status));
+        List<KoiFish> koiFishList = new ArrayList<>();
+        if (status.equals("")) {
+            koiFishList = koiFishRepository.findAll();
+        } else {
+            koiFishList = koiFishRepository.findByKoiStatusEnum(getKoiStatusEnum(status));
+        }
         List<KoiFishResponse> koiFishResponseList = new ArrayList<>();
         for (KoiFish koiFish : koiFishList) {
             KoiFishResponse koiFishResponse = getKoiMapperResponse(koiFish);
             koiFishResponseList.add(koiFishResponse);
+        }
+        return koiFishResponseList;
+    }
+
+    public KoiFishResponsePagination getAllKoiFishPagination(int page , int size) {
+
+        Page<KoiFish> koiFishPage = koiFishRepository.findAll(PageRequest.of(page , size));
+        List<KoiFishResponse> koiFishResponseList = new ArrayList<>();
+        for (KoiFish koiFish : koiFishPage.getContent()) {
+            KoiFishResponse koiFishResponse = getKoiMapperResponse(koiFish);
+            koiFishResponseList.add(koiFishResponse);
+        }
+        KoiFishResponsePagination koiFishResponsePagination = new KoiFishResponsePagination();
+        koiFishResponsePagination.setKoiFishResponseList(koiFishResponseList);
+        koiFishResponsePagination.setPageNumber(koiFishPage.getNumber());
+        koiFishResponsePagination.setTotalPages(koiFishPage.getTotalPages());
+        koiFishResponsePagination.setTotalElements(koiFishPage.getNumberOfElements());
+        return koiFishResponsePagination;
+    }
+
+    public List<KoiFishResponse> getAllKoiFishByCurrentBreeder(String status){
+        List<KoiFish> koiFishList;
+        if(status.equals("")){
+            koiFishList = koiFishRepository.findKoiFishByBreeder(accountUtils.getCurrentAccount().getUser_id());
+        }else{
+            koiFishList = koiFishRepository.findKoiFishByBreederAndStatus(accountUtils.getCurrentAccount().getUser_id(), getKoiStatusEnum(status));
+        }
+        List<KoiFishResponse> koiFishResponseList = new ArrayList<>();
+        for (KoiFish koiFish : koiFishList) {
+            koiFishResponseList.add(getKoiMapperResponse(koiFish));
         }
         return koiFishResponseList;
     }
@@ -84,6 +124,23 @@ public class KoiFishService {
         }
     }
 
+    public HealthStatusResponse updateHealthStatus(Long koi_id, HealthStatusRequest healthStatusRequest) {
+        KoiFish oldKoi = getKoiFishByID(koi_id);
+        oldKoi.setKoiStatus(getKoiStatusEnum(healthStatusRequest.getKoi_status()));
+        oldKoi.setUpdatedDate(new Date());
+        oldKoi.setHealth_note(healthStatusRequest.getHealthNote());
+        try {
+            koiFishRepository.save(oldKoi);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        HealthStatusResponse healthStatusResponse = new HealthStatusResponse();
+        healthStatusResponse.setHealthNote(oldKoi.getHealth_note());
+        healthStatusResponse.setKoiStatus(oldKoi.getKoiStatus());
+        healthStatusResponse.setKoi_id(oldKoi.getKoi_id());
+        return healthStatusResponse;
+    }
+
     public KoiFishResponse deleteKoiFish(Long koi_id) {
         KoiFish target = getKoiFishByID(koi_id);
         target.setUpdatedDate(new Date());
@@ -94,9 +151,9 @@ public class KoiFishService {
 
     public String deleteKoiFishDB(Long koi_id) {
         KoiFish target = getKoiFishByID(koi_id);
-        try{
+        try {
             koiFishRepository.delete(target);
-        }catch (Exception e){
+        } catch (Exception e) {
             return e.getMessage();
         }
 
@@ -111,6 +168,7 @@ public class KoiFishService {
         }
         return koiFish;
     }
+
     public KoiFishResponse getKoiFishResponseByID(Long koi_id) {
         KoiFish koiFish = koiFishRepository.findByKoiId(koi_id);
 
@@ -171,7 +229,7 @@ public class KoiFishService {
         Set<Variety> varieties = koiFish.getVarieties();// lay ra ds varieties tu KoiFish
         Set<Long> varietiesIdSet = new HashSet<>();
         for (Variety variety : varieties) {
-            if(variety.getStatus() == VarietyStatusEnum.ACTIVE) { //only get variety which is currently ACTIVE
+            if (variety.getStatus() == VarietyStatusEnum.ACTIVE) { //only get variety which is currently ACTIVE
                 varietiesIdSet.add(variety.getId());
             }
         }
@@ -183,6 +241,7 @@ public class KoiFishService {
         koiFishResponse.setBreeder_id(koiFish.getAccount().getUser_id());
         koiFishResponse.setVarietiesID(getVarietiesIdOfKoi(koiFish));// return varieties of KoiFish which is
         // currently ACTIVE
+        koiFishResponse.setHealthNote(koiFish.getHealth_note());
         return koiFishResponse;
     }
 

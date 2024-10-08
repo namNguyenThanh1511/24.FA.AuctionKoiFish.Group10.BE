@@ -37,18 +37,24 @@ public class AuctionRequestAPI {
         return ResponseEntity.ok(updatedAuctionRequest);
     }
 
-    @GetMapping("")
+    @GetMapping("/pending")
     public ResponseEntity<List<AuctionRequestResponse>> getAllPendingAuctionRequests() {
         List<AuctionRequestResponse> auctionRequestResponseList = auctionRequestService.getAllAuctionRequests(
                 "pending");
         return ResponseEntity.ok(auctionRequestResponseList);
     }
 
-    @GetMapping("/all")
+    @GetMapping("")
     public ResponseEntity<List<AuctionRequestResponse>> getAllAuctionRequests() {
-        List<AuctionRequestResponse> auctionRequestResponseList = auctionRequestService.getAllAuctionRequests();
+        List<AuctionRequestResponse> auctionRequestResponseList = auctionRequestService.getAllAuctionRequests("");
         return ResponseEntity.ok(auctionRequestResponseList);
     }
 
+    @GetMapping("/koiBreeder")
+    public ResponseEntity<List<AuctionRequestResponse>> getAllAuctionRequestsForCurrentKoiBreeder() {
+        List<AuctionRequestResponse> auctionRequestResponseList =
+                auctionRequestService.getAllAuctionRequestsOfCurrentKoiBreeder();
+        return ResponseEntity.ok(auctionRequestResponseList);
+    }
 
 }

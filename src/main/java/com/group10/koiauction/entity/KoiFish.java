@@ -1,6 +1,7 @@
 package com.group10.koiauction.entity;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.group10.koiauction.entity.enums.KoiSexEnum;
 import com.group10.koiauction.entity.enums.KoiStatusEnum;
 import jakarta.persistence.*;
@@ -81,10 +82,20 @@ public class KoiFish {
     @Column(name = "video_url")
     private String video_url;
 
+    @Column(name = "health_note")
+    private String health_note;
+
     @ManyToOne // 1 koi breeder co nhieu ca koi
     @JoinColumn(name = "user_id")
     Account account;
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "koiFish")
+    Set<AuctionRequest> auctionRequests;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "koiFish")
+    Set<AuctionSession> auctionSessionSet;
 
     @ManyToMany
     @JoinTable(name = "koi_varieties" // bảng trung gian của quan hệ nhiều-nhiều

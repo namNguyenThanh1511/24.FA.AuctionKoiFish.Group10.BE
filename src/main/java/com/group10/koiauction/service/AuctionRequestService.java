@@ -95,7 +95,23 @@ public class AuctionRequestService {
     }
 
     public List<AuctionRequestResponse> getAllAuctionRequests(String status) {
-        List<AuctionRequest> auctionRequests = auctionRequestRepository.findByStatus(getAuctionRequestStatusEnum(status));
+        List<AuctionRequest> auctionRequestList;
+        if(status.equals("")){
+            auctionRequestList = auctionRequestRepository.findAll();
+        }else{
+            auctionRequestList = auctionRequestRepository.findByStatus(getAuctionRequestStatusEnum(status));
+        }
+        List<AuctionRequestResponse> auctionRequestResponseList = new ArrayList<>();
+        for (AuctionRequest auctionRequest : auctionRequestList) {
+            AuctionRequestResponse auctionRequestResponse = modelMapper.map(auctionRequest, AuctionRequestResponse.class);
+            auctionRequestResponse.setKoi_id(auctionRequest.getKoiFish().getKoi_id());
+            auctionRequestResponse.setBreeder_id(auctionRequest.getAccount().getUser_id());
+            auctionRequestResponseList.add(auctionRequestResponse);
+        }
+        return auctionRequestResponseList;
+    }
+    public List<AuctionRequestResponse> getAllAuctionRequests(AuctionRequestStatusEnum status) {
+        List<AuctionRequest> auctionRequests = auctionRequestRepository.findByStatus(status);
         List<AuctionRequestResponse> auctionRequestResponseList = new ArrayList<>();
         for (AuctionRequest auctionRequest : auctionRequests) {
             AuctionRequestResponse auctionRequestResponse = modelMapper.map(auctionRequest, AuctionRequestResponse.class);
@@ -105,13 +121,20 @@ public class AuctionRequestService {
         }
         return auctionRequestResponseList;
     }
-    public List<AuctionRequestResponse> getAllAuctionRequests() {
-        List<AuctionRequest> auctionRequests = auctionRequestRepository.findAll();
+
+    public List<AuctionRequestResponse> getAllAuctionRequestsOfCurrentKoiBreeder() {
         List<AuctionRequestResponse> auctionRequestResponseList = new ArrayList<>();
+        List<AuctionRequest> auctionRequests = auctionRequestRepository.findByBreederId(accountUtils.getCurrentAccount().getUser_id());
         for (AuctionRequest auctionRequest : auctionRequests) {
-            AuctionRequestResponse auctionRequestResponse = modelMapper.map(auctionRequest, AuctionRequestResponse.class);
-            auctionRequestResponse.setKoi_id(auctionRequest.getKoiFish().getKoi_id());
+            AuctionRequestResponse auctionRequestResponse = new AuctionRequestResponse();
+            auctionRequestResponse.setAuction_request_id(auctionRequest.getAuction_request_id());
+            auctionRequestResponse.setTitle(auctionRequest.getTitle());
+            auctionRequestResponse.setCreatedDate(auctionRequest.getCreatedDate());
+            auctionRequestResponse.setDescription(auctionRequest.getDescription());
+            auctionRequestResponse.setResponseNote(auctionRequest.getResponse_note());
+            auctionRequestResponse.setStatus(auctionRequest.getStatus());
             auctionRequestResponse.setBreeder_id(auctionRequest.getAccount().getUser_id());
+            auctionRequestResponse.setKoi_id(auctionRequest.getKoiFish().getKoi_id());
             auctionRequestResponseList.add(auctionRequestResponse);
         }
         return auctionRequestResponseList;

@@ -14,4 +14,7 @@ public interface AuctionRequestRepository extends JpaRepository<AuctionRequest, 
 
     @Query("SELECT U FROM AuctionRequest U WHERE U.status = ?1")
     List<AuctionRequest> findByStatus(@Param("status") AuctionRequestStatusEnum status);
+
+    @Query("SELECT U FROM AuctionRequest U WHERE U.account.user_id = :koiBreederId")
+    List<AuctionRequest> findByBreederId(@Param("koiBreederId") Long koiBreederId);
 }
