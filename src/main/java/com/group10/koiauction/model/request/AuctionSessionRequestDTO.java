@@ -25,4 +25,6 @@ public class AuctionSessionRequestDTO {
     private double minBalanceToJoin;
 
     private Long auction_request_id;
+
+    private Long staff_id;
 }
