@@ -1,5 +1,6 @@
 package com.group10.koiauction.service;
 
+import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.AuctionRequest;
 import com.group10.koiauction.entity.AuctionSession;
 import com.group10.koiauction.entity.KoiFish;
@@ -12,6 +13,7 @@ import com.group10.koiauction.mapper.AuctionSessionMapper;
 import com.group10.koiauction.model.request.AuctionSessionRequestDTO;
 import com.group10.koiauction.model.request.UpdateStatusAuctionSessionRequestDTO;
 import com.group10.koiauction.model.response.AuctionSessionResponseDTO;
+import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.repository.AuctionRequestRepository;
 import com.group10.koiauction.repository.AuctionSessionRepository;
 import com.group10.koiauction.repository.KoiFishRepository;
@@ -41,12 +43,16 @@ public class AuctionSessionService {
     @Autowired
     AuctionRequestRepository auctionRequestRepository;
 
+    @Autowired
+    AccountRepository accountRepository;
+
     public AuctionSessionResponseDTO createAuctionSession(AuctionSessionRequestDTO auctionSessionRequestDTO) {
         AuctionSession auctionSession = auctionSessionMapper.toAuctionSession(auctionSessionRequestDTO);
         AuctionRequest auctionRequest = getAuctionRequestByID(auctionSessionRequestDTO.getAuction_request_id());
         auctionSession.setCurrentPrice(auctionSession.getStartingPrice());
         auctionSession.setKoiFish(auctionRequest.getKoiFish());//lay ca tu auction request
         auctionSession.setAuctionRequest(auctionRequest);
+        auctionSession.setStaff(getAccountById(auctionSessionRequestDTO.getStaff_id()));//phân công staff cho phiên đấu giá
         auctionSession.setManager(accountUtils.getCurrentAccount());
         auctionSession.setStatus(AuctionSessionStatus.UPCOMING);
         updateKoiStatus(auctionRequest.getKoiFish().getKoi_id(),auctionSession.getStatus());//update fish status based on AuctionSession status
@@ -59,10 +65,12 @@ public class AuctionSessionService {
             throw new RuntimeException(e.getMessage());
         }
         AuctionSessionResponseDTO auctionSessionResponseDTO = auctionSessionMapper.toAuctionSessionResponseDTO(auctionSession);
+        auctionSessionResponseDTO.setStaff_id(auctionSession.getStaff().getUser_id());
         auctionSessionResponseDTO.setManager_id(accountUtils.getCurrentAccount().getUser_id());
         auctionSessionResponseDTO.setKoi_id(auctionRequest.getKoiFish().getKoi_id());
         auctionSessionResponseDTO.setAuction_request_id(auctionRequest.getAuction_request_id());
         auctionSessionResponseDTO.setAuctionType(auctionSession.getAuctionType());
+
         return auctionSessionResponseDTO;
     }
 
@@ -71,6 +79,7 @@ public class AuctionSessionService {
         List<AuctionSessionResponseDTO> auctionSessionResponseDTOs = new ArrayList<>();
         for (AuctionSession auctionSession : auctionSessions) {
             AuctionSessionResponseDTO auctionSessionResponseDTO = auctionSessionMapper.toAuctionSessionResponseDTO(auctionSession);
+            auctionSessionResponseDTO.setStaff_id(auctionSession.getStaff().getUser_id());
             auctionSessionResponseDTO.setManager_id(auctionSession.getManager().getUser_id());
             auctionSessionResponseDTO.setKoi_id(auctionSession.getKoiFish().getKoi_id());
             auctionSessionResponseDTO.setAuction_request_id(auctionSession.getAuctionRequest().getAuction_request_id());
@@ -93,6 +102,7 @@ public class AuctionSessionService {
         AuctionSessionResponseDTO auctionSessionResponseDTO = auctionSessionMapper.toAuctionSessionResponseDTO(auctionSession);
         auctionSessionResponseDTO.setKoi_id(auctionSession.getKoiFish().getKoi_id());
         auctionSessionResponseDTO.setAuction_request_id(auctionSession.getAuctionRequest().getAuction_request_id());
+        auctionSessionResponseDTO.setStaff_id(auctionSession.getStaff().getUser_id());
         auctionSessionResponseDTO.setManager_id(auctionSession.getManager().getUser_id());
 
         if (auctionSession.getWinner() == null) {
@@ -111,11 +121,19 @@ public class AuctionSessionService {
         return koiFish;
     }
 
+    public Account getAccountById(Long id) {
+        Account account = accountRepository.findByUser_id(id);
+        if (account == null) {
+            throw new EntityNotFoundException("Staff with id " + id + " not found");
+        }
+        return account;
+    }
+
     public AuctionRequest getAuctionRequestByID(Long auction_request_id) {
         AuctionRequest auctionRequest = auctionRequestRepository.findByAuctionRequestId(auction_request_id);
         if (auctionRequest == null) {
             throw new EntityNotFoundException("AuctionRequest with id : " + auction_request_id + " not found");
-        } else if (!auctionRequest.getStatus().equals("APPROVED_BY_MANAGER")) {
+        } else if (!auctionRequest.getStatus().equals(AuctionRequestStatusEnum.APPROVED_BY_MANAGER)) {
             throw new EntityNotFoundException("AuctionRequest with id : " + auction_request_id + " is not approved by manager yet");
         }
         return auctionRequest;

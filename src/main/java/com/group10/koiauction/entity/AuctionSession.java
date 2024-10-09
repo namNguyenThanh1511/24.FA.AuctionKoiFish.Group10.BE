@@ -62,6 +62,10 @@ public class AuctionSession {
     @JoinColumn(name = "winner_id")
     private Account winner;
 
+    @ManyToOne
+    @JoinColumn(name = "staff_id")
+    private Account staff;
+
 //    @ManyToOne
 //    @JoinColumn(name = "auction_id", nullable = false)
 //    private Auction auction;

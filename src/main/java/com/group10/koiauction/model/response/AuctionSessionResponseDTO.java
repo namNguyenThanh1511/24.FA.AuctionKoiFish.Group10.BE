@@ -32,6 +32,8 @@ public class AuctionSessionResponseDTO {
 
     private Long winner_id;
 
+    private Long staff_id;
+
     private Long manager_id;
 
     private AuctionSessionType auctionType;

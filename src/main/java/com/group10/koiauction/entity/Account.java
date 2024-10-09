@@ -85,7 +85,12 @@ public class Account implements UserDetails {
 
 
     @OneToMany(mappedBy = "winner")//1 member có thể thắng nhiều phiên đấu giá
+    @JsonIgnore
     Set<AuctionSession> auctionSessionSet;
+
+    @OneToMany(mappedBy = "staff")
+    @JsonIgnore
+    Set<AuctionSession> auctionSessionsSetForStaff;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() { // đinh nghĩa quyền hạn account này làm đc
