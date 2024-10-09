@@ -19,7 +19,6 @@ import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.utilities.AccountUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -286,20 +285,20 @@ public class AuthenticationService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String phoneNumber) throws UsernameNotFoundException {
-        Account account = accountRepository.findAccountByPhoneNumber(phoneNumber);
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Account account = accountRepository.findAccountByUsername(username);
         if (account == null) {
             throw new EntityNotFoundException("User not found");
         }
         return account;
     }
 
+
     public AccountResponse getAccountResponseById(Long id) {
         Account target = getAccountById(id);
         AccountResponse accountResponse = accountMapper.toAccountResponse(target);
         return accountResponse;
     }
-
     public Account getAccountById(Long id) {
         Account account = accountRepository.findByUser_id(id);
         if (account == null) {

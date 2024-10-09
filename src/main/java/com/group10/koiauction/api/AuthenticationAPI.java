@@ -96,5 +96,4 @@ public class AuthenticationAPI {
         authenticationService.resetPassword(resetPasswordRequestDTO);
         return ResponseEntity.ok("Password reset successfully");
     }
-
 }
