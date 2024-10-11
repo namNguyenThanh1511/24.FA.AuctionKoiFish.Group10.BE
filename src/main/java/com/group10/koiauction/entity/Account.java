@@ -92,6 +92,10 @@ public class Account implements UserDetails {
     @JsonIgnore
     Set<AuctionSession> auctionSessionsSetForStaff;
 
+    @OneToMany(mappedBy = "member")
+    @JsonIgnore
+    Set<Bid> bidSet;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() { // đinh nghĩa quyền hạn account này làm đc
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
