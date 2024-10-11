@@ -55,6 +55,8 @@ public class AuctionSessionService {
         auctionSession.setStaff(getAccountById(auctionSessionRequestDTO.getStaff_id()));//phân công staff cho phiên đấu giá
         auctionSession.setManager(accountUtils.getCurrentAccount());
         auctionSession.setStatus(AuctionSessionStatus.UPCOMING);
+        auctionSession.setCreateAt(new Date());
+        auctionSession.setUpdateAt(auctionSession.getCreateAt());
         updateKoiStatus(auctionRequest.getKoiFish().getKoi_id(),auctionSession.getStatus());//update fish status based on AuctionSession status
         try {
             auctionSessionRepository.save(auctionSession);
@@ -93,6 +95,7 @@ public class AuctionSessionService {
         auctionSession.setStatus(getAuctionSessionStatus(updateStatusAuctionSessionRequestDTO.getStatus()));
         auctionSession.setNote(updateStatusAuctionSessionRequestDTO.getNote());
         updateKoiStatus(auctionSession.getKoiFish().getKoi_id(),auctionSession.getStatus());
+        auctionSession.setUpdateAt(new Date());
         try {
             auctionSessionRepository.save(auctionSession);
 
