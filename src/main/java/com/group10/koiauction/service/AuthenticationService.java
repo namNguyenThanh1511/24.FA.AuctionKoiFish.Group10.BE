@@ -319,11 +319,7 @@ public class AuthenticationService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Account account = accountRepository.findAccountByUsername(username);
-        if (account == null) {
-            throw new EntityNotFoundException("User not found");
-        }
-        return account;
+        return accountRepository.findByUsername(username); // find by username config in Account class
     }
 
 
