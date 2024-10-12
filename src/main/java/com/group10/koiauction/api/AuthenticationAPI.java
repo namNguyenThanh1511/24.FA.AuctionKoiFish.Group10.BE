@@ -84,14 +84,20 @@ public class AuthenticationAPI {
         return ResponseEntity.ok(accountResponse);
     }
 
+    @PostMapping("/manager/create-staff-account")
+    public ResponseEntity<AccountResponse> createStaffAccount(@RequestBody CreateStaffAccountRequest createStaffAccountRequest) {
+        AccountResponse accountResponse = authenticationService.createStaffAccount(createStaffAccountRequest);
+        return ResponseEntity.ok(accountResponse);
+    }
 
-    @PostMapping("forgot-password")
+
+    @PostMapping("/forgot-password")
     public  ResponseEntity forgotPassword(@Valid @RequestBody ForgotPasswordRequest forgotPasswordRequest) {
         authenticationService.forgotPassword(forgotPasswordRequest.getEmail());
         return ResponseEntity.ok("forgot password successfully");
     }
 
-    @PostMapping("/reset-password")
+    @PutMapping("/reset-password")
     public ResponseEntity resetPassword(@Valid @RequestBody ResetPasswordRequestDTO resetPasswordRequestDTO) {
         authenticationService.resetPassword(resetPasswordRequestDTO);
         return ResponseEntity.ok("Password reset successfully");

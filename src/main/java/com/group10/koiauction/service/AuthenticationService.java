@@ -5,14 +5,9 @@ import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.enums.AccountRoleEnum;
 import com.group10.koiauction.entity.enums.AccountStatusEnum;
 import com.group10.koiauction.mapper.AccountMapper;
-import com.group10.koiauction.model.request.CreateBreederAccountRequest;
-import com.group10.koiauction.model.request.LoginAccountRequest;
-import com.group10.koiauction.model.request.RegisterAccountRequest;
+import com.group10.koiauction.model.request.*;
 import com.group10.koiauction.exception.DuplicatedEntity;
 import com.group10.koiauction.exception.EntityNotFoundException;
-import com.group10.koiauction.model.request.RegisterMemberRequest;
-import com.group10.koiauction.model.request.UpdateProfileRequestDTO;
-import com.group10.koiauction.model.request.ResetPasswordRequestDTO;
 import com.group10.koiauction.model.response.AccountResponse;
 import com.group10.koiauction.model.response.EmailDetail;
 import com.group10.koiauction.repository.AccountRepository;
@@ -259,6 +254,37 @@ public class AuthenticationService implements UserDetailsService {
         }
     }
 
+    public AccountResponse createStaffAccount(CreateStaffAccountRequest createStaffAccountRequest) {
+        Account newAccount = modelMapper.map(createStaffAccountRequest, Account.class);
+        try {
+            // Automatically set the role to STAFF for staff account creation
+            newAccount.setRoleEnum(AccountRoleEnum.STAFF);
+
+            // Set the default password to "123@abc"
+            String defaultPassword = "123@abc";
+            newAccount.setPassword(passwordEncoder.encode(defaultPassword));
+
+            accountRepository.save(newAccount);
+
+            EmailDetail emailDetail = new EmailDetail();
+            emailDetail.setAccount(newAccount);
+            emailDetail.setSubject("Welcome to my web");
+            emailDetail.setLink("https://www.google.com/");
+
+            emailService.sentEmailBreeder(emailDetail);
+
+            return modelMapper.map(newAccount, AccountResponse.class);
+        } catch (Exception e) {
+            if (e.getMessage().contains(createStaffAccountRequest.getPhoneNumber())) {
+                throw new DuplicatedEntity("Duplicated phone");
+            } else if (e.getMessage().contains(createStaffAccountRequest.getEmail())) {
+                throw new DuplicatedEntity("Duplicated email");
+            } else if (e.getMessage().contains(createStaffAccountRequest.getUsername())) {
+                throw new DuplicatedEntity("Username exists");
+            }
+            throw e;
+        }
+    }
 
     public void forgotPassword(String email) {
         Account account = accountRepository.findAccountByEmail(email);
