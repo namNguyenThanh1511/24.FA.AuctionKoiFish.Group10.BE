@@ -34,5 +34,8 @@ public class Bid {
     @JoinColumn(name = "member_id")
     private Account member;
 
+    @OneToOne(mappedBy = "bid")
+    Transaction transaction;
+
 
 }

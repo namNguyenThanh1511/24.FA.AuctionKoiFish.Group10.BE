@@ -92,4 +92,11 @@ public class AuctionSession {
     @OneToMany(mappedBy = "auctionSession")
     @JsonIgnore
     private Set<Bid> bidSet;
+
+    @OneToOne(mappedBy = "auctionSession")
+    Transaction transaction;
+
+
+
+
 }

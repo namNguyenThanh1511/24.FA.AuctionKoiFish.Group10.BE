@@ -96,6 +96,19 @@ public class Account implements UserDetails {
     @JsonIgnore
     Set<Bid> bidSet;
 
+    @OneToMany(mappedBy = "from")
+    Set<Transaction> transactionSetFrom;
+
+    @OneToMany(mappedBy = "to")
+    @JsonIgnore
+    Set<Transaction> transactionSetTo;
+
+    @OneToMany(mappedBy = "member")
+    Set<PaymentRequest> paymentRequestSet;
+
+
+
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() { // đinh nghĩa quyền hạn account này làm đc
         List<SimpleGrantedAuthority> authorities = new ArrayList<>();
