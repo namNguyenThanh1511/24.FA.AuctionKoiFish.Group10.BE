@@ -1,10 +1,17 @@
 package com.group10.koiauction.repository;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.group10.koiauction.entity.Account;
 
+import com.group10.koiauction.entity.enums.AccountRoleEnum;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import javax.management.relation.Role;
+import java.util.List;
 
 public interface AccountRepository extends JpaRepository<Account, Long> {
     @Query("SELECT U FROM Account U WHERE U.user_id = ?1")
@@ -26,4 +33,6 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Account findAccountByPhoneNumber(String phoneNumber);
 
     Account findAccountByUsername(String username);
+
+    List<Account> findAccountsByRoleEnum(AccountRoleEnum role);
 }

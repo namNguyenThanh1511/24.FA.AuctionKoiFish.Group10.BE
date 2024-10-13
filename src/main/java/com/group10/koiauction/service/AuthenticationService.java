@@ -20,6 +20,8 @@ import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.utilities.AccountUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -30,6 +32,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.management.relation.Role;
 import java.util.Date;
 import java.util.List;
 
@@ -336,6 +339,17 @@ public class AuthenticationService implements UserDetailsService {
         return account;
     }
 
+    public List<Account> getAllBreederAccounts() {
+    return accountRepository.findAccountsByRoleEnum(AccountRoleEnum.KOI_BREEDER);
+    }
+
+    public List<Account> getAllStaffAccounts() {
+        return accountRepository.findAccountsByRoleEnum(AccountRoleEnum.STAFF);
+    }
+
+    public List<Account> getAllMemberAccounts() {
+        return accountRepository.findAccountsByRoleEnum(AccountRoleEnum.MEMBER);
+    }
 
     public AccountRoleEnum getRoleEnumX(String role) {
         String roleX = role.toLowerCase().replaceAll("\\s", "");
