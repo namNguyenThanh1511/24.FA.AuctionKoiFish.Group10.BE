@@ -3,13 +3,16 @@ package com.group10.koiauction.service;
 import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.AuctionRequest;
 import com.group10.koiauction.entity.KoiFish;
+import com.group10.koiauction.entity.enums.AccountRoleEnum;
 import com.group10.koiauction.entity.enums.AccountStatusEnum;
 import com.group10.koiauction.entity.enums.AuctionRequestStatusEnum;
 import com.group10.koiauction.entity.enums.KoiStatusEnum;
 import com.group10.koiauction.exception.EntityNotFoundException;
+import com.group10.koiauction.model.request.ResponseAuctionRequestDTO;
 import com.group10.koiauction.model.request.AuctionRequestDTO;
 import com.group10.koiauction.model.request.AuctionRequestUpdateDTO;
 import com.group10.koiauction.model.response.AuctionRequestResponse;
+import com.group10.koiauction.model.response.BreederResponseDTO;
 import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.repository.AuctionRequestRepository;
 import com.group10.koiauction.repository.KoiFishRepository;
@@ -63,7 +66,11 @@ public class AuctionRequestService {
         auctionRequestResponse.setStatus(auctionRequest.getStatus());
         auctionRequestResponse.setTitle(auctionRequest.getTitle());
         auctionRequestResponse.setDescription(auctionRequest.getDescription());
-        auctionRequestResponse.setBreeder_id(accountUtils.getCurrentAccount().getUser_id());
+        BreederResponseDTO breederResponseDTO = new BreederResponseDTO();
+        breederResponseDTO.setId(accountUtils.getCurrentAccount().getUser_id());
+        breederResponseDTO.setUsername(accountUtils.getCurrentAccount().getUsername());
+        auctionRequestResponse.setBreeder(breederResponseDTO);
+//        auctionRequestResponse.setBreeder_id(accountUtils.getCurrentAccount().getUser_id());
         auctionRequestResponse.setKoi_id(auctionRequestDTO.getKoiFish_id());
 
         return auctionRequestResponse;
@@ -87,11 +94,76 @@ public class AuctionRequestService {
         auctionRequestResponse.setStatus(auctionRequest.getStatus());
         auctionRequestResponse.setTitle(auctionRequest.getTitle());
         auctionRequestResponse.setDescription(auctionRequest.getDescription());
-        auctionRequestResponse.setBreeder_id(auctionRequest.getAccount().getUser_id());
+        BreederResponseDTO breederResponseDTO = new BreederResponseDTO();
+        breederResponseDTO.setId(auctionRequest.getAccount().getUser_id());
+        breederResponseDTO.setUsername(auctionRequest.getAccount().getUsername());
+        auctionRequestResponse.setBreeder(breederResponseDTO);
+//        auctionRequestResponse.setBreeder_id(auctionRequest.getAccount().getUser_id());
         auctionRequestResponse.setKoi_id(auctionRequest.getKoiFish().getKoi_id());
         auctionRequestResponse.setResponseNote(auctionRequest.getResponse_note());
         return auctionRequestResponse;
 
+    }
+
+    public AuctionRequestResponse approveAuctionRequest(Long id, ResponseAuctionRequestDTO responseAuctionRequestDTO) {
+        AuctionRequest auctionRequest = getAuctionRequestById(id);
+        Account account = accountUtils.getCurrentAccount();
+        auctionRequest.setUpdatedDate(new Date());
+        auctionRequest.setStatus(account.getRoleEnum() == AccountRoleEnum.STAFF ?
+                AuctionRequestStatusEnum.ACCEPTED_BY_STAFF : AuctionRequestStatusEnum.APPROVED_BY_MANAGER );//
+        // update status
+        updateKoiStatus(auctionRequest.getKoiFish().getKoi_id(),auctionRequest.getStatus());
+        auctionRequest.setAccount(auctionRequest.getAccount());
+        auctionRequest.setResponse_note(responseAuctionRequestDTO.getResponseNote());
+        try {
+            auctionRequestRepository.save(auctionRequest);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+        AuctionRequestResponse auctionRequestResponse = new AuctionRequestResponse();
+        auctionRequestResponse.setAuction_request_id(auctionRequest.getAuction_request_id());
+        auctionRequestResponse.setCreatedDate(auctionRequest.getCreatedDate());
+        auctionRequestResponse.setStatus(auctionRequest.getStatus());
+        auctionRequestResponse.setTitle(auctionRequest.getTitle());
+        auctionRequestResponse.setDescription(auctionRequest.getDescription());
+        BreederResponseDTO breederResponseDTO = new BreederResponseDTO();
+        breederResponseDTO.setId(auctionRequest.getAccount().getUser_id());
+        breederResponseDTO.setUsername(auctionRequest.getAccount().getUsername());
+        auctionRequestResponse.setBreeder(breederResponseDTO);
+//        auctionRequestResponse.setBreeder_id(auctionRequest.getAccount().getUser_id());
+        auctionRequestResponse.setKoi_id(auctionRequest.getKoiFish().getKoi_id());
+        auctionRequestResponse.setResponseNote(auctionRequest.getResponse_note());
+        return auctionRequestResponse;
+    }
+    public AuctionRequestResponse rejectAuctionRequest(Long id, ResponseAuctionRequestDTO responseAuctionRequestDTO) {
+        AuctionRequest auctionRequest = getAuctionRequestById(id);
+        Account account = accountUtils.getCurrentAccount();
+        auctionRequest.setUpdatedDate(new Date());
+        auctionRequest.setStatus(account.getRoleEnum() == AccountRoleEnum.STAFF ?
+                AuctionRequestStatusEnum.REJECTED_BY_STAFF : AuctionRequestStatusEnum.REJECTED_BY_MANAGER );//
+        // update status
+        updateKoiStatus(auctionRequest.getKoiFish().getKoi_id(),auctionRequest.getStatus());
+        auctionRequest.setAccount(auctionRequest.getAccount());
+        auctionRequest.setResponse_note(responseAuctionRequestDTO.getResponseNote());
+        try {
+            auctionRequestRepository.save(auctionRequest);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+        AuctionRequestResponse auctionRequestResponse = new AuctionRequestResponse();
+        auctionRequestResponse.setAuction_request_id(auctionRequest.getAuction_request_id());
+        auctionRequestResponse.setCreatedDate(auctionRequest.getCreatedDate());
+        auctionRequestResponse.setStatus(auctionRequest.getStatus());
+        auctionRequestResponse.setTitle(auctionRequest.getTitle());
+        auctionRequestResponse.setDescription(auctionRequest.getDescription());
+        BreederResponseDTO breederResponseDTO = new BreederResponseDTO();
+        breederResponseDTO.setId(auctionRequest.getAccount().getUser_id());
+        breederResponseDTO.setUsername(auctionRequest.getAccount().getUsername());
+        auctionRequestResponse.setBreeder(breederResponseDTO);
+//        auctionRequestResponse.setBreeder_id(auctionRequest.getAccount().getUser_id());
+        auctionRequestResponse.setKoi_id(auctionRequest.getKoiFish().getKoi_id());
+        auctionRequestResponse.setResponseNote(auctionRequest.getResponse_note());
+        return auctionRequestResponse;
     }
 
     public List<AuctionRequestResponse> getAllAuctionRequests(String status) {
@@ -105,7 +177,12 @@ public class AuctionRequestService {
         for (AuctionRequest auctionRequest : auctionRequestList) {
             AuctionRequestResponse auctionRequestResponse = modelMapper.map(auctionRequest, AuctionRequestResponse.class);
             auctionRequestResponse.setKoi_id(auctionRequest.getKoiFish().getKoi_id());
-            auctionRequestResponse.setBreeder_id(auctionRequest.getAccount().getUser_id());
+            BreederResponseDTO breederResponseDTO = new BreederResponseDTO();
+            breederResponseDTO.setId(auctionRequest.getAccount().getUser_id());
+            breederResponseDTO.setUsername(auctionRequest.getAccount().getUsername());
+//            auctionRequestResponse.setBreeder_id(auctionRequest.getAccount().getUser_id());
+            auctionRequestResponse.setBreeder(breederResponseDTO);
+            auctionRequestResponse.setResponseNote(auctionRequest.getResponse_note());
             auctionRequestResponseList.add(auctionRequestResponse);
         }
         return auctionRequestResponseList;
@@ -116,7 +193,11 @@ public class AuctionRequestService {
         for (AuctionRequest auctionRequest : auctionRequests) {
             AuctionRequestResponse auctionRequestResponse = modelMapper.map(auctionRequest, AuctionRequestResponse.class);
             auctionRequestResponse.setKoi_id(auctionRequest.getKoiFish().getKoi_id());
-            auctionRequestResponse.setBreeder_id(auctionRequest.getAccount().getUser_id());
+            BreederResponseDTO breederResponseDTO = new BreederResponseDTO();
+            breederResponseDTO.setId(auctionRequest.getAccount().getUser_id());
+            breederResponseDTO.setUsername(auctionRequest.getAccount().getUsername());
+            auctionRequestResponse.setBreeder(breederResponseDTO);
+//            auctionRequestResponse.setBreeder_id(auctionRequest.getAccount().getUser_id());
             auctionRequestResponseList.add(auctionRequestResponse);
         }
         return auctionRequestResponseList;
@@ -133,7 +214,11 @@ public class AuctionRequestService {
             auctionRequestResponse.setDescription(auctionRequest.getDescription());
             auctionRequestResponse.setResponseNote(auctionRequest.getResponse_note());
             auctionRequestResponse.setStatus(auctionRequest.getStatus());
-            auctionRequestResponse.setBreeder_id(auctionRequest.getAccount().getUser_id());
+//            auctionRequestResponse.setBreeder_id(auctionRequest.getAccount().getUser_id());
+            BreederResponseDTO breederResponseDTO = new BreederResponseDTO();
+            breederResponseDTO.setId(auctionRequest.getAccount().getUser_id());
+            breederResponseDTO.setUsername(auctionRequest.getAccount().getUsername());
+            auctionRequestResponse.setBreeder(breederResponseDTO);
             auctionRequestResponse.setKoi_id(auctionRequest.getKoiFish().getKoi_id());
             auctionRequestResponseList.add(auctionRequestResponse);
         }
