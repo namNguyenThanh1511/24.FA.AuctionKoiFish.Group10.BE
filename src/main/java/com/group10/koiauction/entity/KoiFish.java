@@ -103,4 +103,9 @@ public class KoiFish {
             , inverseJoinColumns = @JoinColumn(name = "variety_id"))  // cột khóa chính của bảng variety
             // 2 khóa chính nối vào bảng trung gian tạo thành 2 khóa ngoại ở bảng trung gian (koi_varieties)
     Set<Variety> varieties = new HashSet<>();
+
+    @OneToMany(mappedBy = "koiFish")
+    Set<PaymentRequest> paymentRequestSet;// 1 cá koi có thể đc mua nhiều lần nếu cá đó đã bị thất bại ở lần thanh
+    // toán trước
+
 }
