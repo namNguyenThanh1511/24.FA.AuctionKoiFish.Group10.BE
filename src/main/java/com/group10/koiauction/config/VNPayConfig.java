@@ -25,6 +25,11 @@ import java.util.*;
 @Configuration
 public class VNPayConfig {
 
+    private static final String LOCAL_PORT_FE = "5174";
+    private static final String BASE_URL_LOCAL = "http://localhost:"+LOCAL_PORT_FE+"/";
+    private static final String BASE_URL_HOST = "http://14.225.220.131/";
+    private static final String BASE_URL_HOSTNAME = "http://www.koiauctionsystem.store/";
+
     @Autowired
     AccountUtils accountUtils;
 
@@ -72,7 +77,7 @@ public class VNPayConfig {
         String tmnCode = "GVOIN1TF";
         String secretKey = "JE6NKK6CJRA7V35NCRU3RS2RCFTSJGH3";
         String vnpUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-        String returnUrl = "https://blearning.vn/guide/swp/docker-local?transactionId=" + transactionReturn.getId();
+        String returnUrl = BASE_URL_LOCAL+"member-profile/wallet/success?transactionId=" + transactionReturn.getId();
         //?fundRequestId=2
         //&vnp_Amount=20000000
         //&vnp_BankCode=NCB

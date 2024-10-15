@@ -44,6 +44,12 @@ public class AuthenticationAPI {
         return ResponseEntity.ok(account);
     }
 
+    @PostMapping("login-google")
+    public ResponseEntity loginGG(@RequestBody LoginGoogleRequestDTO loginGoogleRequestDTO) {
+        AccountResponse account = authenticationService.loginGoogle(loginGoogleRequestDTO.getToken());
+        return ResponseEntity.ok(account);
+    }
+
     @DeleteMapping("/deleteDB/{id}")
     public ResponseEntity delete(@PathVariable Long id) {
         return ResponseEntity.ok(authenticationService.deleteDB(id));

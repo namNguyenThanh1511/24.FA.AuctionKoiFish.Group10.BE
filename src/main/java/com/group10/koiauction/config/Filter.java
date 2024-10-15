@@ -40,7 +40,8 @@ public class Filter extends OncePerRequestFilter {
             "/api/login",
             "/api/register",
             "/api/register-member",
-            "/api/forgot-password"
+            "/api/forgot-password",
+            "/api/login-google"
 //            "/api/account/{id}",
 //            "/api/account/update-profile/{id}",
 //
@@ -50,7 +51,7 @@ public class Filter extends OncePerRequestFilter {
         //Nếu gặp những API như list trên -> cho phép truy cập luôn
         //ngược lại , phân quyền ( authorization) , check token
         AntPathMatcher matcher = new AntPathMatcher();// check pattern vs uri người dùng truy
-        return AUTH_PERMISSION.stream().anyMatch(pattern ->  matcher.match(pattern, uri));// nếu match -> true ; else -> false
+        return AUTH_PERMISSION.stream().anyMatch(pattern -> matcher.match(pattern, uri));// nếu match -> true ; else -> false
 
     }
 
@@ -59,27 +60,27 @@ public class Filter extends OncePerRequestFilter {
         //check before access controller
         //check xem api user that user request allow who can access ( có phải là 1 public api hay ko , ai cũng dùng đc )
         boolean isPublicAPI = checkIsPublicAPI(request.getRequestURI());
-        if(isPublicAPI) {
+        if (isPublicAPI) {
             filterChain.doFilter(request, response); // cho phep truy cap luon
-        }else {
+        } else {
             //nếu ko phải public api -> kiểm tra token
             String token = getTokenFromRequest(request);
-            if(token == null){
+            if (token == null) {
                 // ko dc phep truy cap
-                handlerExceptionResolver.resolveException(request,response,null,new AuthenException("Token is missing"));
+                handlerExceptionResolver.resolveException(request, response, null, new AuthenException("Token is missing"));
                 return;
             }
             // => co' token
             // check xem token co' đúng hay ko -> lấy thông tin account từ token
             Account account;
-            try{
+            try {
                 account = tokenService.getAccountByToken(token);
-            }catch (ExpiredJwtException e){
-                handlerExceptionResolver.resolveException(request,response,null,new AuthenException("Expired token"));
+            } catch (ExpiredJwtException e) {
+                handlerExceptionResolver.resolveException(request, response, null, new AuthenException("Expired token"));
                 return;
-            }catch (MalformedJwtException e){
+            } catch (MalformedJwtException e) {
                 //token sai dinh dang / format
-                handlerExceptionResolver.resolveException(request,response,null,new AuthenException("Invalid token format"));
+                handlerExceptionResolver.resolveException(request, response, null, new AuthenException("Invalid token format"));
                 return;
             }
             //=> token chuẩn -> cho phép truy cập , lưu lại thông tin của account này
@@ -90,9 +91,10 @@ public class Filter extends OncePerRequestFilter {
             authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authenticationToken); // Lưu thông tin user vào SecurityContext để biết chính xác đâu là thằng
             //token ok , cho truy cap
-            filterChain.doFilter(request,response);
+            filterChain.doFilter(request, response);
         }
     }
+
     public String getTokenFromRequest(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {

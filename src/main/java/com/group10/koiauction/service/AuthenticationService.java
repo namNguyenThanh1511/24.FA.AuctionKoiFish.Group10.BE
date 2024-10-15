@@ -31,8 +31,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
 
-import javax.management.relation.Role;
 import java.util.Date;
 import java.util.List;
 
@@ -140,6 +142,34 @@ public class AuthenticationService implements UserDetailsService {
             throw new EntityNotFoundException("Username or password are incorrect");
         }
 
+    }
+
+    public AccountResponse loginGoogle(String token){
+        try{
+            AccountResponse accountResponse = new AccountResponse();
+            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
+            String email = decodedToken.getEmail();
+            Account account = accountRepository.findAccountByEmail(email);
+            if(account == null){
+                Account newAccount = new Account();
+                newAccount.setEmail(email);
+                newAccount.setFirstName(decodedToken.getName());
+                newAccount.setLastName(decodedToken.getName());
+                newAccount.setRoleEnum(AccountRoleEnum.MEMBER);
+                newAccount.setStatus(AccountStatusEnum.ACTIVE);
+                newAccount.setBalance(0);
+                accountRepository.save(newAccount);
+//                return accountMapper.toAccountResponse(newAccount);
+            }else{
+                accountResponse = accountMapper.toAccountResponse(account);
+                accountResponse.setToken(tokenService.generateToken(account));
+                return accountResponse;
+            }
+
+        }catch (FirebaseAuthException e){
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public String deleteDB(Long id) {
