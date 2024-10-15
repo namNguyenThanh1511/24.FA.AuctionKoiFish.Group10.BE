@@ -173,6 +173,11 @@ public class AuctionSessionService {
 
     }
 
+    public AuctionSessionResponsePrimaryDataDTO getAuctionSessionResponsePrimaryDataDTO(Long id) {
+        AuctionSession auctionSession = auctionSessionRepository.findAuctionSessionById(id);
+        return getAuctionSessionResponsePrimaryDataDTO(auctionSession);
+    }
+
     public AuctionSessionResponsePrimaryDataDTO getAuctionSessionResponsePrimaryDataDTO(AuctionSession auctionSession) {
         AuctionSessionResponsePrimaryDataDTO auctionSessionResponsePrimaryDataDTO = auctionSessionMapper.toAuctionSessionResponsePrimaryDataDto(auctionSession);
         AuctionSessionResponseAccountDTO staff = new AuctionSessionResponseAccountDTO();

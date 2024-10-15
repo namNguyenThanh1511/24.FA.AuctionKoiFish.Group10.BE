@@ -84,11 +84,9 @@ public class AuthenticationService implements UserDetailsService {
                 throw new DuplicatedEntity("Duplicated  email ");
             } else if (e.getMessage().contains(registerAccountRequest.getUsername())) {
                 throw new DuplicatedEntity("username  exist");
-
             }
             throw e;
         }
-
     }
     public AccountResponse registerMember(RegisterMemberRequest registerAccountRequest) {
         Account newAccount = modelMapper.map(registerAccountRequest, Account.class);// Account.class : tự động new Account() rồi mapping
@@ -259,6 +257,7 @@ public class AuthenticationService implements UserDetailsService {
                 }
                 target.setPhoneNumber(updateProfileRequestDTO.getPhoneNumber());
             }
+            target.setAddress(updateProfileRequestDTO.getAddress());
             accountRepository.save(target);
         } catch (DuplicatedEntity e) {
             throw e;
@@ -318,7 +317,7 @@ public class AuthenticationService implements UserDetailsService {
             EmailDetail emailDetail = new EmailDetail();
             emailDetail.setAccount(newAccount);
             emailDetail.setSubject("Welcome to my web");
-            emailDetail.setLink("https://www.google.com/");
+            emailDetail.setLink("http://www.koiauctionsystem.store/");
 
             emailService.sentEmailBreeder(emailDetail);
 
@@ -344,7 +343,7 @@ public class AuthenticationService implements UserDetailsService {
         EmailDetail emailDetail = new EmailDetail();
         emailDetail.setAccount(account);//set receiver
         emailDetail.setSubject("Reset password");
-        emailDetail.setLink("https://www.google.com/?token="+token);
+        emailDetail.setLink("http://www.koiauctionsystem.store/reset-password?token="+token);
         emailService.sentEmail(emailDetail);
 
     }

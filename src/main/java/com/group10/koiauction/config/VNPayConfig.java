@@ -66,7 +66,7 @@ public class VNPayConfig {
         Transaction transactionReturn = transactionRepository.save(transaction);
 
         double amount = fundsRequest.getAmount()*100;
-        String amountStr = String.format("%.0f", amount);
+        String amountStr = String.valueOf((int)amount);
 
 
         String tmnCode = "GVOIN1TF";
