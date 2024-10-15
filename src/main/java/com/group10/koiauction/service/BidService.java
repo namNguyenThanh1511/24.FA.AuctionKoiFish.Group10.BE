@@ -1,10 +1,7 @@
 package com.group10.koiauction.service;
 
 import com.group10.koiauction.entity.*;
-import com.group10.koiauction.entity.enums.AuctionRequestStatusEnum;
-import com.group10.koiauction.entity.enums.AuctionSessionStatus;
-import com.group10.koiauction.entity.enums.AuctionSessionType;
-import com.group10.koiauction.entity.enums.KoiStatusEnum;
+import com.group10.koiauction.entity.enums.*;
 import com.group10.koiauction.exception.BidException;
 import com.group10.koiauction.exception.EntityNotFoundException;
 import com.group10.koiauction.mapper.BidRepository;
@@ -12,6 +9,7 @@ import com.group10.koiauction.model.request.BidRequestDTO;
 import com.group10.koiauction.model.request.BuyNowRequestDTO;
 import com.group10.koiauction.repository.AuctionSessionRepository;
 import com.group10.koiauction.repository.KoiFishRepository;
+import com.group10.koiauction.repository.TransactionRepository;
 import com.group10.koiauction.utilities.AccountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -33,6 +31,9 @@ public class BidService {
     @Autowired
     private KoiFishRepository koiFishRepository;
 
+    @Autowired
+    private TransactionRepository transactionRepository;
+
     public Bid createBid(BidRequestDTO bidRequestDTO) {
         Account memberAccount = accountUtils.getCurrentAccount();
         AuctionSession auctionSession = getAuctionSessionByID(bidRequestDTO.getAuctionSessionId());
@@ -41,6 +42,9 @@ public class BidService {
                     "have  " + memberAccount.getBalance() + " but required : " + auctionSession.getMinBalanceToJoin());
         }
         double maxBidAmount = findMaxBidAmount(auctionSession.getBidSet());
+        if(maxBidAmount == 0){
+            maxBidAmount = auctionSession.getCurrentPrice();
+        }
         if (bidRequestDTO.getBidAmount() < maxBidAmount + auctionSession.getBidIncrement()) {
             throw new BidException("Your bid is lower than the required minimum increment.");
         }
@@ -49,12 +53,24 @@ public class BidService {
             throw new RuntimeException("You can buy now this fish");
         }
         memberAccount.setBalance(memberAccount.getBalance() - bidRequestDTO.getBidAmount());
+
         Bid bid = new Bid();
         bid.setBidAt(new Date());
         bid.setBidAmount(bidRequestDTO.getBidAmount());
         bid.setAuctionSession(getAuctionSessionByID(bidRequestDTO.getAuctionSessionId()));
         bid.setMember(memberAccount);
         updateAuctionSessionCurrentPrice(bid.getBidAmount(), auctionSession);
+
+        Transaction transaction = new Transaction();
+        transaction.setCreateAt(new Date());
+        transaction.setAuctionSession(auctionSession);
+        transaction.setFrom(memberAccount);
+        transaction.setType(TransactionEnum.BID);
+        transaction.setAmount(bidRequestDTO.getBidAmount());
+        transaction.setDescription("Bidding : - "+bidRequestDTO.getBidAmount());
+
+        transaction.setBid(bid);
+        bid.setTransaction(transaction);
         try {
             bidRepository.save(bid);
             return bid;
@@ -147,7 +163,7 @@ public class BidService {
         AuctionSession auctionSession = auctionSessionRepository.findAuctionSessionById(auction_session_id);
         if (auctionSession == null) {
             throw new EntityNotFoundException("Auction Session with id : " + auction_session_id + " not found");
-        } else if (!auctionSession.getStatus().equals(AuctionSessionStatus.ONGOING) && !auctionSession.getStatus().equals(AuctionSessionStatus.UPCOMING)) {
+        } else if (!auctionSession.getStatus().equals(AuctionSessionStatus.ONGOING)) {
             throw new EntityNotFoundException("Auction Session  with id : " + auction_session_id + " is not available" +
                     " to bid ");
         }

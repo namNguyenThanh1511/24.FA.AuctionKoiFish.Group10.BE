@@ -34,7 +34,7 @@ public class Bid {
     @JoinColumn(name = "member_id")
     private Account member;
 
-    @OneToOne(mappedBy = "bid")
+    @OneToOne(mappedBy = "bid",cascade = CascadeType.ALL)//each time save bid -> auto save transaction
     Transaction transaction;
 
 

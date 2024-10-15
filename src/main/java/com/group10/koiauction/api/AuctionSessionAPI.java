@@ -21,6 +21,12 @@ public class AuctionSessionAPI {
     @Autowired
     private AuctionSessionService auctionSessionService;
 
+    @GetMapping("/{id}")
+    public ResponseEntity getAuctionSession(@PathVariable Long id) {
+        AuctionSessionResponsePrimaryDataDTO response = auctionSessionService.getAuctionSessionResponsePrimaryDataDTO(id);
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("")
     public ResponseEntity<AuctionSessionResponsePrimaryDataDTO> createAuctionSession(@RequestBody AuctionSessionRequestDTO auctionSessionRequestDTO) {
         AuctionSessionResponsePrimaryDataDTO auctionSessionResponseDTO = auctionSessionService.createAuctionSession(auctionSessionRequestDTO);
