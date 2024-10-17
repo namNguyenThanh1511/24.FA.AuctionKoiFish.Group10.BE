@@ -38,4 +38,6 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Account findAccountByUsername(String username);
 
     List<Account> findAccountsByRoleEnum(AccountRoleEnum role);
+
+    Page<Account> findAccountsByRoleEnum(AccountRoleEnum role, Pageable pageable);
 }

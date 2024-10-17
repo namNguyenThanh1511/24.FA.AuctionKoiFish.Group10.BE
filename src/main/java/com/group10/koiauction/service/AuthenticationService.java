@@ -21,6 +21,7 @@ import com.group10.koiauction.utilities.AccountUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -417,6 +418,39 @@ public class AuthenticationService implements UserDetailsService {
 
     public List<Account> getAllMemberAccounts() {
         return accountRepository.findAccountsByRoleEnum(AccountRoleEnum.MEMBER);
+    }
+
+    public Page<AccountResponse> getAllBreederAccountsPaging(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Account> breederAccounts = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.KOI_BREEDER, pageable);
+        return breederAccounts.map(this::mapToAccountResponse);
+    }
+
+    public Page<AccountResponse> getAllStaffAccountsPaging(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Account> staffAccounts = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.STAFF, pageable);
+        return staffAccounts.map(this::mapToAccountResponse);
+    }
+
+    public Page<AccountResponse> getAllMemberAccountsPaging(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Account> memberAccounts = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.MEMBER, pageable);
+        return memberAccounts.map(this::mapToAccountResponse);
+    }
+
+    private AccountResponse mapToAccountResponse(Account account) {
+        AccountResponse response = new AccountResponse();
+        response.setUser_id(account.getUser_id());  // Corrected to user_id
+        response.setUsername(account.getUsername());
+        response.setFirstName(account.getFirstName());
+        response.setLastName(account.getLastName());
+        response.setEmail(account.getEmail());
+        response.setPhoneNumber(account.getPhoneNumber());
+        response.setAddress(account.getAddress());
+        response.setStatus(account.getStatus());
+        response.setRoleEnum(account.getRoleEnum());
+        response.setBalance(account.getBalance());
+        return response;
     }
 
     public AccountRoleEnum getRoleEnumX(String role) {

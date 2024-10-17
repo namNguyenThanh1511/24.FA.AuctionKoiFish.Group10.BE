@@ -135,4 +135,28 @@ public class AuthenticationAPI {
     public List<Account> getMemberAccounts(){
         return authenticationService.getAllMemberAccounts();
     }
+
+    @GetMapping("/breeders-paging")
+    public ResponseEntity<Page<AccountResponse>> getBreederAccountsPaging(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<AccountResponse> breeders = authenticationService.getAllBreederAccountsPaging(page, size);
+        return ResponseEntity.ok(breeders);
+    }
+
+    @GetMapping("/staffs-paging")
+    public ResponseEntity<Page<AccountResponse>> getStaffAccountsPaging(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<AccountResponse> staffs = authenticationService.getAllStaffAccountsPaging(page, size);
+        return ResponseEntity.ok(staffs);
+    }
+
+    @GetMapping("/members-paging")
+    public ResponseEntity<Page<AccountResponse>> getMemberAccountsPaging(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Page<AccountResponse> members = authenticationService.getAllMemberAccountsPaging(page, size);
+        return ResponseEntity.ok(members);
+    }
 }
