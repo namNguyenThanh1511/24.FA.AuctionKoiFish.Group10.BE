@@ -31,8 +31,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.FirebaseToken;
 
-import javax.management.relation.Role;
 import java.util.Date;
 import java.util.List;
 
@@ -84,11 +86,9 @@ public class AuthenticationService implements UserDetailsService {
                 throw new DuplicatedEntity("Duplicated  email ");
             } else if (e.getMessage().contains(registerAccountRequest.getUsername())) {
                 throw new DuplicatedEntity("username  exist");
-
             }
             throw e;
         }
-
     }
     public AccountResponse registerMember(RegisterMemberRequest registerAccountRequest) {
         Account newAccount = modelMapper.map(registerAccountRequest, Account.class);// Account.class : tự động new Account() rồi mapping
@@ -142,6 +142,34 @@ public class AuthenticationService implements UserDetailsService {
             throw new EntityNotFoundException("Username or password are incorrect");
         }
 
+    }
+
+    public AccountResponse loginGoogle(String token){
+        try{
+            AccountResponse accountResponse = new AccountResponse();
+            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
+            String email = decodedToken.getEmail();
+            Account account = accountRepository.findAccountByEmail(email);
+            if(account == null){
+                Account newAccount = new Account();
+                newAccount.setEmail(email);
+                newAccount.setFirstName(decodedToken.getName());
+                newAccount.setLastName(decodedToken.getName());
+                newAccount.setRoleEnum(AccountRoleEnum.MEMBER);
+                newAccount.setStatus(AccountStatusEnum.ACTIVE);
+                newAccount.setBalance(0);
+                accountRepository.save(newAccount);
+//                return accountMapper.toAccountResponse(newAccount);
+            }else{
+                accountResponse = accountMapper.toAccountResponse(account);
+                accountResponse.setToken(tokenService.generateToken(account));
+                return accountResponse;
+            }
+
+        }catch (FirebaseAuthException e){
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public String deleteDB(Long id) {
@@ -231,6 +259,46 @@ public class AuthenticationService implements UserDetailsService {
         return accountMapper.toAccountResponse(target);
     }
 
+    public AccountResponse updateAccountProfileOfCurrentUser(UpdateProfileRequestDTO updateProfileRequestDTO) {
+        Account target = accountUtils.getCurrentAccount();
+        try {
+            if (updateProfileRequestDTO.getUsername() != null && !updateProfileRequestDTO.getUsername().equals(target.getUsername()))
+            {
+                if (accountRepository.existsByUsername(updateProfileRequestDTO.getUsername())) {
+                    throw new DuplicatedEntity("username is already been used ");
+                }
+                target.setUsername(updateProfileRequestDTO.getUsername());
+            }
+            if (updateProfileRequestDTO.getEmail() != null && !updateProfileRequestDTO.getEmail().equals(target.getEmail())) {
+                if (accountRepository.existsByEmail(updateProfileRequestDTO.getEmail())) {
+                    throw new DuplicatedEntity("Email already been used");
+                }
+                target.setEmail(updateProfileRequestDTO.getEmail());
+            }
+            if (updateProfileRequestDTO.getFirstName() != null) {
+                target.setFirstName(updateProfileRequestDTO.getFirstName());
+            }
+            if (updateProfileRequestDTO.getLastName() != null) {
+                target.setLastName(updateProfileRequestDTO.getLastName());
+            }
+            if (updateProfileRequestDTO.getPhoneNumber() != null && !updateProfileRequestDTO.getPhoneNumber().equals(target.getPhoneNumber())) {
+                if (accountRepository.existsByPhoneNumber(updateProfileRequestDTO.getPhoneNumber())) {
+                    throw new DuplicatedEntity("Phone already been used");
+                }
+                target.setPhoneNumber(updateProfileRequestDTO.getPhoneNumber());
+            }
+            target.setAddress(updateProfileRequestDTO.getAddress());
+            accountRepository.save(target);
+        } catch (DuplicatedEntity e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Error updating account profile: " + e.getMessage());
+        }
+        return accountMapper.toAccountResponse(target);
+    }
+
+
+
     
     public AccountResponse createBreederAccount(CreateBreederAccountRequest createBreederAccountRequest) {
         Account newAccount = modelMapper.map(createBreederAccountRequest, Account.class);
@@ -279,7 +347,7 @@ public class AuthenticationService implements UserDetailsService {
             EmailDetail emailDetail = new EmailDetail();
             emailDetail.setAccount(newAccount);
             emailDetail.setSubject("Welcome to my web");
-            emailDetail.setLink("https://www.google.com/");
+            emailDetail.setLink("http://www.koiauctionsystem.store/");
 
             emailService.sentEmailBreeder(emailDetail);
 
@@ -305,7 +373,7 @@ public class AuthenticationService implements UserDetailsService {
         EmailDetail emailDetail = new EmailDetail();
         emailDetail.setAccount(account);//set receiver
         emailDetail.setSubject("Reset password");
-        emailDetail.setLink("https://www.google.com/?token="+token);
+        emailDetail.setLink("http://www.koiauctionsystem.store/reset-password?token="+token);
         emailService.sentEmail(emailDetail);
 
     }

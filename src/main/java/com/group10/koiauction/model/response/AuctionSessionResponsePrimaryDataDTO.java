@@ -5,9 +5,9 @@ import com.group10.koiauction.entity.enums.AuctionSessionType;
 import lombok.Data;
 
 import java.util.Date;
-@Data
-public class AuctionSessionResponseDTO {
 
+@Data
+public class AuctionSessionResponsePrimaryDataDTO {
     private Long auctionSessionId;
 
     private String title;
@@ -26,15 +26,19 @@ public class AuctionSessionResponseDTO {
 
     private double minBalanceToJoin;
 
-    private Long koi_id;
+    private AuctionSessionResponseKoiDTO koi;
 
-    private Long auction_request_id;
+    private AuctionSessionResponseAuctionRequestDTO auctionRequest;
+//    private Long auction_request_id;
 
-    private Long winner_id;
-
-    private Long staff_id;
-
-    private Long manager_id;
+    private AuctionSessionResponseAccountDTO winner;
+    private AuctionSessionResponseAccountDTO staff;
+    private AuctionSessionResponseAccountDTO manager;
+//    private Long winner_id;
+//
+//    private Long staff_id;
+//
+//    private Long manager_id;
 
     private AuctionSessionType auctionType;
 

@@ -44,6 +44,12 @@ public class AuthenticationAPI {
         return ResponseEntity.ok(account);
     }
 
+    @PostMapping("login-google")
+    public ResponseEntity loginGG(@RequestBody LoginGoogleRequestDTO loginGoogleRequestDTO) {
+        AccountResponse account = authenticationService.loginGoogle(loginGoogleRequestDTO.getToken());
+        return ResponseEntity.ok(account);
+    }
+
     @DeleteMapping("/deleteDB/{id}")
     public ResponseEntity delete(@PathVariable Long id) {
         return ResponseEntity.ok(authenticationService.deleteDB(id));
@@ -81,6 +87,14 @@ public class AuthenticationAPI {
         AccountResponse accountResponse = authenticationService.updateAccountProfile(id,updateProfileRequestDTO);
         return ResponseEntity.ok(accountResponse);
     }
+
+    @PutMapping("/account/update-profile-current-user")
+    public ResponseEntity<AccountResponse> updateAccountProfileOfCurrentUser(@Valid @RequestBody UpdateProfileRequestDTO updateProfileRequestDTO){
+        AccountResponse accountResponse = authenticationService.updateAccountProfileOfCurrentUser(updateProfileRequestDTO);
+        return ResponseEntity.ok(accountResponse);
+    }
+
+
 
     @PostMapping("/manager/create-breeder-account")
     public ResponseEntity<AccountResponse> createBreederAccount(@RequestBody CreateBreederAccountRequest createBreederAccountRequest) {

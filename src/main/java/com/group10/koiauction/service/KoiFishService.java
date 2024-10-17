@@ -90,7 +90,7 @@ public class KoiFishService {
     public List<KoiFishResponse> getAllKoiFishByCurrentBreeder(String status){
         List<KoiFish> koiFishList;
         if(status.equals("")){
-            koiFishList = koiFishRepository.findKoiFishByBreeder(accountUtils.getCurrentAccount().getUser_id());
+            koiFishList = koiFishRepository.findKoiFishByBreederExceptStatus(accountUtils.getCurrentAccount().getUser_id(),KoiStatusEnum.IS_DELETED);
         }else{
             koiFishList = koiFishRepository.findKoiFishByBreederAndStatus(accountUtils.getCurrentAccount().getUser_id(), getKoiStatusEnum(status));
         }
@@ -144,7 +144,7 @@ public class KoiFishService {
     public KoiFishResponse deleteKoiFish(Long koi_id) {
         KoiFish target = getKoiFishByID(koi_id);
         target.setUpdatedDate(new Date());
-        target.setKoiStatus(KoiStatusEnum.UNAVAILABLE);
+        target.setKoiStatus(KoiStatusEnum.IS_DELETED);
         koiFishRepository.save(target);
         return getKoiMapperResponse(target);
     }
@@ -215,10 +215,10 @@ public class KoiFishService {
         return switch (statusX) {
             case "available" -> KoiStatusEnum.AVAILABLE;
             case "pending" -> KoiStatusEnum.PENDING;
-            case "rejected" -> KoiStatusEnum.REJECTED;
+            case "isdeleted" -> KoiStatusEnum.IS_DELETED;
             case "pendingauction" -> KoiStatusEnum.PENDING_AUCTION;
             case "selling" -> KoiStatusEnum.SELLING;
-            case "ordered" -> KoiStatusEnum.ORDERED;
+            case "waitingforpayment" -> KoiStatusEnum.WAITING_FOR_PAYMENT;
             case "sold" -> KoiStatusEnum.SOLD;
             case "unavailable" -> KoiStatusEnum.UNAVAILABLE;
             default -> throw new EntityNotFoundException("Invalid status");

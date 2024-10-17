@@ -25,45 +25,33 @@ public class Account implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long user_id;
 
-    @NotBlank(message = "Username is required")
-    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
-    @Column(unique = true, nullable = false)
+
+
+    @Column(unique = true)
     private String username;
 
-    @NotBlank(message = "Password is required")
-    @Size(min = 8, message = "Password must be at least 8 characters")
+
+
     private String password;
 
-    @NotBlank(message = "First name is required")
-    @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
     private String firstName;
 
-    @NotBlank(message = "Last name is required")
-    @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
+
     private String lastName;
 
-    @Email(message = "Please provide a valid email address")
-    @NotBlank(message = "Email is required")
+
     @Column(unique = true)
     private String email;
 
-    @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "(84|0[3|5|7|8|9])+(\\d{8})\\b", message = "Phone number is invalid")
+
     @Column(unique = true)
     private String phoneNumber;
 
-
-    @NotBlank(message = "Address is required")
-    @Size(max = 255, message = "Address cannot exceed 255 characters")
     private String address;
 
-
-    @NotNull(message = "Account creation date is required")
-    @Past(message = "Creation date time must after current time")
     private Date createdDate = new Date();
 
-    @NotNull(message = "Account update date is required")
-    @Past(message = "Update date time must after current time")
+
     private Date updatedDate = new Date();
 
     @Enumerated(EnumType.STRING)
@@ -85,7 +73,29 @@ public class Account implements UserDetails {
 
 
     @OneToMany(mappedBy = "winner")//1 member có thể thắng nhiều phiên đấu giá
+    @JsonIgnore
     Set<AuctionSession> auctionSessionSet;
+
+    @OneToMany(mappedBy = "staff")
+    @JsonIgnore
+    Set<AuctionSession> auctionSessionsSetForStaff;
+
+    @OneToMany(mappedBy = "member")
+    @JsonIgnore
+    Set<Bid> bidSet;
+
+    @OneToMany(mappedBy = "from")
+    Set<Transaction> transactionSetFrom;
+
+    @OneToMany(mappedBy = "to")
+    @JsonIgnore
+    Set<Transaction> transactionSetTo;
+
+    @OneToMany(mappedBy = "member")
+    Set<PaymentRequest> paymentRequestSet;
+
+
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() { // đinh nghĩa quyền hạn account này làm đc

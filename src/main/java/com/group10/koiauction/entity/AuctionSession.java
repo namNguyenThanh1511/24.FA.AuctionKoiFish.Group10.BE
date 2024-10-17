@@ -1,5 +1,6 @@
 package com.group10.koiauction.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.group10.koiauction.entity.enums.AuctionSessionStatus;
 import com.group10.koiauction.entity.enums.AuctionSessionType;
 import jakarta.persistence.*;
@@ -11,6 +12,7 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.Set;
 
 @Entity
 @Table(name = "auction_session")
@@ -56,9 +58,21 @@ public class AuctionSession {
     @Column(name = "status", nullable = false)
     private AuctionSessionStatus status;
 
+    private String note;
+
+    Date createAt;
+
+    Date updateAt;
+
+    boolean isAbleToBuyNow;
+
     @ManyToOne
     @JoinColumn(name = "winner_id")
     private Account winner;
+
+    @ManyToOne
+    @JoinColumn(name = "staff_id")
+    private Account staff;
 
 //    @ManyToOne
 //    @JoinColumn(name = "auction_id", nullable = false)
@@ -76,4 +90,13 @@ public class AuctionSession {
     @ManyToOne
     @JoinColumn(name = "manager_id")
     private Account manager;
+
+    @OneToMany(mappedBy = "auctionSession")
+    @JsonIgnore
+    private Set<Bid> bidSet;
+
+    @OneToMany(mappedBy = "auctionSession")
+    @JsonIgnore
+    Set<Transaction> transactionSet;
+
 }

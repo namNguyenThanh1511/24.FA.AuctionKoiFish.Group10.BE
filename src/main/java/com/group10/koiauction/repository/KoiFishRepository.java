@@ -29,8 +29,14 @@ public interface KoiFishRepository extends JpaRepository<KoiFish, Long> {
     @Query("SELECT U FROM KoiFish U WHERE U.account.user_id = :userId ")
     List<KoiFish> findKoiFishByBreeder(@Param("userId")Long userId);
 
+
+    @Query("SELECT U FROM KoiFish U WHERE U.account.user_id = :userId AND U.koiStatus != :koiStatus ")
+    List<KoiFish> findKoiFishByBreederExceptStatus(@Param("userId")Long userId , @Param("koiStatus")KoiStatusEnum status);
+
     @Query("SELECT U FROM KoiFish U WHERE U.account.user_id = :userId AND U.koiStatus = :status ")
     List<KoiFish> findKoiFishByBreederAndStatus(@Param("userId")Long userId ,@Param("status") KoiStatusEnum status);
+
+
 
 
 

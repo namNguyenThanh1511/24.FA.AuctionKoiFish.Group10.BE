@@ -53,7 +53,7 @@ public class AuctionRequest
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    Account account;
+    Account account;//breeder
 
     @ManyToOne // nhieu request -> 1 con ca koi
     @JoinColumn(name = "koi_id")//đặt tên cho khóa ngoại ở bảng AuctionRequest
