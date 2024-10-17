@@ -64,6 +64,8 @@ public class AuctionSession {
 
     Date updateAt;
 
+    boolean isAbleToBuyNow;
+
     @ManyToOne
     @JoinColumn(name = "winner_id")
     private Account winner;
@@ -93,10 +95,8 @@ public class AuctionSession {
     @JsonIgnore
     private Set<Bid> bidSet;
 
-    @OneToOne(mappedBy = "auctionSession")
-    Transaction transaction;
-
-
-
+    @OneToMany(mappedBy = "auctionSession")
+    @JsonIgnore
+    Set<Transaction> transactionSet;
 
 }

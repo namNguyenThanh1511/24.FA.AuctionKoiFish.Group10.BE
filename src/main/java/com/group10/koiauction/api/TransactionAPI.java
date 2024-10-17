@@ -1,6 +1,7 @@
 package com.group10.koiauction.api;
 
 import com.group10.koiauction.entity.Transaction;
+import com.group10.koiauction.model.response.TransactionResponseDTO;
 import com.group10.koiauction.service.TransactionService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,7 @@ public class TransactionAPI {
 
     @GetMapping()
     public ResponseEntity getAllTransaction() {
-        List<Transaction> transactions = transactionService.getAllTransactions();
+        List<TransactionResponseDTO> transactions = transactionService.getAllTransactions();
         return ResponseEntity.ok(transactions);
     }
 }
