@@ -59,15 +59,17 @@ public class BidService {
         if (maxBidAmount == 0) {
             maxBidAmount = auctionSession.getCurrentPrice();
         }
+        if(bidRequestDTO.getBidAmount() > memberAccount.getBalance()){
+            throw new BidException("Your account does not have enough money to bid this amount ");
+        }
         if (bidRequestDTO.getBidAmount() < maxBidAmount + auctionSession.getBidIncrement()) {
             throw new BidException("Your bid is lower than the required minimum increment.");
         }
-        if (auctionSession.isAbleToBuyNow()) {
-            if (bidRequestDTO.getBidAmount() >= auctionSession.getBuyNowPrice()) {//khi đấu giá vượt quá Buy Now ->
+        if (bidRequestDTO.getBidAmount() >= auctionSession.getBuyNowPrice()) {//khi đấu giá vượt quá Buy Now ->
                 // chuyển sang buy now , ko tính là bid nữa
                 throw new RuntimeException("You can buy now this fish");
-            }
         }
+
         Bid bid = new Bid();
         bid.setBidAt(new Date());
         bid.setBidAmount(bidRequestDTO.getBidAmount());
@@ -188,9 +190,6 @@ public class BidService {
         double currentPrice = auctionSession.getCurrentPrice();
         auctionSession.setCurrentPrice(bidAmount);
         auctionSession.setUpdateAt(new Date());
-        if (currentPrice >= auctionSession.getBuyNowPrice()) {
-            auctionSession.setAbleToBuyNow(false);
-        }
         try {
             auctionSessionRepository.save(auctionSession);
         } catch (RuntimeException e) {
