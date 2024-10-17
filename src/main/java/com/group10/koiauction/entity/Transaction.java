@@ -52,8 +52,11 @@ public class Transaction {
     @JoinColumn(name = "bid_id")
     Bid bid;
 
-    @OneToOne
+    @OneToOne(mappedBy = "transaction",cascade = CascadeType.ALL)// each time save transaction -> save system profit
+    SystemProfit systemProfit;
+
+
+    @ManyToOne
     @JoinColumn(name = "auction_session_id")
     AuctionSession auctionSession;
-
 }
