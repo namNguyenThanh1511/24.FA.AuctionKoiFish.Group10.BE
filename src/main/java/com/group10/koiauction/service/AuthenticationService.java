@@ -15,12 +15,14 @@ import com.group10.koiauction.model.request.RegisterMemberRequest;
 import com.group10.koiauction.model.request.UpdateProfileRequestDTO;
 import com.group10.koiauction.model.request.ResetPasswordRequestDTO;
 import com.group10.koiauction.model.response.AccountResponse;
+import com.group10.koiauction.model.response.AccountResponsePagination;
 import com.group10.koiauction.model.response.EmailDetail;
 import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.utilities.AccountUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -35,6 +37,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -410,6 +413,84 @@ public class AuthenticationService implements UserDetailsService {
 
     public List<Account> getAllMemberAccounts() {
         return accountRepository.findAccountsByRoleEnum(AccountRoleEnum.MEMBER);
+    }
+
+    public AccountResponsePagination getAllBreederAccountsPagination(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Account> breederAccounts = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.KOI_BREEDER, pageable);
+
+        // Convert Account entities to AccountResponse
+        List<AccountResponse> accountResponseList = new ArrayList<>();
+        for (Account account : breederAccounts.getContent()) {
+            AccountResponse accountResponse = mapToAccountResponse(account);
+            accountResponseList.add(accountResponse);
+        }
+
+        // Use the constructor with arguments
+        return new AccountResponsePagination(
+                accountResponseList,
+                breederAccounts.getNumber(),
+                breederAccounts.getTotalPages(),
+                breederAccounts.getNumberOfElements()
+        );
+    }
+
+
+    public AccountResponsePagination getAllStaffAccountsPagination(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Account> staffAccounts = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.STAFF, pageable);
+
+        // Convert Account entities to AccountResponse
+        List<AccountResponse> accountResponseList = new ArrayList<>();
+        for (Account account : staffAccounts.getContent()) {
+            AccountResponse accountResponse = mapToAccountResponse(account);
+            accountResponseList.add(accountResponse);
+        }
+
+        // Create AccountResponsePagination and set pagination details
+        return new AccountResponsePagination(
+                accountResponseList,
+                staffAccounts.getNumber(),
+                staffAccounts.getTotalPages(),
+                staffAccounts.getNumberOfElements()
+        );
+    }
+
+
+    public AccountResponsePagination getAllMemberAccountsPagintion(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Account> memberAccounts = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.MEMBER, pageable);
+
+        // Convert Account entities to AccountResponse
+        List<AccountResponse> accountResponseList = new ArrayList<>();
+        for (Account account : memberAccounts.getContent()) {
+            AccountResponse accountResponse = mapToAccountResponse(account);
+            accountResponseList.add(accountResponse);
+        }
+
+        // Create AccountResponsePagination and set pagination details
+        return new AccountResponsePagination(
+                accountResponseList,
+                memberAccounts.getNumber(),
+                memberAccounts.getTotalPages(),
+                memberAccounts.getNumberOfElements()
+        );
+    }
+
+
+    private AccountResponse mapToAccountResponse(Account account) {
+        AccountResponse response = new AccountResponse();
+        response.setUser_id(account.getUser_id());  // Corrected to user_id
+        response.setUsername(account.getUsername());
+        response.setFirstName(account.getFirstName());
+        response.setLastName(account.getLastName());
+        response.setEmail(account.getEmail());
+        response.setPhoneNumber(account.getPhoneNumber());
+        response.setAddress(account.getAddress());
+        response.setStatus(account.getStatus());
+        response.setRoleEnum(account.getRoleEnum());
+        response.setBalance(account.getBalance());
+        return response;
     }
 
     public AccountRoleEnum getRoleEnumX(String role) {

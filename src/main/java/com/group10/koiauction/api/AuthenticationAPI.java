@@ -3,6 +3,7 @@ package com.group10.koiauction.api;
 import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.model.request.*;
 import com.group10.koiauction.model.response.AccountResponse;
+import com.group10.koiauction.model.response.AccountResponsePagination;
 import com.group10.koiauction.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -134,5 +135,29 @@ public class AuthenticationAPI {
     @GetMapping("/members")
     public List<Account> getMemberAccounts(){
         return authenticationService.getAllMemberAccounts();
+    }
+
+    @GetMapping("/breeders-pagination")
+    public ResponseEntity<AccountResponsePagination> getBreederAccountsPagination(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        AccountResponsePagination breeders = authenticationService.getAllBreederAccountsPagination(page, size);
+        return ResponseEntity.ok(breeders);
+    }
+
+    @GetMapping("/staffs-pagination")
+    public ResponseEntity<AccountResponsePagination> getStaffAccountsPagination(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        AccountResponsePagination staffs = authenticationService.getAllStaffAccountsPagination(page, size);
+        return ResponseEntity.ok(staffs);
+    }
+
+    @GetMapping("/members-pagination")
+    public ResponseEntity<AccountResponsePagination> getMemberAccountsPagination(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        AccountResponsePagination members = authenticationService.getAllMemberAccountsPagintion(page, size);
+        return ResponseEntity.ok(members);
     }
 }
