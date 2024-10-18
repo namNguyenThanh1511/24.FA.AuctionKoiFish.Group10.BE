@@ -15,6 +15,7 @@ import com.group10.koiauction.model.request.RegisterMemberRequest;
 import com.group10.koiauction.model.request.UpdateProfileRequestDTO;
 import com.group10.koiauction.model.request.ResetPasswordRequestDTO;
 import com.group10.koiauction.model.response.AccountResponse;
+import com.group10.koiauction.model.response.AccountResponsePagination;
 import com.group10.koiauction.model.response.EmailDetail;
 import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.utilities.AccountUtils;
@@ -36,6 +37,7 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -420,23 +422,68 @@ public class AuthenticationService implements UserDetailsService {
         return accountRepository.findAccountsByRoleEnum(AccountRoleEnum.MEMBER);
     }
 
-    public Page<AccountResponse> getAllBreederAccountsPaging(int page, int size) {
+    public AccountResponsePagination getAllBreederAccountsPagination(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Account> breederAccounts = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.KOI_BREEDER, pageable);
-        return breederAccounts.map(this::mapToAccountResponse);
+
+        // Convert Account entities to AccountResponse
+        List<AccountResponse> accountResponseList = new ArrayList<>();
+        for (Account account : breederAccounts.getContent()) {
+            AccountResponse accountResponse = mapToAccountResponse(account);
+            accountResponseList.add(accountResponse);
+        }
+
+        // Use the constructor with arguments
+        return new AccountResponsePagination(
+                accountResponseList,
+                breederAccounts.getNumber(),
+                breederAccounts.getTotalPages(),
+                breederAccounts.getNumberOfElements()
+        );
     }
 
-    public Page<AccountResponse> getAllStaffAccountsPaging(int page, int size) {
+
+    public AccountResponsePagination getAllStaffAccountsPagination(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Account> staffAccounts = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.STAFF, pageable);
-        return staffAccounts.map(this::mapToAccountResponse);
+
+        // Convert Account entities to AccountResponse
+        List<AccountResponse> accountResponseList = new ArrayList<>();
+        for (Account account : staffAccounts.getContent()) {
+            AccountResponse accountResponse = mapToAccountResponse(account);
+            accountResponseList.add(accountResponse);
+        }
+
+        // Create AccountResponsePagination and set pagination details
+        return new AccountResponsePagination(
+                accountResponseList,
+                staffAccounts.getNumber(),
+                staffAccounts.getTotalPages(),
+                staffAccounts.getNumberOfElements()
+        );
     }
 
-    public Page<AccountResponse> getAllMemberAccountsPaging(int page, int size) {
+
+    public AccountResponsePagination getAllMemberAccountsPagintion(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Account> memberAccounts = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.MEMBER, pageable);
-        return memberAccounts.map(this::mapToAccountResponse);
+
+        // Convert Account entities to AccountResponse
+        List<AccountResponse> accountResponseList = new ArrayList<>();
+        for (Account account : memberAccounts.getContent()) {
+            AccountResponse accountResponse = mapToAccountResponse(account);
+            accountResponseList.add(accountResponse);
+        }
+
+        // Create AccountResponsePagination and set pagination details
+        return new AccountResponsePagination(
+                accountResponseList,
+                memberAccounts.getNumber(),
+                memberAccounts.getTotalPages(),
+                memberAccounts.getNumberOfElements()
+        );
     }
+
 
     private AccountResponse mapToAccountResponse(Account account) {
         AccountResponse response = new AccountResponse();

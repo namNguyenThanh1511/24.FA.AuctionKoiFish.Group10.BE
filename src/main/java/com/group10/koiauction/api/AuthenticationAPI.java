@@ -3,6 +3,7 @@ package com.group10.koiauction.api;
 import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.model.request.*;
 import com.group10.koiauction.model.response.AccountResponse;
+import com.group10.koiauction.model.response.AccountResponsePagination;
 import com.group10.koiauction.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -136,27 +137,27 @@ public class AuthenticationAPI {
         return authenticationService.getAllMemberAccounts();
     }
 
-    @GetMapping("/breeders-paging")
-    public ResponseEntity<Page<AccountResponse>> getBreederAccountsPaging(
+    @GetMapping("/breeders-pagination")
+    public ResponseEntity<AccountResponsePagination> getBreederAccountsPagination(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<AccountResponse> breeders = authenticationService.getAllBreederAccountsPaging(page, size);
+        AccountResponsePagination breeders = authenticationService.getAllBreederAccountsPagination(page, size);
         return ResponseEntity.ok(breeders);
     }
 
-    @GetMapping("/staffs-paging")
-    public ResponseEntity<Page<AccountResponse>> getStaffAccountsPaging(
+    @GetMapping("/staffs-pagination")
+    public ResponseEntity<AccountResponsePagination> getStaffAccountsPagination(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<AccountResponse> staffs = authenticationService.getAllStaffAccountsPaging(page, size);
+        AccountResponsePagination staffs = authenticationService.getAllStaffAccountsPagination(page, size);
         return ResponseEntity.ok(staffs);
     }
 
-    @GetMapping("/members-paging")
-    public ResponseEntity<Page<AccountResponse>> getMemberAccountsPaging(
+    @GetMapping("/members-pagination")
+    public ResponseEntity<AccountResponsePagination> getMemberAccountsPagination(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        Page<AccountResponse> members = authenticationService.getAllMemberAccountsPaging(page, size);
+        AccountResponsePagination members = authenticationService.getAllMemberAccountsPagintion(page, size);
         return ResponseEntity.ok(members);
     }
 }
