@@ -42,10 +42,10 @@ public class AuctionSession {
     private double bidIncrement;
 
     @Column(name = "start_date", nullable = false)
-    private Date startDate;
+    private LocalDateTime startDate;
 
     @Column(name = "end_date", nullable = false)
-    private Date endDate;
+    private LocalDateTime endDate;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "auction_type", nullable = false)
@@ -63,8 +63,6 @@ public class AuctionSession {
     Date createAt;
 
     Date updateAt;
-
-    boolean isAbleToBuyNow;
 
     @ManyToOne
     @JoinColumn(name = "winner_id")

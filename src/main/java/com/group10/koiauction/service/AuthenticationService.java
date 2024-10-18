@@ -70,12 +70,10 @@ public class AuthenticationService implements UserDetailsService {
             newAccount.setRoleEnum(getRoleEnumX(registerAccountRequest.getRoleEnum()));
             newAccount.setPassword(passwordEncoder.encode(registerAccountRequest.getPassword()));
             accountRepository.save(newAccount);
-
             EmailDetail emailDetail = new EmailDetail();
             emailDetail.setAccount(newAccount);
             emailDetail.setSubject("Welcome to my web");
             emailDetail.setLink("https://www.google.com/");
-
             emailService.sentEmail(emailDetail);
 
             return modelMapper.map(newAccount, AccountResponse.class);
@@ -112,11 +110,9 @@ public class AuthenticationService implements UserDetailsService {
                 throw new DuplicatedEntity("Duplicated  email ");
             } else if (e.getMessage().contains(registerAccountRequest.getUsername())) {
                 throw new DuplicatedEntity("username  exist");
-
             }
             throw e;
         }
-
     }
 
     public AccountResponse login(LoginAccountRequest loginAccountRequest) {
@@ -297,9 +293,6 @@ public class AuthenticationService implements UserDetailsService {
         return accountMapper.toAccountResponse(target);
     }
 
-
-
-    
     public AccountResponse createBreederAccount(CreateBreederAccountRequest createBreederAccountRequest) {
         Account newAccount = modelMapper.map(createBreederAccountRequest, Account.class);
         try {

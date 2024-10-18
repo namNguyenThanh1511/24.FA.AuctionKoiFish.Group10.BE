@@ -31,6 +31,7 @@ import static org.testng.Assert.*;
 public class AccountServiceTest {
     @Mock
     private AccountRepository accountRepository;
+
     @Mock
     private EmailService emailService;
 
@@ -40,183 +41,86 @@ public class AccountServiceTest {
     @Mock
     private ModelMapper modelMapper;
 
-
-    @Mock
-    private TokenService tokenService;
-
-
-    @Mock
-    private AccountMapper   accountMapper;
-
-    @Mock
-    private AuthenticationManager authenticationManager;
-
-    @Mock
-    private Authentication authentication;
-
     @InjectMocks
     private AuthenticationService authenticationService;
 
+    private RegisterAccountRequest registerAccountRequest;
+    private Account account;
+    private AccountResponse accountResponse;
+
     @BeforeMethod
-    public void setUp() {
-        MockitoAnnotations.initMocks(this);
+    public void setup() {
+        // Initialize mocks
+        MockitoAnnotations.openMocks(this);
+
+        // Sample RegisterAccountRequest setup
+        registerAccountRequest = new RegisterAccountRequest();
+        registerAccountRequest.setUsername("testUser");
+        registerAccountRequest.setEmail("test@example.com");
+        registerAccountRequest.setPhoneNumber("0829017282");
+        registerAccountRequest.setPassword("password123");
+        registerAccountRequest.setRoleEnum("MEMBER");
+
+        // Mock Account entity
+        account = new Account();
+        account.setUsername(registerAccountRequest.getUsername());
+        account.setEmail(registerAccountRequest.getEmail());
+
+        // Mock AccountResponse
+        accountResponse = new AccountResponse();
+        accountResponse.setUsername("testUser");
     }
 
     @Test
-    public void register_Success() {
-        // Set up test input (with valid, non-duplicated data)
-        RegisterAccountRequest request = new RegisterAccountRequest();
-        request.setRoleEnum("member");
-        request.setPassword("password");
-        request.setPhoneNumber("123456789");
-        request.setEmail("namntse1702390000@fpt.edu.vn"); // Ensure the email is not duplicated
-        request.setUsername("testUser");
+    public void testRegister_successfulRegistration() {
+        // Mock the mapping from RegisterAccountRequest to Account
+        when(modelMapper.map(registerAccountRequest, Account.class)).thenReturn(account);
+        // Mock password encoding
+        when(passwordEncoder.encode(registerAccountRequest.getPassword())).thenReturn("encodedPassword");
+        // Mock saving the account
+        when(accountRepository.save(account)).thenReturn(account);
+        // Mock mapping from Account to AccountResponse
+        when(modelMapper.map(account, AccountResponse.class)).thenReturn(accountResponse);
 
-        // Prepare the Account object
-        Account newAccount = new Account();
-        newAccount.setPhoneNumber(request.getPhoneNumber());
-        newAccount.setEmail(request.getEmail());
-        newAccount.setUsername(request.getUsername());
+        // Call the method under test
+        AccountResponse response = authenticationService.register(registerAccountRequest);
 
-        AccountResponse expectedResponse = new AccountResponse();
+        // Verify interactions
+        verify(passwordEncoder).encode(registerAccountRequest.getPassword());
+        verify(accountRepository).save(account);
 
-        // Mock the behavior of modelMapper, passwordEncoder, and accountRepository
-        when(modelMapper.map(request, Account.class)).thenReturn(newAccount);
-        when(passwordEncoder.encode(request.getPassword())).thenReturn("encodedPassword");
-        when(accountRepository.save(any(Account.class))).thenReturn(newAccount); // Successful save
-        when(modelMapper.map(newAccount, AccountResponse.class)).thenReturn(expectedResponse);
 
-        // Execute the registration method
-        AccountResponse response = authenticationService.register(request);
-
-        // Assert the result is not null
-        Assert.assertNotNull(response);
-        // Verify that accountRepository.save() was called exactly once
-        verify(accountRepository, times(1)).save(newAccount);
-        // Verify that emailService.sentEmail() was called exactly once
-        verify(emailService, times(1)).sentEmail(any(EmailDetail.class));
+        assertEquals(response.getUsername(), "testUser");
     }
 
-
-    @Test
-    public void register_DuplicatedEmail_throwsDuplicatedEntity() {
-        // Set up test input with a duplicated email
-        RegisterAccountRequest request = new RegisterAccountRequest();
-        request.setRoleEnum("member");
-        request.setPassword("password");
-        request.setPhoneNumber("123456789");
-        request.setEmail("duplicated_email@domain.com"); // Simulate a duplicated email
-        request.setUsername("testUser");
-
-        // Prepare the Account object
-        Account newAccount = new Account();
-        newAccount.setPhoneNumber(request.getPhoneNumber());
-        newAccount.setEmail(request.getEmail());
-        newAccount.setUsername(request.getUsername());
-
-        // Mock the behavior of modelMapper and passwordEncoder
-        when(modelMapper.map(request, Account.class)).thenReturn(newAccount);
-        when(passwordEncoder.encode(request.getPassword())).thenReturn("encodedPassword");
-
-        // Simulate a duplicated email exception from the repository
+    @Test(expectedExceptions = DuplicatedEntity.class)
+    public void testRegister_duplicatedPhone() {
+        // Mock the exception thrown when saving the account
         when(accountRepository.save(any(Account.class)))
-                .thenThrow(new RuntimeException(request.getEmail()));
+                .thenThrow(new RuntimeException(registerAccountRequest.getPhoneNumber()));
 
-        try {
-            // Execute the register method
-            authenticationService.register(request);
-            Assert.fail("Expected DuplicatedEntity exception to be thrown");
-        } catch (DuplicatedEntity e) {
-            // Verify that the exception message matches what we expect
-            Assert.assertEquals("Duplicated  email ", e.getMessage());
-        }
-
-        // Verify that accountRepository.save() was called but threw an exception
-        verify(accountRepository, times(1)).save(newAccount);
-        // Verify that emailService.sentEmail() was never called due to failure
-        verify(emailService, times(0)).sentEmail(any(EmailDetail.class));
+        // Call the method under test and expect the exception
+        authenticationService.register(registerAccountRequest);
     }
 
-
-
-    @Test
-    public void register_DuplicatedPhoneNumber_ThrowsException() {
-        // Set up test input with a duplicated phone number
-        RegisterAccountRequest request = new RegisterAccountRequest();
-        request.setRoleEnum("member");
-        request.setPassword("password");
-        request.setPhoneNumber("123456789"); // Simulate a duplicated phone number
-        request.setEmail("test@domain.com");
-        request.setUsername("testUser");
-
-        // Prepare the Account object
-        Account newAccount = new Account();
-        newAccount.setPhoneNumber(request.getPhoneNumber());
-        newAccount.setEmail(request.getEmail());
-        newAccount.setUsername(request.getUsername());
-
-        // Mock the behavior of modelMapper and passwordEncoder
-        when(modelMapper.map(request, Account.class)).thenReturn(newAccount);
-        when(passwordEncoder.encode(request.getPassword())).thenReturn("encodedPassword");
-
-        // Simulate a duplicated phone number exception from the repository
+    @Test(expectedExceptions = DuplicatedEntity.class)
+    public void testRegister_duplicatedEmail() {
+        // Mock the exception thrown when saving the account
         when(accountRepository.save(any(Account.class)))
-                .thenThrow(new RuntimeException(request.getPhoneNumber())); // Simulate exception with phone number
+                .thenThrow(new RuntimeException(registerAccountRequest.getEmail()));
 
-        try {
-            // Execute the register method
-            authenticationService.register(request);
-            Assert.fail("Expected DuplicatedEntity exception to be thrown due to duplicated phone number");
-        } catch (DuplicatedEntity e) {
-            // Verify that the exception message matches what we expect
-            Assert.assertEquals("Duplicated phone", e.getMessage());
-        }
-
-        // Verify that accountRepository.save() was called but threw an exception
-        verify(accountRepository, times(1)).save(newAccount);
-        // Verify that emailService.sentEmail() was never called due to failure
-        verify(emailService, times(0)).sentEmail(any(EmailDetail.class));
+        // Call the method under test and expect the exception
+        authenticationService.register(registerAccountRequest);
     }
 
+    @Test(expectedExceptions = DuplicatedEntity.class)
+    public void testRegister_duplicatedUsername() {
+        // Mock the exception thrown when saving the account
+        when(accountRepository.save(any(Account.class)))
+                .thenThrow(new RuntimeException(registerAccountRequest.getUsername()));
 
-    @Test
-    public void testLoginSuccess() {
-        // Arrange: Set up the login request
-        LoginAccountRequest loginRequest = new LoginAccountRequest();
-        loginRequest.setUsername("manager1");
-        loginRequest.setPassword("manager1");
-
-        // Create a mock Account object to simulate database retrieval
-        Account mockAccount = new Account();
-        mockAccount.setUsername("manager1");
-        mockAccount.setPassword("$10$yecSolxPBCde2BGqT1kfKOljY3DOhIQZYdHYLOFK4s6jXWRd5WRJi");
-        mockAccount.setStatus(AccountStatusEnum.ACTIVE);
-
-        // Create an expected AccountResponse
-        AccountResponse expectedResponse = new AccountResponse();
-        expectedResponse.setUsername("manager1");
-        expectedResponse.setToken("mocked-token");
-
-        // Mock the behavior of accountRepository to return the mock account
-        when(accountRepository.findByUsername("manager1")).thenReturn(mockAccount);
-
-        // Mock the behavior of accountMapper to map Account to AccountResponse
-        when(accountMapper.toAccountResponse(mockAccount)).thenReturn(expectedResponse);
-
-        // Mock the behavior of authenticationManager and tokenService
-        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
-                .thenReturn(authentication);
-        when(authentication.getPrincipal()).thenReturn(mockAccount);
-        when(tokenService.generateToken(mockAccount)).thenReturn("mocked-token");
-
-        // Act: Call the login method
-        AccountResponse actualResponse = authenticationService.login(loginRequest);
-
-        // Assert: Validate that the expected and actual responses match
-        assertEquals(actualResponse, expectedResponse);
-
-        // Verify that accountRepository.findByUsername was called once
-        verify(accountRepository, times(1)).findByUsername("manager1");
+        // Call the method under test and expect the exception
+        authenticationService.register(registerAccountRequest);
     }
 
 

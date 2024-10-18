@@ -20,9 +20,11 @@ import com.group10.koiauction.repository.AuctionRequestRepository;
 import com.group10.koiauction.repository.AuctionSessionRepository;
 import com.group10.koiauction.repository.KoiFishRepository;
 import com.group10.koiauction.utilities.AccountUtils;
+import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -54,6 +56,9 @@ public class AuctionSessionService {
     @Autowired
     AuctionRequestMapper auctionRequestMapper;
 
+    @Autowired
+    Scheduler scheduler;
+
     public AuctionSessionResponsePrimaryDataDTO createAuctionSession(AuctionSessionRequestDTO auctionSessionRequestDTO) {
         AuctionSession auctionSession = auctionSessionMapper.toAuctionSession(auctionSessionRequestDTO);
         AuctionRequest auctionRequest = getAuctionRequestByID(auctionSessionRequestDTO.getAuction_request_id());
@@ -67,7 +72,9 @@ public class AuctionSessionService {
         auctionSession.setUpdateAt(auctionSession.getCreateAt());
         updateKoiStatus(auctionRequest.getKoiFish().getKoi_id(), auctionSession.getStatus());//update fish status based on AuctionSession status
         try {
-            auctionSessionRepository.save(auctionSession);
+            auctionSession=  auctionSessionRepository.save(auctionSession);
+            scheduleActivationJob(auctionSession);
+
         } catch (Exception e) {
             if (e.getMessage().contains("UK9849ywhqdd6e9e0q2gla07c7o")) {
                 throw new DuplicatedEntity("auction request with id " + auctionSessionRequestDTO.getAuction_request_id() + " already been used in another auction session");
@@ -75,6 +82,47 @@ public class AuctionSessionService {
             throw new RuntimeException(e.getMessage());
         }
         return getAuctionSessionResponsePrimaryDataDTO(auctionSession);
+    }
+    private void scheduleActivationJob(AuctionSession auctionSession) {
+        try {
+            // Tạo JobDetail cho ActivateSemesterJob
+            JobDetail activateJobDetail = JobBuilder.newJob(ActivateAuctionSessionService.class)
+                    .withIdentity("activateAuctionSessionJob_" + auctionSession.getAuctionSessionId(), "auctionSessions")
+                    .usingJobData("auctionSessionId", auctionSession.getAuctionSessionId().toString())
+                    .build();
+
+            // Tạo Trigger cho ActivateSemesterJob vào ngày `dateFrom`
+            Trigger activateTrigger = TriggerBuilder.newTrigger()
+                    .withIdentity("activateTrigger_" + auctionSession.getAuctionSessionId(), "auctionSessions")
+                    .startAt(Date.from(auctionSession.getStartDate().atZone(ZoneId.systemDefault()).toInstant())) // Thời gian
+                    // bắt
+                    // đầu kỳ học
+                    .build();
+
+            // Lên lịch job kích hoạt kỳ học
+            scheduler.scheduleJob(activateJobDetail, activateTrigger);
+
+            // Tạo JobDetail cho DeactivateSemesterJob
+            JobDetail deactivateJobDetail = JobBuilder.newJob(DeactivateAuctionSessionService.class)
+                    .withIdentity("deactivateAuctionSessionJob_" + auctionSession.getAuctionSessionId(),
+                            "auctionSession")
+                    .usingJobData("auctionSessionId", auctionSession.getAuctionSessionId().toString())
+                    .build();
+
+            // Tạo Trigger cho DeactivateSemesterJob vào ngày `dateTo`
+            Trigger deactivateTrigger = TriggerBuilder.newTrigger()
+                    .withIdentity("deactivateTrigger_" + auctionSession.getAuctionSessionId(), "auctionSessions")
+                    .startAt(Date.from(auctionSession.getEndDate().atZone(ZoneId.systemDefault()).toInstant())) // Thời gian
+                    // kết
+                    // thúc kỳ học
+                    .build();
+
+            // Lên lịch job hủy kích hoạt kỳ học
+            scheduler.scheduleJob(deactivateJobDetail, deactivateTrigger);
+
+        } catch (SchedulerException e) {
+            throw new RuntimeException("Failed to schedule jobs for semester activation and deactivation", e);
+        }
     }
 
     public List<AuctionSessionResponsePrimaryDataDTO> getAllAuctionSessions() {
@@ -93,6 +141,7 @@ public class AuctionSessionService {
         auctionSession.setNote(updateStatusAuctionSessionRequestDTO.getNote());
         updateKoiStatus(auctionSession.getKoiFish().getKoi_id(), auctionSession.getStatus());
         auctionSession.setUpdateAt(new Date());
+
         try {
             auctionSessionRepository.save(auctionSession);
 
