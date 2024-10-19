@@ -64,8 +64,6 @@ public class AuctionSession {
 
     Date updateAt;
 
-    boolean isAbleToBuyNow;
-
     @ManyToOne
     @JoinColumn(name = "winner_id")
     private Account winner;
