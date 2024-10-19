@@ -21,11 +21,16 @@ import com.group10.koiauction.repository.AuctionSessionRepository;
 import com.group10.koiauction.repository.KoiFishRepository;
 import com.group10.koiauction.utilities.AccountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class AuctionSessionService {
@@ -171,6 +176,24 @@ public class AuctionSessionService {
         }
 
 
+    }
+
+    public AuctionSessionResponsePagination getAuctionSessionsByStaff(Long staffId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AuctionSession> auctionSessions = auctionSessionRepository.findAllByStaffAccountId(staffId, pageable);
+
+        List<AuctionSessionResponsePrimaryDataDTO> responseList = auctionSessions
+                .stream()
+                .map(this::getAuctionSessionResponsePrimaryDataDTO)
+                .collect(Collectors.toList());
+
+        return new AuctionSessionResponsePagination(
+                responseList,
+                auctionSessions.getNumber(),
+                auctionSessions.getSize(),
+                auctionSessions.getTotalElements(),
+                auctionSessions.getTotalPages()
+        );
     }
 
     public AuctionSessionResponsePrimaryDataDTO getAuctionSessionResponsePrimaryDataDTO(Long id) {
