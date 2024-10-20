@@ -1,12 +1,7 @@
 package com.group10.koiauction.service;
 
-import com.group10.koiauction.entity.Account;
-import com.group10.koiauction.entity.AuctionRequest;
-import com.group10.koiauction.entity.AuctionSession;
-import com.group10.koiauction.entity.KoiFish;
-import com.group10.koiauction.entity.enums.AuctionRequestStatusEnum;
-import com.group10.koiauction.entity.enums.AuctionSessionStatus;
-import com.group10.koiauction.entity.enums.KoiStatusEnum;
+import com.group10.koiauction.entity.*;
+import com.group10.koiauction.entity.enums.*;
 import com.group10.koiauction.exception.DuplicatedEntity;
 import com.group10.koiauction.exception.EntityNotFoundException;
 import com.group10.koiauction.mapper.AuctionRequestMapper;
@@ -22,12 +17,17 @@ import com.group10.koiauction.repository.KoiFishRepository;
 import com.group10.koiauction.utilities.AccountUtils;
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class AuctionSessionService {
@@ -138,6 +138,25 @@ public class AuctionSessionService {
         return auctionSessionResponsePrimaryDataDTOS;
     }
 
+    public AuctionSessionResponsePagination getAllAuctionSessionsPagination(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AuctionSession> auctionSessions = auctionSessionRepository.findAll(pageable);
+
+        List<AuctionSessionResponsePrimaryDataDTO> responseList = auctionSessions
+                .stream()
+                .map(this::getAuctionSessionResponsePrimaryDataDTO)
+                .collect(Collectors.toList());
+
+        return new AuctionSessionResponsePagination(
+                responseList,
+                auctionSessions.getNumber(),
+                auctionSessions.getSize(),
+                auctionSessions.getTotalElements(),
+                auctionSessions.getTotalPages()
+        );
+    }
+
+
     public AuctionSessionResponsePrimaryDataDTO updateAuctionSessionStatus(Long auction_session_id, UpdateStatusAuctionSessionRequestDTO updateStatusAuctionSessionRequestDTO) {
         AuctionSession auctionSession = auctionSessionRepository.findById(auction_session_id).orElseThrow(() -> new EntityNotFoundException("Auction session with id " + auction_session_id + " not found"));
         auctionSession.setStatus(getAuctionSessionStatus(updateStatusAuctionSessionRequestDTO.getStatus()));
@@ -230,7 +249,55 @@ public class AuctionSessionService {
 
     }
 
-    public AuctionSessionResponsePrimaryDataDTO getAuctionSessionResponsePrimaryDataDTO(Long id) {
+    public AuctionSessionResponsePagination getAuctionSessionsByStaff(Long staffId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AuctionSession> auctionSessions = auctionSessionRepository.findAllByStaffAccountId(staffId, pageable);
+
+        List<AuctionSessionResponsePrimaryDataDTO> responseList = auctionSessions
+                .stream()
+                .map(this::getAuctionSessionResponsePrimaryDataDTO)
+                .collect(Collectors.toList());
+
+        return new AuctionSessionResponsePagination(
+                responseList,
+                auctionSessions.getNumber(),
+                auctionSessions.getSize(),
+                auctionSessions.getTotalElements(),
+                auctionSessions.getTotalPages()
+        );
+    }
+
+    public AuctionSessionResponsePagination searchAuctionSessions(
+            AuctionSessionType auctionType,
+            KoiSexEnum sex,
+            String breederName,
+            Set<String> varieties,  // Change to Set<String>
+            Double minSizeCm,
+            Double maxSizeCm,
+            Double minWeightKg,
+            Double maxWeightKg,
+            int page,
+            int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AuctionSession> auctionSessions = auctionSessionRepository.searchAuctionSessions(
+                auctionType, sex, breederName, varieties, minSizeCm, maxSizeCm, minWeightKg, maxWeightKg, pageable);
+
+        List<AuctionSessionResponsePrimaryDataDTO> responseList = auctionSessions.getContent()
+                .stream()
+                .map(this::getAuctionSessionResponsePrimaryDataDTO)
+                .collect(Collectors.toList());
+
+        return new AuctionSessionResponsePagination(
+                responseList,
+                auctionSessions.getNumber(),
+                auctionSessions.getSize(),
+                auctionSessions.getTotalElements(),
+                auctionSessions.getTotalPages()
+        );
+    }
+
+        public AuctionSessionResponsePrimaryDataDTO getAuctionSessionResponsePrimaryDataDTO(Long id) {
         AuctionSession auctionSession = auctionSessionRepository.findAuctionSessionById(id);
         return getAuctionSessionResponsePrimaryDataDTO(auctionSession);
     }
