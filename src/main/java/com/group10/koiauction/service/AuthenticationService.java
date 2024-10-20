@@ -37,6 +37,7 @@ import com.google.firebase.auth.FirebaseToken;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class AuthenticationService implements UserDetailsService {
@@ -65,11 +66,20 @@ public class AuthenticationService implements UserDetailsService {
 
 
     public AccountResponse register(RegisterAccountRequest registerAccountRequest) {
-        Account newAccount = modelMapper.map(registerAccountRequest, Account.class);// Account.class : tự động new Account() rồi mapping
+
+        if (accountRepository.findAccountByPhoneNumber(registerAccountRequest.getPhoneNumber()).isPresent()) {
+            throw new DuplicatedEntity("Duplicated phone");}
+//        } else if(accountRepository.findAccountByUsername(registerAccountRequest.getUsername())== null) {
+//            throw new DuplicatedEntity("Duplicated username");
+//        } else if (accountRepository.findAccountByEmail(registerAccountRequest.getEmail())== null) {
+//            throw new DuplicatedEntity("Duplicated email");
+//        }
+        Account newAccount = new Account();
+        newAccount = modelMapper.map(registerAccountRequest, Account.class);
         try {
             newAccount.setRoleEnum(getRoleEnumX(registerAccountRequest.getRoleEnum()));
             newAccount.setPassword(passwordEncoder.encode(registerAccountRequest.getPassword()));
-            accountRepository.save(newAccount);
+            newAccount = accountRepository.save(newAccount);
             EmailDetail emailDetail = new EmailDetail();
             emailDetail.setAccount(newAccount);
             emailDetail.setSubject("Welcome to my web");
@@ -153,6 +163,7 @@ public class AuthenticationService implements UserDetailsService {
                 newAccount.setLastName(decodedToken.getName());
                 newAccount.setRoleEnum(AccountRoleEnum.MEMBER);
                 newAccount.setStatus(AccountStatusEnum.ACTIVE);
+                newAccount.setUsername(email);
                 newAccount.setBalance(0);
                 accountRepository.save(newAccount);
 //                return accountMapper.toAccountResponse(newAccount);

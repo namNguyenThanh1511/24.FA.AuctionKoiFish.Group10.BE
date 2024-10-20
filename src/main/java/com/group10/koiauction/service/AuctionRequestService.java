@@ -112,7 +112,7 @@ public class AuctionRequestService {
         auctionRequest.setStatus(account.getRoleEnum() == AccountRoleEnum.STAFF ?
                 AuctionRequestStatusEnum.ACCEPTED_BY_STAFF : AuctionRequestStatusEnum.APPROVED_BY_MANAGER );//
         // update status
-        updateKoiStatus(auctionRequest.getKoiFish().getKoi_id(),auctionRequest.getStatus());
+//        updateKoiStatus(auctionRequest.getKoiFish().getKoi_id(),auctionRequest.getStatus());
         auctionRequest.setAccount(auctionRequest.getAccount());
         auctionRequest.setResponse_note(responseAuctionRequestDTO.getResponseNote());
         try {
@@ -135,6 +135,19 @@ public class AuctionRequestService {
         auctionRequestResponse.setResponseNote(auctionRequest.getResponse_note());
         return auctionRequestResponse;
     }
+
+    public void approveAuctionRequest(Long id) {
+        AuctionRequest auctionRequest = getAuctionRequestById(id);
+        auctionRequest.setUpdatedDate(new Date());
+        auctionRequest.setStatus(AuctionRequestStatusEnum.APPROVED_BY_MANAGER);//
+        auctionRequest.setAccount(auctionRequest.getAccount());
+        try {
+            auctionRequestRepository.save(auctionRequest);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
     public AuctionRequestResponse rejectAuctionRequest(Long id, ResponseAuctionRequestDTO responseAuctionRequestDTO) {
         AuctionRequest auctionRequest = getAuctionRequestById(id);
         Account account = accountUtils.getCurrentAccount();
@@ -224,6 +237,11 @@ public class AuctionRequestService {
         }
         return auctionRequestResponseList;
     }
+    public void revertApproveAuctionRequest(Long auctionSessionRequestId) {
+        AuctionRequest auctionRequest = getAuctionRequestById(auctionSessionRequestId);
+        auctionRequest.setStatus(AuctionRequestStatusEnum.ACCEPTED_BY_STAFF);
+        auctionRequestRepository.save(auctionRequest);
+    }
 
     public Account getAccountById(Long id) {
         Account account = accountRepository.findByUser_id(id);
@@ -292,10 +310,10 @@ public class AuctionRequestService {
                 target.setKoiStatus(KoiStatusEnum.IS_DELETED);
                 target.setUpdatedDate(new Date());
                 break;
-            }case APPROVED_BY_MANAGER:{//Manager duyệt lần cuối thành công
-                target.setKoiStatus(KoiStatusEnum.PENDING_AUCTION);// Cá chờ đc đưa lên đấu giá
-                target.setUpdatedDate(new Date());
-                break;
+//            }case APPROVED_BY_MANAGER:{//Manager duyệt lần cuối thành công
+//                target.setKoiStatus(KoiStatusEnum.PENDING_AUCTION);// Cá chờ đc đưa lên đấu giá
+//                target.setUpdatedDate(new Date());
+//                break;
             }case REJECTED_BY_MANAGER:{//Manager thấy cá này ko có chiến lược mang lại lợi nhuận cho sàn , từ chối cá
                 target.setKoiStatus(KoiStatusEnum.IS_DELETED);
                 target.setUpdatedDate(new Date());

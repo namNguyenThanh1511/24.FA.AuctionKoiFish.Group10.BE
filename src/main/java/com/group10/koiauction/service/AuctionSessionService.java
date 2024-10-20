@@ -57,6 +57,9 @@ public class AuctionSessionService {
     AuctionRequestMapper auctionRequestMapper;
 
     @Autowired
+    KoiFishService koiFishService;
+
+    @Autowired
     Scheduler scheduler;
 
     public AuctionSessionResponsePrimaryDataDTO createAuctionSession(AuctionSessionRequestDTO auctionSessionRequestDTO) {
@@ -96,10 +99,10 @@ public class AuctionSessionService {
                     .withIdentity("activateTrigger_" + auctionSession.getAuctionSessionId(), "auctionSessions")
                     .startAt(Date.from(auctionSession.getStartDate().atZone(ZoneId.systemDefault()).toInstant())) // Thời gian
                     // bắt
-                    // đầu kỳ học
+                    // đầu phiên
                     .build();
 
-            // Lên lịch job kích hoạt kỳ học
+            // Lên lịch job kích hoạt phiên
             scheduler.scheduleJob(activateJobDetail, activateTrigger);
 
             // Tạo JobDetail cho DeactivateSemesterJob
@@ -196,7 +199,12 @@ public class AuctionSessionService {
     public void updateKoiStatus(Long id, AuctionSessionStatus status) {
         KoiFish target = getKoiFishByID(id);
         switch (status) {
-            case UPCOMING, ONGOING: {
+            case UPCOMING: {
+                target.setKoiStatus(KoiStatusEnum.PENDING_AUCTION);
+                target.setUpdatedDate(new Date());
+                break;
+            }
+            case ONGOING: {
                 target.setKoiStatus(KoiStatusEnum.SELLING);
                 target.setUpdatedDate(new Date());
                 break;

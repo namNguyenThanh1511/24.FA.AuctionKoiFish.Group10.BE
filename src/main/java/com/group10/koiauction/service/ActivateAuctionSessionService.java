@@ -13,16 +13,20 @@ public class ActivateAuctionSessionService implements Job {
     @Autowired
     AuctionSessionRepository auctionSessionRepository;
 
+    @Autowired
+    AuctionSessionService auctionSessionService;
+
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         String auctionSessionId = jobExecutionContext.getJobDetail().getJobDataMap().getString("auctionSessionId");
-        Long longAutionID = Long.parseLong(auctionSessionId);
-        AuctionSession auctionSession = auctionSessionRepository.findById(longAutionID)
+        Long longAuctionID = Long.parseLong(auctionSessionId);
+        AuctionSession auctionSession = auctionSessionRepository.findById(longAuctionID)
                 .orElseThrow(() -> new JobExecutionException("AuctionSession not found for ID: " + auctionSessionId));
 
         if (auctionSession.getStatus() == AuctionSessionStatus.UPCOMING) {
             auctionSession.setStatus(AuctionSessionStatus.ONGOING);
             auctionSessionRepository.save(auctionSession);
+            auctionSessionService.updateKoiStatus(auctionSession.getKoiFish().getKoi_id(),auctionSession.getStatus());
             System.out.println("AuctionSession " + auctionSessionId + " has been activated.");
         }
 

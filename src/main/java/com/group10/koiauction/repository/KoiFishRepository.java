@@ -36,7 +36,8 @@ public interface KoiFishRepository extends JpaRepository<KoiFish, Long> {
     @Query("SELECT U FROM KoiFish U WHERE U.account.user_id = :userId AND U.koiStatus = :status ")
     List<KoiFish> findKoiFishByBreederAndStatus(@Param("userId")Long userId ,@Param("status") KoiStatusEnum status);
 
-
+    @Query("SELECT U FROM KoiFish U WHERE U.video_url = :video_url")
+    KoiFish findExactKoiFishByVideoUrl(@Param("video_url") String video_url);
 
 
 

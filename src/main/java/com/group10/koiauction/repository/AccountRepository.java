@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 
 import javax.management.relation.Role;
 import java.util.List;
+import java.util.Optional;
 
 public interface AccountRepository extends JpaRepository<Account, Long> {
     @Query("SELECT U FROM Account U WHERE U.user_id = ?1")
@@ -33,7 +34,8 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     Account findAccountByEmail(String email);
 
-    Account findAccountByPhoneNumber(String phoneNumber);
+    @Query("SELECT U FROM Account U WHERE U.phoneNumber = :phoneNumber")
+    Optional<Account> findAccountByPhoneNumber(@Param("phoneNumber") String phoneNumber);
 
     Account findAccountByUsername(String username);
 
