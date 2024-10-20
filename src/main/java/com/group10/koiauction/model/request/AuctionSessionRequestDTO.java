@@ -1,11 +1,15 @@
 package com.group10.koiauction.model.request;
 
 import com.group10.koiauction.entity.enums.AuctionSessionType;
-import lombok.Data;
+import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
-@Data
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 
 public class AuctionSessionRequestDTO {
     private String title;
@@ -16,9 +20,9 @@ public class AuctionSessionRequestDTO {
 
     private double bidIncrement;
 
-    private Date startDate;
+    private LocalDateTime startDate;
 
-    private Date endDate;
+    private LocalDateTime endDate;
 
     private AuctionSessionType auctionType;
 

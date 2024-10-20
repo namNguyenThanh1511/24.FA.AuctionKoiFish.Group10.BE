@@ -74,4 +74,10 @@ public class AuctionRequestAPI {
         return ResponseEntity.ok(auctionRequestResponse);
     }
 
+    @PutMapping("/revertApprove/{id}")
+    public ResponseEntity<String> revertApprovalAuctionRequest(@PathVariable Long id){
+        auctionRequestService.revertApproveAuctionRequest(id);
+        return ResponseEntity.ok("Revert request successful");
+    }
+
 }

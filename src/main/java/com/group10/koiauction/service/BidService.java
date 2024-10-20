@@ -51,46 +51,46 @@ public class BidService {
     public BidResponseDTO createBid(BidRequestDTO bidRequestDTO) {
         Account memberAccount = accountUtils.getCurrentAccount();
         AuctionSession auctionSession = getAuctionSessionByID(bidRequestDTO.getAuctionSessionId());
+        double bidRequestAmountIncrement = bidRequestDTO.getBidAmount();
+        double previousMaxBidAmount = findMaxBidAmount(auctionSession.getBidSet());// ko co ai dau gia -> lay gia hien tai
+        if (previousMaxBidAmount == 0) {
+            previousMaxBidAmount = auctionSession.getCurrentPrice();
+        }
+        double currentBidAmount = previousMaxBidAmount + bidRequestAmountIncrement;
         if (memberAccount.getBalance() < auctionSession.getMinBalanceToJoin()) {
             throw new BidException("Your balance does not have enough money to join the auction." + "You currently " +
                     "have  " + memberAccount.getBalance() + " but required : " + auctionSession.getMinBalanceToJoin());
         }
-        double maxBidAmount = findMaxBidAmount(auctionSession.getBidSet());
-        if (maxBidAmount == 0) {
-            maxBidAmount = auctionSession.getCurrentPrice();
-        }
         if(bidRequestDTO.getBidAmount() > memberAccount.getBalance()){
             throw new BidException("Your account does not have enough money to bid this amount ");
         }
-        if (bidRequestDTO.getBidAmount() < maxBidAmount + auctionSession.getBidIncrement()) {
+        if (currentBidAmount < previousMaxBidAmount + auctionSession.getBidIncrement()) {
             throw new BidException("Your bid is lower than the required minimum increment.");
         }
         if (bidRequestDTO.getBidAmount() >= auctionSession.getBuyNowPrice()) {//khi đấu giá vượt quá Buy Now ->
                 // chuyển sang buy now , ko tính là bid nữa
                 throw new RuntimeException("You can buy now this fish");
         }
-
         Bid bid = new Bid();
         bid.setBidAt(new Date());
-        bid.setBidAmount(bidRequestDTO.getBidAmount());
+        bid.setBidAmount(currentBidAmount);
         bid.setAuctionSession(getAuctionSessionByID(bidRequestDTO.getAuctionSessionId()));
         bid.setMember(memberAccount);
-        updateAuctionSessionCurrentPrice(bid.getBidAmount(), auctionSession);
+        updateAuctionSessionCurrentPrice(currentBidAmount, auctionSession);
 
         Transaction transaction = new Transaction();
         transaction.setCreateAt(new Date());
         transaction.setFrom(memberAccount);
         transaction.setType(TransactionEnum.BID);
         transaction.setAmount(bidRequestDTO.getBidAmount());
-        transaction.setDescription("Bidding : - " + bidRequestDTO.getBidAmount());
+        transaction.setDescription("Bidding (-)  " + bidRequestAmountIncrement);
 
         transaction.setBid(bid);
         bid.setTransaction(transaction);
-        memberAccount.setBalance(memberAccount.getBalance() - bidRequestDTO.getBidAmount());
+        memberAccount.setBalance(memberAccount.getBalance() - bidRequestAmountIncrement);
 
         try {
             bid = bidRepository.save(bid);
-
         } catch (RuntimeException e) {
             throw new RuntimeException(e.getMessage());
         }

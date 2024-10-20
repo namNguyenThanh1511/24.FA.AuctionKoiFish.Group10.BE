@@ -41,7 +41,8 @@ public class Filter extends OncePerRequestFilter {
             "/api/register",
             "/api/register-member",
             "/api/forgot-password",
-            "/api/login-google"
+            "/api/login-google",
+            "/api/dataSource"
 //            "/api/account/{id}",
 //            "/api/account/update-profile/{id}",
 //
