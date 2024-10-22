@@ -44,6 +44,12 @@ public class AuctionSessionAPI {
         return ResponseEntity.ok(auctionSessionResponseDTO);
     }
 
+    @PutMapping("/close/{id}")
+    public ResponseEntity<AuctionSessionResponsePrimaryDataDTO> closeAuctionSession(@PathVariable Long id) {
+        AuctionSessionResponsePrimaryDataDTO auctionSessionResponsePrimaryDataDTO = auctionSessionService.closeAuctionSession(id);
+        return ResponseEntity.ok(auctionSessionResponsePrimaryDataDTO);
+    }
+
     @GetMapping()
     public ResponseEntity<List<AuctionSessionResponsePrimaryDataDTO>> getAllAuctionSessions() {
         List<AuctionSessionResponsePrimaryDataDTO> auctionSessionResponseDTOs = auctionSessionService.getAllAuctionSessions();

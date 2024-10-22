@@ -1,4 +1,4 @@
-package com.group10.koiauction.mapper;
+package com.group10.koiauction.repository;
 
 import com.group10.koiauction.entity.Bid;
 import org.springframework.data.jpa.repository.JpaRepository;

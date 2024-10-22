@@ -93,7 +93,7 @@ public class AuctionSession {
     @JsonIgnore
     private Set<Bid> bidSet;
 
-    @OneToMany(mappedBy = "auctionSession")
+    @OneToMany(mappedBy = "auctionSession",cascade = CascadeType.ALL)
     @JsonIgnore
     Set<Transaction> transactionSet;
 

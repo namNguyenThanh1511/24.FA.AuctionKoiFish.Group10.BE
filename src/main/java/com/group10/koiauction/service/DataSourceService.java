@@ -127,7 +127,7 @@ public class DataSourceService {
             auctionSession.setCurrentPrice(auctionSessionRequestDTO.getStartingPrice());
             auctionSession.setKoiFish(auctionRequest.getKoiFish());//lay ca tu auction request
             auctionSession.setAuctionRequest(auctionRequest);
-            auctionSession.setStaff(accountRepository.findByUser_id(auctionSessionRequestDTO.getStaff_id()));//phân công staff cho
+            auctionSession.setStaff(accountRepository.findByUser_id(auctionSessionRequestDTO.getStaff_id()));
             auctionSession.setManager(accountRepository.findAccountByUsername("manager"));
             auctionSession.setStatus(AuctionSessionStatus.UPCOMING);
             auctionSession.setCreateAt(new Date());
@@ -135,6 +135,7 @@ public class DataSourceService {
             auctionSessionRepository.save(auctionSession);
             auctionSessionService.updateKoiStatus(auctionRequest.getKoiFish().getKoi_id(), auctionSession.getStatus());
             auctionRequestService.approveAuctionRequest(auctionRequest.getAuction_request_id());
+            auctionSessionService.scheduleActivationJob(auctionSession);
         } catch (Exception e) {
             auctionRequestService.revertApproveAuctionRequest(auctionSessionRequestDTO.getAuction_request_id());
             throw new RuntimeException(e.getMessage() + " Trigger reverting ... ");
@@ -212,8 +213,8 @@ public class DataSourceService {
                 3000,
                 5000,
                 100,
-                LocalDateTime.now().plusDays(1),
-                LocalDateTime.now().plusDays(10),
+                LocalDateTime.now().plusMinutes(5),
+                LocalDateTime.now().plusMinutes(10),
                 AuctionSessionType.ASCENDING,
                 500,
                 auctionRequestRepository.findAuctionRequestByTitle("Kohaku Auction").getAuction_request_id(),
@@ -223,8 +224,8 @@ public class DataSourceService {
                 2500,
                 4500,
                 150,
-                LocalDateTime.now().plusDays(1),
-                LocalDateTime.now().plusDays(10),
+                LocalDateTime.now().plusMinutes(5),
+                LocalDateTime.now().plusMinutes(10),
                 AuctionSessionType.ASCENDING,
                 600,
                 auctionRequestRepository.findAuctionRequestByTitle("Sanke Auction").getAuction_request_id(),

@@ -1,6 +1,7 @@
 package com.group10.koiauction.service;
 
 
+import com.group10.koiauction.constant.MappingURL;
 import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.enums.AccountRoleEnum;
 import com.group10.koiauction.entity.enums.AccountStatusEnum;
@@ -69,9 +70,8 @@ public class AuthenticationService implements UserDetailsService {
 
 
     public AccountResponse register(RegisterAccountRequest registerAccountRequest) {
-
-        if (accountRepository.findAccountByPhoneNumber(registerAccountRequest.getPhoneNumber()).isPresent()) {
-            throw new DuplicatedEntity("Duplicated phone");}
+//        if (accountRepository.findAccountByPhoneNumber(registerAccountRequest.getPhoneNumber()).isPresent()) {
+//            throw new DuplicatedEntity("Duplicated phone");
 //        } else if(accountRepository.findAccountByUsername(registerAccountRequest.getUsername())== null) {
 //            throw new DuplicatedEntity("Duplicated username");
 //        } else if (accountRepository.findAccountByEmail(registerAccountRequest.getEmail())== null) {
@@ -86,9 +86,11 @@ public class AuthenticationService implements UserDetailsService {
             EmailDetail emailDetail = new EmailDetail();
             emailDetail.setAccount(newAccount);
             emailDetail.setSubject("Welcome to my web");
-            emailDetail.setLink("https://www.google.com/");
-            emailService.sentEmail(emailDetail);
-
+            Runnable runnable = () -> {
+                emailDetail.setLink(MappingURL.BASE_URL_LOCAL);
+                emailService.sentEmail(emailDetail);
+            };
+            new Thread(runnable).start();
             return modelMapper.map(newAccount, AccountResponse.class);
         } catch (Exception e) {
             if (e.getMessage().contains(registerAccountRequest.getPhoneNumber())) {
@@ -107,14 +109,14 @@ public class AuthenticationService implements UserDetailsService {
             newAccount.setRoleEnum(AccountRoleEnum.MEMBER);
             newAccount.setPassword(passwordEncoder.encode(registerAccountRequest.getPassword()));
             accountRepository.save(newAccount);
-
             EmailDetail emailDetail = new EmailDetail();
             emailDetail.setAccount(newAccount);
             emailDetail.setSubject("Welcome to my web");
-            emailDetail.setLink("https://www.google.com/");
-
-            emailService.sentEmail(emailDetail);
-
+            Runnable runnable = () -> {
+                emailDetail.setLink(MappingURL.BASE_URL_LOCAL);
+                emailService.sentEmail(emailDetail);
+            };
+            new Thread(runnable).start();
             return modelMapper.map(newAccount, AccountResponse.class);
         } catch (Exception e) {
             if (e.getMessage().contains(registerAccountRequest.getPhoneNumber())) {
@@ -318,13 +320,14 @@ public class AuthenticationService implements UserDetailsService {
             newAccount.setPassword(passwordEncoder.encode(defaultPassword));
 
             accountRepository.save(newAccount);
-
             EmailDetail emailDetail = new EmailDetail();
             emailDetail.setAccount(newAccount);
             emailDetail.setSubject("Welcome to my web");
-            emailDetail.setLink("https://www.google.com/");
-
-            emailService.sentEmailBreeder(emailDetail);
+            Runnable runnable = () -> {
+                emailDetail.setLink(MappingURL.BASE_URL_LOCAL);
+                emailService.sentEmailBreeder(emailDetail);
+            };
+            new Thread(runnable).start();
 
             return modelMapper.map(newAccount, AccountResponse.class);
         } catch (Exception e) {
@@ -354,9 +357,12 @@ public class AuthenticationService implements UserDetailsService {
             EmailDetail emailDetail = new EmailDetail();
             emailDetail.setAccount(newAccount);
             emailDetail.setSubject("Welcome to my web");
-            emailDetail.setLink("http://www.koiauctionsystem.store/");
 
-            emailService.sentEmailBreeder(emailDetail);
+            Runnable runnable = () -> {
+                emailDetail.setLink(MappingURL.BASE_URL_LOCAL);
+                emailService.sentEmailBreeder(emailDetail);
+            };
+            new Thread(runnable).start();
 
             return modelMapper.map(newAccount, AccountResponse.class);
         } catch (Exception e) {
