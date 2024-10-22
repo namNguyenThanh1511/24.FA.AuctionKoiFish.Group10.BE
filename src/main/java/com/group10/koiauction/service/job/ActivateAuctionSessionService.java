@@ -1,8 +1,9 @@
-package com.group10.koiauction.service;
+package com.group10.koiauction.service.job;
 
 import com.group10.koiauction.entity.AuctionSession;
 import com.group10.koiauction.entity.enums.AuctionSessionStatus;
 import com.group10.koiauction.repository.AuctionSessionRepository;
+import com.group10.koiauction.service.AuctionSessionService;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;

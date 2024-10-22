@@ -1,7 +1,9 @@
 package com.group10.koiauction.service;
 
+import com.group10.koiauction.constant.ServiceFeePercent;
 import com.group10.koiauction.entity.*;
 import com.group10.koiauction.entity.enums.*;
+import com.group10.koiauction.exception.BidException;
 import com.group10.koiauction.exception.DuplicatedEntity;
 import com.group10.koiauction.exception.EntityNotFoundException;
 import com.group10.koiauction.mapper.AuctionRequestMapper;
@@ -10,10 +12,9 @@ import com.group10.koiauction.mapper.KoiMapper;
 import com.group10.koiauction.model.request.AuctionSessionRequestDTO;
 import com.group10.koiauction.model.request.UpdateStatusAuctionSessionRequestDTO;
 import com.group10.koiauction.model.response.*;
-import com.group10.koiauction.repository.AccountRepository;
-import com.group10.koiauction.repository.AuctionRequestRepository;
-import com.group10.koiauction.repository.AuctionSessionRepository;
-import com.group10.koiauction.repository.KoiFishRepository;
+import com.group10.koiauction.repository.*;
+import com.group10.koiauction.service.job.ActivateAuctionSessionService;
+import com.group10.koiauction.service.job.DeactivateAuctionSessionService;
 import com.group10.koiauction.utilities.AccountUtils;
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,12 +22,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -51,6 +50,9 @@ public class AuctionSessionService {
     AccountRepository accountRepository;
 
     @Autowired
+    TransactionRepository transactionRepository;
+
+    @Autowired
     KoiMapper koiMapper;
 
     @Autowired
@@ -60,7 +62,11 @@ public class AuctionSessionService {
     KoiFishService koiFishService;
 
     @Autowired
+    BidService bidService;
+
+    @Autowired
     Scheduler scheduler;
+
 
     public AuctionSessionResponsePrimaryDataDTO createAuctionSession(AuctionSessionRequestDTO auctionSessionRequestDTO) {
         AuctionSession auctionSession = auctionSessionMapper.toAuctionSession(auctionSessionRequestDTO);
@@ -75,8 +81,9 @@ public class AuctionSessionService {
         auctionSession.setUpdateAt(auctionSession.getCreateAt());
         updateKoiStatus(auctionRequest.getKoiFish().getKoi_id(), auctionSession.getStatus());//update fish status based on AuctionSession status
         try {
-            auctionSession=  auctionSessionRepository.save(auctionSession);
+            auctionSession = auctionSessionRepository.save(auctionSession);
             scheduleActivationJob(auctionSession);
+
 
         } catch (Exception e) {
             if (e.getMessage().contains("UK9849ywhqdd6e9e0q2gla07c7o")) {
@@ -86,7 +93,8 @@ public class AuctionSessionService {
         }
         return getAuctionSessionResponsePrimaryDataDTO(auctionSession);
     }
-    private void scheduleActivationJob(AuctionSession auctionSession) {
+
+    public void scheduleActivationJob(AuctionSession auctionSession) {
         try {
             // Tạo JobDetail cho ActivateSemesterJob
             JobDetail activateJobDetail = JobBuilder.newJob(ActivateAuctionSessionService.class)
@@ -163,15 +171,117 @@ public class AuctionSessionService {
         auctionSession.setNote(updateStatusAuctionSessionRequestDTO.getNote());
         updateKoiStatus(auctionSession.getKoiFish().getKoi_id(), auctionSession.getStatus());
         auctionSession.setUpdateAt(new Date());
-
         try {
             auctionSessionRepository.save(auctionSession);
-
         } catch (RuntimeException e) {
             throw new RuntimeException(e.getMessage());
         }
         AuctionSessionResponsePrimaryDataDTO auctionSessionResponsePrimaryDataDTO = getAuctionSessionResponsePrimaryDataDTO(auctionSession);
         return auctionSessionResponsePrimaryDataDTO;
+    }
+
+    @Transactional
+    public AuctionSessionResponsePrimaryDataDTO closeAuctionSession(Long auction_session_id) {
+        AuctionSession target = auctionSessionRepository.findById(auction_session_id).orElseThrow(() -> new EntityNotFoundException("Auction session with id " + auction_session_id + " not found"));
+        Set<Bid> bidSet =  target.getBidSet();
+        if(bidSet.isEmpty()){
+            try {
+                target.setUpdateAt(new Date());
+                target.setNote("No participant");
+                target.setStatus(AuctionSessionStatus.NO_WINNER);
+                auctionSessionRepository.save(target);
+                updateKoiStatus(target.getKoiFish().getKoi_id(), target.getStatus());
+            } catch (RuntimeException e) {
+                throw new RuntimeException(e.getMessage());
+            }
+        }else{
+            try {
+                target.setWinner(getAuctionSessionWinner(target));
+                target.setUpdateAt(new Date());
+                target.setStatus(AuctionSessionStatus.COMPLETED);
+                auctionSessionRepository.save(target);
+                createTransactionsAfterAuctionSessionComplete(target);
+                updateKoiStatus(target.getKoiFish().getKoi_id(), target.getStatus());
+            } catch (Exception e) {
+                throw new RuntimeException(e.getMessage());
+            }
+        }
+        AuctionSessionResponsePrimaryDataDTO response = getAuctionSessionResponsePrimaryDataDTO(target);
+        return response;
+    }
+
+    @Transactional
+    public void closeAuctionSession(AuctionSession target) {
+        if(target.getBidSet().isEmpty()){
+            try {
+                target.setUpdateAt(new Date());
+                target.setNote("No participant");
+                target.setStatus(AuctionSessionStatus.NO_WINNER);
+                auctionSessionRepository.save(target);
+                updateKoiStatus(target.getKoiFish().getKoi_id(), target.getStatus());
+            } catch (RuntimeException e) {
+                throw new RuntimeException(e.getMessage());
+            }
+        }else{
+            try {
+                target.setWinner(getAuctionSessionWinner(target));
+                target.setUpdateAt(new Date());
+                target.setStatus(AuctionSessionStatus.COMPLETED);
+                auctionSessionRepository.save(target);
+                createTransactionsAfterAuctionSessionComplete(target);
+                updateKoiStatus(target.getKoiFish().getKoi_id(), target.getStatus());
+            } catch (Exception e) {
+                throw new RuntimeException(e.getMessage());
+            }
+        }
+    }
+
+    @Transactional
+    public void createTransactionsAfterAuctionSessionComplete(AuctionSession auctionSession) {
+        Account manager = accountRepository.findAccountByUsername("manager");
+        Account winner = auctionSession.getWinner();
+        Transaction transaction = new Transaction();
+        SystemProfit systemProfit = new SystemProfit();
+        double serviceFeePercent = ServiceFeePercent.SERVICE_FEE_PERCENT;
+        double profit = auctionSession.getCurrentPrice() * serviceFeePercent;
+
+        transaction.setCreateAt(new Date());
+        transaction.setType(TransactionEnum.TRANSFER_FUNDS);
+        transaction.setFrom(winner);
+        transaction.setTo(manager);
+        transaction.setAmount(profit);
+        transaction.setDescription("System take (+) " + profit + " as service fee");
+
+        systemProfit.setBalance(bidService.increasedBalance(manager, profit));
+        systemProfit.setDate(new Date());
+        systemProfit.setDescription("System revenue increased (+) " + profit);
+        transaction.setSystemProfit(systemProfit);
+        transaction.setAuctionSession(auctionSession);
+        systemProfit.setTransaction(transaction);
+
+        Transaction transaction2 = new Transaction();
+        Account koiBreeder = auctionSession.getKoiFish().getAccount();
+        double koiBreederAmount = auctionSession.getCurrentPrice() - profit;
+        transaction2.setCreateAt(new Date());
+        transaction2.setType(TransactionEnum.TRANSFER_FUNDS);
+        transaction2.setFrom(manager);
+        transaction2.setTo(koiBreeder);
+        transaction2.setAmount(koiBreederAmount);
+        transaction2.setDescription("Get (+) " + koiBreederAmount + " from system ");
+        transaction2.setAuctionSession(auctionSession);
+        koiBreeder.setBalance(bidService.increasedBalance(koiBreeder, koiBreederAmount));
+        try {
+            transactionRepository.save(transaction);
+            transactionRepository.save(transaction2);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    public Account getAuctionSessionWinner(AuctionSession auctionSession) {
+        Set<Bid> bidSet = auctionSession.getBidSet();
+        Bid maxBid = bidSet.stream().max(Comparator.comparing(Bid::getBidAmount)).orElseThrow(() -> new BidException("No bid found for this auction session"));
+        return maxBid.getMember();
     }
 
     public KoiFish getKoiFishByID(Long koi_id) {
@@ -228,9 +338,9 @@ public class AuctionSessionService {
                 target.setUpdatedDate(new Date());
                 break;
             }
-            case COMPLETED, DRAWN, WAITING_FOR_PAYMENT: {
+            case COMPLETED, DRAWN: {
 
-                target.setKoiStatus(KoiStatusEnum.WAITING_FOR_PAYMENT);
+                target.setKoiStatus(KoiStatusEnum.SOLD);
                 target.setUpdatedDate(new Date());
                 break;
             }
@@ -297,7 +407,7 @@ public class AuctionSessionService {
         );
     }
 
-        public AuctionSessionResponsePrimaryDataDTO getAuctionSessionResponsePrimaryDataDTO(Long id) {
+    public AuctionSessionResponsePrimaryDataDTO getAuctionSessionResponsePrimaryDataDTO(Long id) {
         AuctionSession auctionSession = auctionSessionRepository.findAuctionSessionById(id);
         return getAuctionSessionResponsePrimaryDataDTO(auctionSession);
     }
