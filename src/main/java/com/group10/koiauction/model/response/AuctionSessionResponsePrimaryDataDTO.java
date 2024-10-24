@@ -5,6 +5,8 @@ import com.group10.koiauction.entity.enums.AuctionSessionType;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 @Data
 public class AuctionSessionResponsePrimaryDataDTO {
@@ -43,5 +45,7 @@ public class AuctionSessionResponsePrimaryDataDTO {
     private AuctionSessionType auctionType;
 
     private AuctionSessionStatus auctionStatus;
+
+    private List<BidResponseDTO> bids;
 
 }

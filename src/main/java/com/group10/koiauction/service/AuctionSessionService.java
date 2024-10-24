@@ -451,6 +451,7 @@ public class AuctionSessionService {
         AuctionSessionResponseAccountDTO manager = new AuctionSessionResponseAccountDTO();
         AuctionSessionResponseAccountDTO winner = new AuctionSessionResponseAccountDTO();
         BreederResponseDTO breeder = new BreederResponseDTO();
+        List<BidResponseDTO> bidsResponseList = new ArrayList<>();
         AuctionSessionResponseKoiDTO koi = koiMapper.toAuctionSessionResponseKoiDTO(auctionSession.getKoiFish());
         AuctionSessionResponseAuctionRequestDTO auctionRequest =
                 auctionRequestMapper.toAuctionSessionResponseAuctionRequestDTO(auctionSession.getAuctionRequest());
@@ -481,7 +482,36 @@ public class AuctionSessionService {
         auctionSessionResponsePrimaryDataDTO.setAuctionRequest(auctionRequest);
         auctionSessionResponsePrimaryDataDTO.setAuctionType(auctionSession.getAuctionType());
         auctionSessionResponsePrimaryDataDTO.setAuctionStatus(auctionSession.getStatus());
+        for(Bid bid : auctionSession.getBidSet()){
+            BidResponseDTO bidResponseDTO = getBidResponseDTO(auctionSession, bid);
+            bidsResponseList.add(bidResponseDTO);
+        }
+//        Collections.sort(bidsResponseList, new Comparator<BidResponseDTO>() {
+//            @Override
+//            public int compare(BidResponseDTO o1, BidResponseDTO o2) {
+//                return o2.getBidAt().compareTo(o1.getBidAt());//desc latest to oldest
+//            }
+//        });
+        //java 8 :
+        bidsResponseList.sort(Comparator.comparing(BidResponseDTO::getBidAt).reversed());
+        auctionSessionResponsePrimaryDataDTO.setBids(bidsResponseList);
         return auctionSessionResponsePrimaryDataDTO;
+    }
+
+    private static BidResponseDTO getBidResponseDTO(AuctionSession auctionSession, Bid bid) {
+        BidResponseDTO bidResponseDTO = new BidResponseDTO();
+        bidResponseDTO.setId(bid.getId());
+        bidResponseDTO.setAuctionSessionId(auctionSession.getAuctionSessionId());
+        bidResponseDTO.setBidAt(bid.getBidAt());
+        bidResponseDTO.setBidAmount(bid.getBidAmount());
+        Account member = bid.getMember();
+        AuctionSessionResponseAccountDTO memberResponse = new AuctionSessionResponseAccountDTO();
+        memberResponse.setId(bid.getMember().getUser_id());
+        memberResponse.setUsername(member.getUsername());
+        memberResponse.setFullName(member.getFirstName() + " " + member.getLastName());
+        bidResponseDTO.setMember(memberResponse);
+        bidResponseDTO.setAutoBid(bid.isAutoBid());
+        return bidResponseDTO;
     }
 
 }
