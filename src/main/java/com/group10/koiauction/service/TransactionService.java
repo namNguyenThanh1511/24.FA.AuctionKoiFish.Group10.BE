@@ -6,6 +6,7 @@ import com.group10.koiauction.mapper.AccountMapper;
 import com.group10.koiauction.model.response.AuctionSessionResponseAccountDTO;
 import com.group10.koiauction.model.response.TransactionResponseDTO;
 import com.group10.koiauction.repository.TransactionRepository;
+import com.group10.koiauction.utilities.AccountUtils;
 import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,9 @@ public class TransactionService {
 
     @Autowired
     AccountMapper accountMapper;
+
+    @Autowired
+    AccountUtils accountUtils;
 
     public List<TransactionResponseDTO> getAllTransactions() {
         List<Transaction> transactions = transactionRepository.findAll();
@@ -55,6 +59,58 @@ public class TransactionService {
             return accountResponseDTO;
         }
 
+    }
+
+    public List<TransactionResponseDTO> getMemberTransactions() {
+        Long currentUserId = accountUtils.getCurrentAccount().getUser_id(); // Fetch the current user's ID
+        List<Transaction> transactions = transactionRepository.findTransactionByUserId(currentUserId); // Query transactions
+
+        if (transactions.isEmpty()) {
+            System.out.println("No transactions found for user ID: " + currentUserId);
+            return new ArrayList<>(); // Return an empty list if no transactions
+        }
+
+        List<TransactionResponseDTO> transactionResponseDTOs = new ArrayList<>();
+
+        for (Transaction transaction : transactions) {
+            TransactionResponseDTO transactionResponseDTO = new TransactionResponseDTO();
+            transactionResponseDTO.setId(transaction.getId());
+            transactionResponseDTO.setCreateAt(transaction.getCreateAt());
+            transactionResponseDTO.setType(transaction.getType());
+            transactionResponseDTO.setAmount(transaction.getAmount());
+            transactionResponseDTO.setDescription(transaction.getDescription());
+
+            // Set From and To accounts based on whether currentAccount is 'from' or 'to'
+            Account currentAccount = accountUtils.getCurrentAccount();
+            Account from = transaction.getFrom();
+            Account to = transaction.getTo();
+
+            // If currentAccount is the 'from' account
+            if (from != null && from.getUser_id() == (currentAccount.getUser_id())) {
+                AuctionSessionResponseAccountDTO fromAccountResponse = getAuctionSessionResponseAccountDTO(from);
+                transactionResponseDTO.setFromAccount(fromAccountResponse);
+            }
+
+            // If currentAccount is the 'to' account
+            if (to != null && to.getUser_id() == (currentAccount.getUser_id())) {
+                AuctionSessionResponseAccountDTO toAccountResponse = getAuctionSessionResponseAccountDTO(to);
+                transactionResponseDTO.setToAccount(toAccountResponse);
+            }
+
+            // Set auction session ID if available
+            if (transaction.getAuctionSession() != null) {
+                transactionResponseDTO.setAuctionSessionId(transaction.getAuctionSession().getAuctionSessionId());
+            }
+
+            // Set bid-related auction session ID if available
+            if (transaction.getBid() != null && transaction.getBid().getAuctionSession() != null) {
+                transactionResponseDTO.setAuctionSessionId(transaction.getBid().getAuctionSession().getAuctionSessionId());
+            }
+
+            transactionResponseDTOs.add(transactionResponseDTO); // Add the DTO to the list
+        }
+
+        return transactionResponseDTOs; // Return the transaction response list
     }
 
 }

@@ -28,4 +28,11 @@ public class TransactionAPI {
         List<TransactionResponseDTO> transactions = transactionService.getAllTransactions();
         return ResponseEntity.ok(transactions);
     }
+
+    @GetMapping("/transactions")
+    public ResponseEntity<List<TransactionResponseDTO>> getTransactionById() {
+        List<TransactionResponseDTO> transactions = transactionService.getMemberTransactions();
+        return ResponseEntity.ok(transactions);
+    }
+
 }
