@@ -13,6 +13,7 @@ public class AccountResponsePagination {
     private List<AccountResponse> accountResponseList;
     private int pageNumber;
     private int totalPages;
-    private int totalElements;
+    private int numberOfElements;
+    private long totalElements;
 }
 

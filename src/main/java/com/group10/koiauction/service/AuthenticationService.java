@@ -448,7 +448,8 @@ public class AuthenticationService implements UserDetailsService {
                 accountResponseList,
                 breederAccounts.getNumber(),
                 breederAccounts.getTotalPages(),
-                breederAccounts.getNumberOfElements()
+                breederAccounts.getNumberOfElements(),
+                breederAccounts.getTotalElements()
         );
     }
 
@@ -469,7 +470,8 @@ public class AuthenticationService implements UserDetailsService {
                 accountResponseList,
                 staffAccounts.getNumber(),
                 staffAccounts.getTotalPages(),
-                staffAccounts.getNumberOfElements()
+                staffAccounts.getNumberOfElements(),
+                staffAccounts.getTotalElements()
         );
     }
 
@@ -490,7 +492,8 @@ public class AuthenticationService implements UserDetailsService {
                 accountResponseList,
                 memberAccounts.getNumber(),
                 memberAccounts.getTotalPages(),
-                memberAccounts.getNumberOfElements()
+                memberAccounts.getNumberOfElements(),
+                memberAccounts.getTotalElements()
         );
     }
 
