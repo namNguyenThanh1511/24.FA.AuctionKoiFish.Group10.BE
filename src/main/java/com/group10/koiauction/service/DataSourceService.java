@@ -5,14 +5,8 @@ import com.group10.koiauction.entity.enums.*;
 import com.group10.koiauction.mapper.AccountMapper;
 import com.group10.koiauction.mapper.AuctionSessionMapper;
 import com.group10.koiauction.mapper.KoiMapper;
-import com.group10.koiauction.model.request.AuctionRequestDTO;
-import com.group10.koiauction.model.request.AuctionSessionRequestDTO;
-import com.group10.koiauction.model.request.KoiFishRequest;
-import com.group10.koiauction.model.request.RegisterAccountRequest;
-import com.group10.koiauction.repository.AccountRepository;
-import com.group10.koiauction.repository.AuctionRequestRepository;
-import com.group10.koiauction.repository.AuctionSessionRepository;
-import com.group10.koiauction.repository.KoiFishRepository;
+import com.group10.koiauction.model.request.*;
+import com.group10.koiauction.repository.*;
 import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -58,10 +52,14 @@ public class DataSourceService {
     AuctionRequestService auctionRequestService;
 
     @Autowired
-     AuctionSessionService auctionSessionService;
+    AuctionSessionService auctionSessionService;
+
+    @Autowired
+    VarietyRepository varietyRepository;
 
     List<RegisterAccountRequest> registerAccountRequestList = new ArrayList<>();
     List<KoiFishRequest> koiFishRequestList = new ArrayList<>();
+    List<VarietyRequest> varietyList = new ArrayList<>();
     List<AuctionRequestDTO> auctionRequestDTOList = new ArrayList<>();
     List<AuctionSessionRequestDTO> auctionSessionRequestDTOList = new ArrayList<>();
 
@@ -93,6 +91,17 @@ public class DataSourceService {
 
     }
 
+    public void createVariety(VarietyRequest request) {
+        try {
+            Variety variety = new Variety();
+            variety.setName(request.getName());
+            variety.setStatus(VarietyStatusEnum.ACTIVE);
+            varietyRepository.save(variety);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
     public void createKoiFish(KoiFishRequest request) {
         try {
             KoiFish koiFish = new KoiFish();
@@ -107,20 +116,22 @@ public class DataSourceService {
             throw new RuntimeException(e.getMessage());
         }
     }
-    public void createAuctionRequest(AuctionRequestDTO auctionRequestDTO){
+
+    public void createAuctionRequest(AuctionRequestDTO auctionRequestDTO) {
         AuctionRequest auctionRequest = new AuctionRequest();
-        try{
+        try {
             auctionRequest.setTitle(auctionRequestDTO.getTitle());
             auctionRequest.setDescription(auctionRequestDTO.getDescription());
             auctionRequest.setStatus(AuctionRequestStatusEnum.PENDING);
             auctionRequest.setAccount(accountRepository.findAccountByUsername("koibreeder1"));
             auctionRequest.setKoiFish(koiFishRepository.findByKoiId(auctionRequestDTO.getKoiFish_id()));
             auctionRequestRepository.save(auctionRequest);
-        }catch(Exception e){
+        } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
     }
-    public void createAuctionSession(AuctionSessionRequestDTO auctionSessionRequestDTO){
+
+    public void createAuctionSession(AuctionSessionRequestDTO auctionSessionRequestDTO) {
         try {
             AuctionSession auctionSession = auctionSessionMapper.toAuctionSession(auctionSessionRequestDTO);
             AuctionRequest auctionRequest = auctionRequestRepository.findByAuctionRequestId(auctionSessionRequestDTO.getAuction_request_id());
@@ -151,27 +162,33 @@ public class DataSourceService {
     public KoiFishRequest createKoiFishRequest(String name, KoiSexEnum sex, double sizeCm, double weightKg,
                                                Date bornIn, String image_url, String description,
                                                double estimatedValue, String video_url, Set<Long> varietiesID
-                                               ) {
+    ) {
         KoiFishRequest request = new KoiFishRequest(name, sex, sizeCm, weightKg, bornIn, image_url, description,
                 estimatedValue, video_url, varietiesID);
         koiFishRequestList.add(request);
         return request;
     }
 
-    public AuctionRequestDTO createAuctionRequestDTO(String title, String description, Long koiFishId){
+    public VarietyRequest createVarietyRequest(String name) {
+        VarietyRequest varietyRequest = new VarietyRequest(name);
+        varietyList.add(varietyRequest);
+        return varietyRequest;
+    }
+
+    public AuctionRequestDTO createAuctionRequestDTO(String title, String description, Long koiFishId) {
         AuctionRequestDTO request = new AuctionRequestDTO(title, description, koiFishId);
         auctionRequestDTOList.add(request);
         return request;
     }
 
     public AuctionSessionRequestDTO createAuctionSessionRequestDTO(String title,
-                                                                   double startingPrice , double buyNowPrice ,
-                                                                   double bidIncrement , LocalDateTime startDate ,
-                                                                   LocalDateTime endDate ,
-                                                                   AuctionSessionType auctionType ,
-                                                                   double minBalanceToJoin , Long auctionRequestId ,
-                                                                   Long staffId){
-        AuctionSessionRequestDTO request = new AuctionSessionRequestDTO(title,startingPrice,buyNowPrice,bidIncrement,startDate,endDate,auctionType,minBalanceToJoin,auctionRequestId,staffId);
+                                                                   double startingPrice, double buyNowPrice,
+                                                                   double bidIncrement, LocalDateTime startDate,
+                                                                   LocalDateTime endDate,
+                                                                   AuctionSessionType auctionType,
+                                                                   double minBalanceToJoin, Long auctionRequestId,
+                                                                   Long staffId) {
+        AuctionSessionRequestDTO request = new AuctionSessionRequestDTO(title, startingPrice, buyNowPrice, bidIncrement, startDate, endDate, auctionType, minBalanceToJoin, auctionRequestId, staffId);
         auctionSessionRequestDTOList.add(request);
         return request;
     }
@@ -182,12 +199,28 @@ public class DataSourceService {
         RegisterAccountRequest registerAccountRequest3 = createRegisterAccountRequest("koibreeder1", "11111111", "Le",
                 "Thanh Hien", "hienlt@gmail.com", "0829017287", "ABC 123", "koibreeder");
         RegisterAccountRequest registerAccountRequest4 = createRegisterAccountRequest("member", "11111111", "Diep", "Thanh", "dipthanh@gmail.com", "0829017286", "ABC 123", "MEMBER");
-        //        for (RegisterAccountRequest registerAccountRequest : registerAccountRequestList) {
-//            createAccount(registerAccountRequest);
-//        }
+        RegisterAccountRequest registerAccountRequest5 = createRegisterAccountRequest("member1", "11111111", "Test",
+                "member", "member@gmail.com", "0829017285", "ABC 123", "MEMBER");
+        //----------------------------------------------------------------------------------
+        for (RegisterAccountRequest registerAccountRequest : registerAccountRequestList) {
+            createAccount(registerAccountRequest);
+        }
+        //----------------------------------------------------------------------------------
+
+        createVarietyRequest("Kohaku");
+        createVarietyRequest("Sowa");
+        createVarietyRequest("Ochibashigure");
+        createVarietyRequest("Hirenaga");
+        createVarietyRequest("Tancho");
+        //----------------------------------------------------------------------------------
+        for (VarietyRequest varietyRequest : varietyList) {
+            createVariety(varietyRequest);
+        }
+        //----------------------------------------------------------------------------------
+
         createKoiFishRequest("Kohaku", KoiSexEnum.MALE, 50, 4.5, new Date(120, 5, 15), KOI_IMAGE_URLS.get(0),
                 "Beautiful " +
-                "Kohaku with deep red pattern", 3000, "video_url1", Set.of(1L));
+                        "Kohaku with deep red pattern", 3000, "video_url1", Set.of(1L));
         createKoiFishRequest("Sanke", KoiSexEnum.FEMALE, 45, 3.8, new Date(121, 6, 10), KOI_IMAGE_URLS.get(1), "Well" +
                 "-balanced " +
                 "Sanke with crisp patterns", 2500, "video_url2", Set.of(2L));
@@ -196,18 +229,34 @@ public class DataSourceService {
         createKoiFishRequest("Shiro Utsuri", KoiSexEnum.FEMALE, 48, 4.2, new Date(118, 8, 20), KOI_IMAGE_URLS.get(3),
                 "Stunning Shiro Utsuri with pure white skin", 2800, "video_url4", Set.of(4L));
         createKoiFishRequest("Tancho", KoiSexEnum.MALE, 52, 4.9, new Date(117, 7, 25), KOI_IMAGE_URLS.get(4), "Unique" +
-                " Tancho with a perfect red circle on the head", 4000, "video_url5", Set.of(10L));
+                " Tancho with a perfect red circle on the head", 4000, "video_url5", Set.of(5L));
 
-//        for(KoiFishRequest koiFishRequest : koiFishRequestList){
-//            createKoiFish(koiFishRequest);
-//        }
+        // Additional Koi Fish
+        createKoiFishRequest("Asagi", KoiSexEnum.FEMALE, 60, 5.1, new Date(115, 4, 30), KOI_IMAGE_URLS.get(1), "Asagi with stunning netting pattern", 4500, "video_url6", Set.of(1L, 2L));
+        createKoiFishRequest("Goshiki", KoiSexEnum.MALE, 58, 4.7, new Date(116, 3, 22), KOI_IMAGE_URLS.get(2), "Goshiki with vibrant contrast", 3800, "video_url7", Set.of(3L, 4L));
+        createKoiFishRequest("Yamabuki Ogon", KoiSexEnum.FEMALE, 62, 5.3, new Date(117, 10, 14), KOI_IMAGE_URLS.get(3), "Bright Yamabuki Ogon with golden scales", 5000, "video_url8", Set.of(5L));
+
+        //----------------------------------------------------------------------------------
+        for (KoiFishRequest koiFishRequest : koiFishRequestList) {
+            createKoiFish(koiFishRequest);
+        }
+        //----------------------------------------------------------------------------------
         createAuctionRequestDTO("Kohaku Auction", "Auction for a beautiful Kohaku",
                 koiFishRepository.findExactKoiFishByVideoUrl("video_url1").getKoi_id());
         createAuctionRequestDTO("Sanke Auction", "Auction for a well-balanced Sanke",
                 koiFishRepository.findExactKoiFishByVideoUrl("video_url2").getKoi_id());
-//        for (AuctionRequestDTO auctionRequestDTO : auctionRequestDTOList) {
-//            createAuctionRequest(auctionRequestDTO);
-//        }
+        createAuctionRequestDTO("Asagi Auction", "Auction for a stunning Asagi",
+                koiFishRepository.findExactKoiFishByVideoUrl("video_url6").getKoi_id());
+        createAuctionRequestDTO("Goshiki Auction", "Auction for a vibrant Goshiki",
+                koiFishRepository.findExactKoiFishByVideoUrl("video_url7").getKoi_id());
+        createAuctionRequestDTO("Yamabuki Ogon Auction", "Auction for a bright Yamabuki Ogon",
+                koiFishRepository.findExactKoiFishByVideoUrl("video_url8").getKoi_id());
+
+        //----------------------------------------------------------------------------------
+        for (AuctionRequestDTO auctionRequestDTO : auctionRequestDTOList) {
+            createAuctionRequest(auctionRequestDTO);
+        }
+        //----------------------------------------------------------------------------------
         createAuctionSessionRequestDTO(
                 "Kohaku Special Auction",
                 3000,
@@ -230,8 +279,44 @@ public class DataSourceService {
                 600,
                 auctionRequestRepository.findAuctionRequestByTitle("Sanke Auction").getAuction_request_id(),
                 accountRepository.findAccountByUsername("staff").getUser_id());
-        for(AuctionSessionRequestDTO auctionSessionRequestDTO : auctionSessionRequestDTOList) {
+        createAuctionSessionRequestDTO(
+                "Asagi Auction",
+                4500,
+                7000,
+                200,
+                LocalDateTime.now().plusMinutes(15),
+                LocalDateTime.now().plusMinutes(25),
+                AuctionSessionType.ASCENDING,
+                700,
+                auctionRequestRepository.findAuctionRequestByTitle("Asagi Auction").getAuction_request_id(),
+                accountRepository.findAccountByUsername("staff").getUser_id());
+        createAuctionSessionRequestDTO(
+                "Goshiki Auction",
+                3800,
+                6000,
+                180,
+                LocalDateTime.now().plusMinutes(20),
+                LocalDateTime.now().plusMinutes(30),
+                AuctionSessionType.ASCENDING,
+                650,
+                auctionRequestRepository.findAuctionRequestByTitle("Goshiki Auction").getAuction_request_id(),
+                accountRepository.findAccountByUsername("staff").getUser_id());
+        createAuctionSessionRequestDTO(
+                "Yamabuki Ogon Auction",
+                5000,
+                8000,
+                220,
+                LocalDateTime.now().plusMinutes(25),
+                LocalDateTime.now().plusMinutes(35),
+                AuctionSessionType.ASCENDING,
+                800,
+                auctionRequestRepository.findAuctionRequestByTitle("Yamabuki Ogon Auction").getAuction_request_id(),
+                accountRepository.findAccountByUsername("staff").getUser_id());
+
+        //----------------------------------------------------------------------------------
+        for (AuctionSessionRequestDTO auctionSessionRequestDTO : auctionSessionRequestDTOList) {
             createAuctionSession(auctionSessionRequestDTO);
         }
+        //----------------------------------------------------------------------------------
     }
 }
