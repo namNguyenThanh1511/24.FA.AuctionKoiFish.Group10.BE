@@ -31,5 +31,11 @@ public class BidAPI {
         return ResponseEntity.ok("Buy successful");
     }
 
+    @PostMapping("/estimate-total-lost")
+    public ResponseEntity estimateTotalLost(@RequestBody BidRequestDTO bidRequestDTO) {
+        double totalLost = bidService.estimateTotalCost(bidRequestDTO);
+        return ResponseEntity.ok("Total lost: " + totalLost);
+    }
+
 
 }

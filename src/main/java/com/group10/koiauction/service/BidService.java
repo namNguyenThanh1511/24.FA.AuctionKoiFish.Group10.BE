@@ -58,19 +58,34 @@ public class BidService {
             previousMaxBidAmount = auctionSession.getCurrentPrice();
         }
         double currentBidAmount = previousMaxBidAmount + bidRequestAmountIncrement;
+        //Lấy bid gần nhất của member hiện tại (người đang đấu giá ) để tính lượng tiêu hao trong ví
+        Bid latestBidOfCurrentMember =
+                bidRepository.getLatestBidAmountOfCurrentMemberOfAuctionSession(memberAccount.getUser_id(),
+                        auctionSession.getAuctionSessionId());
+        double memberLostAmount;
+        if (latestBidOfCurrentMember != null) {// nếu member đã có đấu giá trong phiên này
+            memberLostAmount = currentBidAmount - latestBidOfCurrentMember.getBidAmount();
+        } else {// lần đầu tiên member  đấu giá trong phiên này
+            memberLostAmount = auctionSession.getCurrentPrice() + bidRequestAmountIncrement;
+        }
         if (memberAccount.getBalance() < auctionSession.getMinBalanceToJoin()) {
             throw new BidException("Your balance does not have enough money to join the auction." + "You currently " +
                     "have  " + memberAccount.getBalance() + " but required : " + auctionSession.getMinBalanceToJoin());
         }
-        if(bidRequestDTO.getBidAmount() > memberAccount.getBalance()){
+        if (bidRequestDTO.getBidAmount() > memberAccount.getBalance()) {
             throw new BidException("Your account does not have enough money to bid this amount ");
         }
         if (currentBidAmount < previousMaxBidAmount + auctionSession.getBidIncrement()) {
             throw new BidException("Your bid is lower than the required minimum increment.");
         }
+
+        if (memberLostAmount > memberAccount.getBalance()) {
+            throw new BidException("Your account does not have enough money to bid ! " + "You currently have : " + memberAccount.getBalance() + " But required " + memberLostAmount);
+        }
+
         if (bidRequestDTO.getBidAmount() >= auctionSession.getBuyNowPrice()) {//khi đấu giá vượt quá Buy Now ->
-                // chuyển sang buy now , ko tính là bid nữa
-                throw new RuntimeException("You can buy now this fish");
+            // chuyển sang buy now , ko tính là bid nữa
+            throw new RuntimeException("You can buy now this fish");
         }
         Bid bid = new Bid();
         bid.setBidAt(new Date());
@@ -84,12 +99,12 @@ public class BidService {
         transaction.setFrom(memberAccount);
         transaction.setType(TransactionEnum.BID);
         transaction.setAmount(bidRequestDTO.getBidAmount());
-        transaction.setDescription("Bidding (-)  " + bidRequestAmountIncrement);
+        transaction.setDescription("Bidding (-)  " + memberLostAmount);
 
         transaction.setBid(bid);
         transaction.setAuctionSession(auctionSession);
         bid.setTransaction(transaction);
-        memberAccount.setBalance(memberAccount.getBalance() - bidRequestAmountIncrement);
+        memberAccount.setBalance(memberAccount.getBalance() - memberLostAmount);
 
         try {
             bid = bidRepository.save(bid);
@@ -104,7 +119,7 @@ public class BidService {
         memberResponse.setFullName(memberAccount.getFirstName() + " " + memberAccount.getLastName());
         bidResponseDTO.setMember(memberResponse);
         bidResponseDTO.setAuctionSessionId(auctionSession.getAuctionSessionId());
-        return  bidResponseDTO;
+        return bidResponseDTO;
     }
 
 
@@ -117,7 +132,7 @@ public class BidService {
         }
         if (memberAccount.getBalance() >= auctionSession.getBuyNowPrice()) {
 
-            Account manager =accountRepository.findAccountByUsername("manager") ;
+            Account manager = accountRepository.findAccountByUsername("manager");
             //transaction 0 : member lost how much
             Transaction transaction0 = new Transaction();
             transaction0.setCreateAt(new Date());
@@ -133,18 +148,18 @@ public class BidService {
             double serviceFeePercent = ServiceFeePercent.SERVICE_FEE_PERCENT;
             Transaction transaction = new Transaction();
             SystemProfit systemProfit = new SystemProfit();
-            double profit = auctionSession.getBuyNowPrice()*serviceFeePercent;
+            double profit = auctionSession.getBuyNowPrice() * serviceFeePercent;
 
             transaction.setCreateAt(new Date());
             transaction.setType(TransactionEnum.TRANSFER_FUNDS);
             transaction.setFrom(memberAccount);
             transaction.setTo(manager);
             transaction.setAmount(profit);
-            transaction.setDescription("System take (+) "+ profit + " as service fee");
+            transaction.setDescription("System take (+) " + profit + " as service fee");
 
-            systemProfit.setBalance(increasedBalance(manager,profit));
+            systemProfit.setBalance(increasedBalance(manager, profit));
             systemProfit.setDate(new Date());
-            systemProfit.setDescription("System revenue increased (+) "+profit);
+            systemProfit.setDescription("System revenue increased (+) " + profit);
             transaction.setSystemProfit(systemProfit);
             transaction.setAuctionSession(auctionSession);
             systemProfit.setTransaction(transaction);
@@ -152,19 +167,19 @@ public class BidService {
             //transaction 2 : transfer to koi breeder
             Transaction transaction2 = new Transaction();
             Account koiBreeder = auctionSession.getKoiFish().getAccount();
-            double koiBreederAmount = auctionSession.getBuyNowPrice()- profit;
+            double koiBreederAmount = auctionSession.getBuyNowPrice() - profit;
             transaction2.setCreateAt(new Date());
             transaction2.setType(TransactionEnum.TRANSFER_FUNDS);
             transaction2.setFrom(manager);
             transaction2.setTo(koiBreeder);
             transaction2.setAmount(koiBreederAmount);
-            transaction2.setDescription("Get (+) "+koiBreederAmount +" from system ");
+            transaction2.setDescription("Get (+) " + koiBreederAmount + " from system ");
             transaction2.setAuctionSession(auctionSession);
-            koiBreeder.setBalance(increasedBalance(koiBreeder,koiBreederAmount));
+            koiBreeder.setBalance(increasedBalance(koiBreeder, koiBreederAmount));
 
-            transaction0 =transactionRepository.save(transaction0);
-            transaction =transactionRepository.save(transaction);
-            transaction2 =transactionRepository.save(transaction2);
+            transaction0 = transactionRepository.save(transaction0);
+            transaction = transactionRepository.save(transaction);
+            transaction2 = transactionRepository.save(transaction2);
             accountRepository.save(memberAccount);
 
             Set<Transaction> transactionSet = new HashSet<>();
@@ -184,6 +199,26 @@ public class BidService {
         } else {
             throw new BidException("Your balance does not have enough money to buy");
         }
+    }
+
+    public double estimateTotalCost(BidRequestDTO requestDTO) {
+        AuctionSession auctionSession = getAuctionSessionByID(requestDTO.getAuctionSessionId());
+        Account member = accountUtils.getCurrentAccount();
+        Set<Bid> bidSet = auctionSession.getBidSet();
+        double totalCost;
+        double previousMaxBidAmount = findMaxBidAmount(bidSet);
+        if(previousMaxBidAmount == 0){
+            previousMaxBidAmount = auctionSession.getCurrentPrice();
+        }
+        double currentBidAmount = previousMaxBidAmount + requestDTO.getBidAmount();
+        Bid latestBidOfCurrentMember =
+                bidRepository.getLatestBidAmountOfCurrentMemberOfAuctionSession(member.getUser_id(), auctionSession.getAuctionSessionId());
+        if (latestBidOfCurrentMember != null) {
+            totalCost = currentBidAmount - latestBidOfCurrentMember.getBidAmount();
+        } else {
+            totalCost = auctionSession.getCurrentPrice() + requestDTO.getBidAmount();
+        }
+        return totalCost;
     }
 
     public double findMaxBidAmount(Set<Bid> bidSet) {
@@ -255,7 +290,7 @@ public class BidService {
         return auctionSession;
     }
 
-    public double increasedBalance(Account account , double amount) {
+    public double increasedBalance(Account account, double amount) {
         double currentBalance = account.getBalance();
         double newBalance = currentBalance + amount;
         account.setBalance(newBalance);
