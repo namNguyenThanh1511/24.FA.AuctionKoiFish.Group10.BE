@@ -12,7 +12,8 @@ import java.util.List;
 public class KoiFishResponsePagination {
     private List<KoiFishResponse> koiFishResponseList;
     private int pageNumber;
-    private int totalElements;
+    private long totalElements;
+    private int numberOfElements;
     private int totalPages;
 
 }

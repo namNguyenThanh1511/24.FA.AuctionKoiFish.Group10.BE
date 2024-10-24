@@ -186,8 +186,8 @@ public class AuctionSessionService {
     @Transactional
     public AuctionSessionResponsePrimaryDataDTO closeAuctionSession(Long auction_session_id) {
         AuctionSession target = auctionSessionRepository.findById(auction_session_id).orElseThrow(() -> new EntityNotFoundException("Auction session with id " + auction_session_id + " not found"));
-        Set<Bid> bidSet =  target.getBidSet();
-        if(bidSet.isEmpty()){
+        Set<Bid> bidSet = target.getBidSet();
+        if (bidSet.isEmpty()) {
             try {
                 target.setUpdateAt(new Date());
                 target.setNote("No participant");
@@ -197,7 +197,7 @@ public class AuctionSessionService {
             } catch (RuntimeException e) {
                 throw new RuntimeException(e.getMessage());
             }
-        }else{
+        } else {
             try {
                 target.setWinner(getAuctionSessionWinner(target));
                 target.setUpdateAt(new Date());
@@ -216,7 +216,7 @@ public class AuctionSessionService {
 
     @Transactional
     public void closeAuctionSession(AuctionSession target) {
-        if(target.getBidSet().isEmpty()){
+        if (target.getBidSet().isEmpty()) {
             try {
                 target.setUpdateAt(new Date());
                 target.setNote("No participant");
@@ -226,7 +226,7 @@ public class AuctionSessionService {
             } catch (RuntimeException e) {
                 throw new RuntimeException(e.getMessage());
             }
-        }else{
+        } else {
             try {
                 target.setWinner(getAuctionSessionWinner(target));
                 target.setUpdateAt(new Date());
@@ -285,28 +285,29 @@ public class AuctionSessionService {
 
     @Transactional
     public void returnMoneyAfterClosedAuctionSession(AuctionSession auctionSession) {
-        List<MemberBidProjectionDTO> loserBids = bidRepository.findMaxBidForEachMemberInAuctionSessionExceptWinner(auctionSession.getAuctionSessionId(),auctionSession.getWinner().getUser_id());
-        for(MemberBidProjectionDTO loserBid : loserBids){
+        List<MemberBidProjectionDTO> loserBids = bidRepository.findMaxBidForEachMemberInAuctionSessionExceptWinner(auctionSession.getAuctionSessionId(), auctionSession.getWinner().getUser_id());
+        for (MemberBidProjectionDTO loserBid : loserBids) {
             createTransactionWhenReturnMoney(loserBid);
         }
 
     }
+
     @Transactional
-    public void createTransactionWhenReturnMoney(MemberBidProjectionDTO loserBid){
+    public void createTransactionWhenReturnMoney(MemberBidProjectionDTO loserBid) {
         Account loser = getAccountById(loserBid.getLoser_id());
         AuctionSession auctionSession =
-                auctionSessionRepository.findById(loserBid.getAuction_session_id()).orElseThrow(()-> new EntityNotFoundException("No auction" +
+                auctionSessionRepository.findById(loserBid.getAuction_session_id()).orElseThrow(() -> new EntityNotFoundException("No auction" +
                         " " +
-                        "session found with id "+loserBid.getAuction_session_id()));
+                        "session found with id " + loserBid.getAuction_session_id()));
         Transaction transaction = new Transaction();
         transaction.setCreateAt(new Date());
         transaction.setType(TransactionEnum.TRANSFER_FUNDS);
         transaction.setFrom(null);
         transaction.setTo(loser);
         transaction.setAmount(loserBid.getBidAmount());
-        transaction.setDescription("Return funds (+) : "+loserBid.getBidAmount());
+        transaction.setDescription("Return funds (+) : " + loserBid.getBidAmount());
         transaction.setAuctionSession(auctionSession);
-        loser.setBalance(bidService.increasedBalance(loser,loserBid.getBidAmount()));
+        loser.setBalance(bidService.increasedBalance(loser, loserBid.getBidAmount()));
         try {
             transactionRepository.save(transaction);
         } catch (Exception e) {
@@ -518,19 +519,24 @@ public class AuctionSessionService {
         auctionSessionResponsePrimaryDataDTO.setAuctionRequest(auctionRequest);
         auctionSessionResponsePrimaryDataDTO.setAuctionType(auctionSession.getAuctionType());
         auctionSessionResponsePrimaryDataDTO.setAuctionStatus(auctionSession.getStatus());
-        for(Bid bid : auctionSession.getBidSet()){
-            BidResponseDTO bidResponseDTO = getBidResponseDTO(auctionSession, bid);
-            bidsResponseList.add(bidResponseDTO);
-        }
+        if (auctionSession.getBidSet() == null) {
+            auctionSessionResponsePrimaryDataDTO.setBids(null);
+        } else {
+            for (Bid bid : auctionSession.getBidSet()) {
+                BidResponseDTO bidResponseDTO = getBidResponseDTO(auctionSession, bid);
+                bidsResponseList.add(bidResponseDTO);
+            }
 //        Collections.sort(bidsResponseList, new Comparator<BidResponseDTO>() {
 //            @Override
 //            public int compare(BidResponseDTO o1, BidResponseDTO o2) {
 //                return o2.getBidAt().compareTo(o1.getBidAt());//desc latest to oldest
 //            }
 //        });
-        //java 8 :
-        bidsResponseList.sort(Comparator.comparing(BidResponseDTO::getBidAt).reversed());
-        auctionSessionResponsePrimaryDataDTO.setBids(bidsResponseList);
+            //java 8 :
+            bidsResponseList.sort(Comparator.comparing(BidResponseDTO::getBidAt).reversed());
+            auctionSessionResponsePrimaryDataDTO.setBids(bidsResponseList);
+        }
+
         return auctionSessionResponsePrimaryDataDTO;
     }
 
