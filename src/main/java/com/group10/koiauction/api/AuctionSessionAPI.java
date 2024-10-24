@@ -97,4 +97,13 @@ public class AuctionSessionAPI {
 
         return ResponseEntity.ok(response); // Returns 200 OK status
     }
+
+    @GetMapping("/my-auctions")
+    public ResponseEntity<AuctionSessionResponsePagination> getAuctionSessionsForCurrentUser(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        AuctionSessionResponsePagination response = auctionSessionService.getAuctionSessionsByCurrentUser(page, size);
+        return ResponseEntity.ok(response);
+    }
+
 }
