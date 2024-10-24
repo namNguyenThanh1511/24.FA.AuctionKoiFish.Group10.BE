@@ -24,8 +24,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.Date;
 import java.util.stream.Collectors;
 
 @Service
@@ -405,6 +407,40 @@ public class AuctionSessionService {
                 auctionSessions.getTotalElements(),
                 auctionSessions.getTotalPages()
         );
+    }
+
+    public AuctionSessionResponsePagination getAuctionSessionsByCurrentUser(int page, int size) {
+        Long currentUserId = accountUtils.getCurrentAccount().getUser_id(); // Lấy ID của user hiện tại
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AuctionSession> auctionSessionsPage = auctionSessionRepository.findAuctionSessionsByUserId(currentUserId, pageable);
+
+        // Chuyển đổi từ entity sang DTO
+        List<AuctionSessionResponsePrimaryDataDTO> auctionSessionResponses = auctionSessionsPage.stream()
+                .map(this::convertToAuctionSessionResponsePrimaryDataDTO)
+                .collect(Collectors.toList());
+
+        // Trả về đối tượng phân trang
+        return new AuctionSessionResponsePagination(
+                auctionSessionResponses,
+                auctionSessionsPage.getNumber(),
+                auctionSessionsPage.getSize(),
+                auctionSessionsPage.getTotalElements(),
+                auctionSessionsPage.getTotalPages()
+        );
+    }
+
+    private AuctionSessionResponsePrimaryDataDTO convertToAuctionSessionResponsePrimaryDataDTO(AuctionSession auctionSession) {
+        AuctionSessionResponsePrimaryDataDTO responseDTO = new AuctionSessionResponsePrimaryDataDTO();
+        responseDTO.setAuctionSessionId(auctionSession.getAuctionSessionId());
+        responseDTO.setTitle(auctionSession.getTitle());
+        responseDTO.setStartingPrice(auctionSession.getStartingPrice());
+        responseDTO.setCurrentPrice(auctionSession.getCurrentPrice());
+        responseDTO.getStartDate();
+        responseDTO.getEndDate();
+        responseDTO.setAuctionStatus(auctionSession.getStatus());
+
+        return responseDTO;
     }
 
     public AuctionSessionResponsePrimaryDataDTO getAuctionSessionResponsePrimaryDataDTO(Long id) {
