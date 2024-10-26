@@ -4,20 +4,16 @@ import com.group10.koiauction.entity.AuctionRequest;
 import com.group10.koiauction.model.request.AuctionRequestDTO;
 import com.group10.koiauction.model.request.AuctionRequestUpdateDTO;
 import com.group10.koiauction.model.request.ResponseAuctionRequestDTO;
-import com.group10.koiauction.model.response.AcceptedAuctionRequestResponse;
 import com.group10.koiauction.model.response.AuctionRequestResponse;
 import com.group10.koiauction.service.AuctionRequestService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auctionRequest")
@@ -84,20 +80,4 @@ public class AuctionRequestAPI {
         return ResponseEntity.ok("Revert request successful");
     }
 
-    @GetMapping("/manager-only/accepted-by-staff")
-    public ResponseEntity<Map<String, Object>> getAuctionRequests(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-
-        Page<AcceptedAuctionRequestResponse> responses = auctionRequestService.getAcceptedByStaffAuctionRequests(page, size);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("transactionResponseList", responses.getContent());
-        response.put("pageNumber", responses.getNumber());
-        response.put("pageSize", responses.getSize());
-        response.put("totalPages", responses.getTotalPages());
-        response.put("totalElements", responses.getTotalElements());
-
-        return ResponseEntity.ok(response);
-    }
 }

@@ -1,6 +1,7 @@
 package com.group10.koiauction.entity;
 
 import com.group10.koiauction.entity.enums.PaymentMethodEnum;
+import com.group10.koiauction.entity.enums.PaymentStatusEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -24,6 +25,11 @@ public class Payment {
     @Enumerated(EnumType.STRING)
     private PaymentMethodEnum method;
     private Date createAt;
+    @Enumerated(EnumType.STRING)
+    private PaymentStatusEnum status;
+    private String bankCode;
+    private String cardType;
+    private String description;
 
     @OneToOne
     @JoinColumn(name = "payment_request_id")

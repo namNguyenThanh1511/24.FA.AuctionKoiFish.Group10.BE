@@ -450,16 +450,13 @@ public class AuctionSessionService {
         Page<AuctionSession> auctionSessionsPage = auctionSessionRepository.findAuctionSessionsByUserId(currentUserId, pageable);
 
         // Chuyển đổi từ entity sang DTO
-        List<AuctionSession> auctionSessions = auctionSessionsPage.toList();
-        List<AuctionSessionResponsePrimaryDataDTO> responseList = new ArrayList<>();
-        for(AuctionSession auctionSession : auctionSessions){
-            AuctionSessionResponsePrimaryDataDTO response = getAuctionSessionResponsePrimaryDataDTO(auctionSession);
-            responseList.add(response);
+        List<AuctionSessionResponsePrimaryDataDTO> auctionSessionResponses = auctionSessionsPage.stream()
+                .map(this::convertToAuctionSessionResponsePrimaryDataDTO)
+                .collect(Collectors.toList());
 
-        }
         // Trả về đối tượng phân trang
         return new AuctionSessionResponsePagination(
-                responseList,
+                auctionSessionResponses,
                 auctionSessionsPage.getNumber(),
                 auctionSessionsPage.getSize(),
                 auctionSessionsPage.getTotalElements(),
@@ -529,7 +526,7 @@ public class AuctionSessionService {
                 BidResponseDTO bidResponseDTO = getBidResponseDTO(auctionSession, bid);
                 bidsResponseList.add(bidResponseDTO);
             }
-//        Collections.sort(bidsResponseList, new Comparator<BidResponseDTO>() {
+//        Collections.sort(bidsResponseList, new Comparator<BidResponseDTO>()
 //            @Override
 //            public int compare(BidResponseDTO o1, BidResponseDTO o2) {
 //                return o2.getBidAt().compareTo(o1.getBidAt());//desc latest to oldest
@@ -539,7 +536,6 @@ public class AuctionSessionService {
             bidsResponseList.sort(Comparator.comparing(BidResponseDTO::getBidAt).reversed());
             auctionSessionResponsePrimaryDataDTO.setBids(bidsResponseList);
         }
-
         return auctionSessionResponsePrimaryDataDTO;
     }
 

@@ -3,6 +3,7 @@ package com.group10.koiauction.api;
 import com.group10.koiauction.config.VNPayConfig;
 import com.group10.koiauction.entity.Transaction;
 import com.group10.koiauction.model.request.DepositFundsRequest;
+import com.group10.koiauction.model.request.DepositFundsRequestDTO;
 import com.group10.koiauction.model.response.BalanceResponseDTO;
 import com.group10.koiauction.service.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -32,9 +33,15 @@ public class UserAPI {
 
     }
 
-    @PutMapping("depositFunds/{id}")
-    public ResponseEntity depositFunds(@PathVariable Long id) throws Exception {
-        Transaction transaction = userService.depositFunds(id);
+//    @PutMapping("depositFunds/{id}")
+//    public ResponseEntity depositFunds(@PathVariable Long id) throws Exception {
+//        Transaction transaction = userService.depositFunds(id);
+//        return ResponseEntity.ok(transaction);
+//    }
+
+    @PutMapping("depositFunds")
+    public ResponseEntity depositFunds2(@RequestBody DepositFundsRequestDTO depositFundsRequestDTO) throws Exception {
+        Transaction transaction = userService.depositFunds2(depositFundsRequestDTO.getReturnURL());
         return ResponseEntity.ok(transaction);
     }
 
