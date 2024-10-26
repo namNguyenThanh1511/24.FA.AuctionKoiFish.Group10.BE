@@ -526,7 +526,7 @@ public class AuctionSessionService {
                 BidResponseDTO bidResponseDTO = getBidResponseDTO(auctionSession, bid);
                 bidsResponseList.add(bidResponseDTO);
             }
-//        Collections.sort(bidsResponseList, new Comparator<BidResponseDTO>() {
+//        Collections.sort(bidsResponseList, new Comparator<BidResponseDTO>()
 //            @Override
 //            public int compare(BidResponseDTO o1, BidResponseDTO o2) {
 //                return o2.getBidAt().compareTo(o1.getBidAt());//desc latest to oldest
@@ -536,7 +536,6 @@ public class AuctionSessionService {
             bidsResponseList.sort(Comparator.comparing(BidResponseDTO::getBidAt).reversed());
             auctionSessionResponsePrimaryDataDTO.setBids(bidsResponseList);
         }
-
         return auctionSessionResponsePrimaryDataDTO;
     }
 
