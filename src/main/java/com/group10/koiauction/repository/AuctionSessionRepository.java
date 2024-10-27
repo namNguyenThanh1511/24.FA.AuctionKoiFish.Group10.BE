@@ -4,6 +4,7 @@ import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.AuctionRequest;
 import com.group10.koiauction.entity.AuctionSession;
 import com.group10.koiauction.entity.Variety;
+import com.group10.koiauction.entity.enums.AuctionSessionStatus;
 import com.group10.koiauction.entity.enums.AuctionSessionType;
 import com.group10.koiauction.entity.enums.KoiSexEnum;
 import org.springframework.data.domain.Page;
@@ -12,6 +13,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Set;
 
 public interface AuctionSessionRepository extends JpaRepository<AuctionSession, Long> {
@@ -42,5 +44,16 @@ public interface AuctionSessionRepository extends JpaRepository<AuctionSession, 
 
     @Query("SELECT DISTINCT a FROM AuctionSession a JOIN a.bidSet b WHERE b.member.user_id = :userId")
     Page<AuctionSession> findAuctionSessionsByUserId(@Param("userId") Long userId, Pageable pageable);
+
+
+
+    @Query("SELECT U FROM AuctionSession U  WHERE  U.title = :title")
+    AuctionSession findAuctionSessionByTitle(@Param("title") String title);
+
+    @Query("SELECT COUNT(a) FROM AuctionSession a WHERE a.status IN (:statuses) ")
+    long countdAuctionSessionByStatus(List<AuctionSessionStatus> statuses);
+
+    @Query("SELECT COUNT(a) FROM AuctionSession a WHERE a.status NOT IN (:statuses) ")
+    long countdAuctionSessionExceptStatus(List<AuctionSessionStatus> statuses);
 
 }

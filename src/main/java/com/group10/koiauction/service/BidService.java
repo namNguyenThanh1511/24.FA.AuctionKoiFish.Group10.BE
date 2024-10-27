@@ -103,6 +103,7 @@ public class BidService {
 
         transaction.setBid(bid);
         transaction.setAuctionSession(auctionSession);
+        transaction.setStatus(TransactionStatus.SUCCESS);
         bid.setTransaction(transaction);
         memberAccount.setBalance(memberAccount.getBalance() - memberLostAmount);
 
@@ -142,6 +143,7 @@ public class BidService {
             transaction0.setAmount(auctionSession.getBuyNowPrice());
             transaction0.setDescription("Buy now (-) : " + auctionSession.getBuyNowPrice());
             transaction0.setAuctionSession(auctionSession);
+            transaction0.setStatus(TransactionStatus.SUCCESS);
             memberAccount.setBalance(memberAccount.getBalance() - auctionSession.getBuyNowPrice());
 
             //transaction 1 : system get profit
@@ -156,6 +158,7 @@ public class BidService {
             transaction.setTo(manager);
             transaction.setAmount(profit);
             transaction.setDescription("System take (+) " + profit + " as service fee");
+            transaction.setStatus(TransactionStatus.SUCCESS);
 
             systemProfit.setBalance(increasedBalance(manager, profit));
             systemProfit.setDate(new Date());
@@ -175,6 +178,7 @@ public class BidService {
             transaction2.setAmount(koiBreederAmount);
             transaction2.setDescription("Get (+) " + koiBreederAmount + " from system ");
             transaction2.setAuctionSession(auctionSession);
+            transaction2.setStatus(TransactionStatus.SUCCESS);
             koiBreeder.setBalance(increasedBalance(koiBreeder, koiBreederAmount));
 
             transaction0 = transactionRepository.save(transaction0);
