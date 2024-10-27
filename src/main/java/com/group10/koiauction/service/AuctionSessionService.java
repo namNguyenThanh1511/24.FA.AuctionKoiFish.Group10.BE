@@ -262,6 +262,7 @@ public class AuctionSessionService {
         systemProfit.setDescription("System revenue increased (+) " + profit);
         transaction.setSystemProfit(systemProfit);
         transaction.setAuctionSession(auctionSession);
+        transaction.setStatus(TransactionStatus.SUCCESS);
         systemProfit.setTransaction(transaction);
 
         Transaction transaction2 = new Transaction();
@@ -275,6 +276,7 @@ public class AuctionSessionService {
         transaction2.setDescription("Get (+) " + koiBreederAmount + " from system ");
         transaction2.setAuctionSession(auctionSession);
         koiBreeder.setBalance(bidService.increasedBalance(koiBreeder, koiBreederAmount));
+        transaction2.setStatus(TransactionStatus.SUCCESS);
         try {
             transactionRepository.save(transaction);
             transactionRepository.save(transaction2);
@@ -308,6 +310,7 @@ public class AuctionSessionService {
         transaction.setDescription("Return funds (+) : " + loserBid.getBidAmount());
         transaction.setAuctionSession(auctionSession);
         loser.setBalance(bidService.increasedBalance(loser, loserBid.getBidAmount()));
+        transaction.setStatus(TransactionStatus.SUCCESS);
         try {
             transactionRepository.save(transaction);
         } catch (Exception e) {

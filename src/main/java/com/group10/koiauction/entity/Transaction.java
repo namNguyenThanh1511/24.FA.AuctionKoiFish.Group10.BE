@@ -63,4 +63,9 @@ public class Transaction {
     @ManyToOne
     @JoinColumn(name = "auction_session_id")
     AuctionSession auctionSession;
+
+    @OneToOne
+    @JoinColumn(name = "withdraw_request_id")
+    WithDrawRequest withdrawRequest;
+
 }

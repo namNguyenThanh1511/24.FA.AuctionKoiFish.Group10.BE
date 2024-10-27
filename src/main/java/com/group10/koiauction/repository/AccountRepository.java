@@ -12,6 +12,7 @@ import org.springframework.data.repository.query.Param;
 
 import javax.management.relation.Role;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface AccountRepository extends JpaRepository<Account, Long> {
@@ -42,4 +43,8 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     List<Account> findAccountsByRoleEnum(AccountRoleEnum role);
 
     Page<Account> findAccountsByRoleEnum(AccountRoleEnum role, Pageable pageable);
+
+    @Query("SELECT COUNT(a.user_id) FROM  Account  a WHERE a.roleEnum = :role")
+    long countAccountByRole(@Param("role") AccountRoleEnum role);
+
 }

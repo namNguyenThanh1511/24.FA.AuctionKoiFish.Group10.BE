@@ -94,7 +94,11 @@ public class Account implements UserDetails {
     @OneToMany(mappedBy = "member")
     Set<PaymentRequest> paymentRequestSet;
 
+    @OneToMany(mappedBy = "user")
+    Set<WithDrawRequest> withDrawRequestSet;
 
+    @OneToMany(mappedBy = "staff")
+    Set<WithDrawRequest> withdrawRequestSetOfStaff;
 
 
     @Override
