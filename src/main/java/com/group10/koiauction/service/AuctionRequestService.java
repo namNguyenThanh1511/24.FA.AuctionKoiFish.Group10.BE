@@ -337,6 +337,7 @@ public class AuctionRequestService {
 
     public Page<AcceptedAuctionRequestResponse> getAcceptedByStaffAuctionRequests(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
+        //ACCEPTED_BY_STAFF
         Page<AuctionRequest> auctionRequests = auctionRequestRepository.findByStatus(AuctionRequestStatusEnum.ACCEPTED_BY_STAFF, pageable);
 
         return auctionRequests.map(auctionRequest -> {
