@@ -453,13 +453,15 @@ public class AuctionSessionService {
         Page<AuctionSession> auctionSessionsPage = auctionSessionRepository.findAuctionSessionsByUserId(currentUserId, pageable);
 
         // Chuyển đổi từ entity sang DTO
-        List<AuctionSessionResponsePrimaryDataDTO> auctionSessionResponses = auctionSessionsPage.stream()
-                .map(this::convertToAuctionSessionResponsePrimaryDataDTO)
-                .collect(Collectors.toList());
-
+        List<AuctionSession> auctionSessions = auctionSessionsPage.toList();
+        List<AuctionSessionResponsePrimaryDataDTO> responseList = new ArrayList<>();
+        for(AuctionSession auctionSession : auctionSessions){
+            AuctionSessionResponsePrimaryDataDTO response = getAuctionSessionResponsePrimaryDataDTO(auctionSession);
+            responseList.add(response);
+        }
         // Trả về đối tượng phân trang
         return new AuctionSessionResponsePagination(
-                auctionSessionResponses,
+                responseList,
                 auctionSessionsPage.getNumber(),
                 auctionSessionsPage.getSize(),
                 auctionSessionsPage.getTotalElements(),
