@@ -83,7 +83,8 @@ public class KoiFishService {
         koiFishResponsePagination.setKoiFishResponseList(koiFishResponseList);
         koiFishResponsePagination.setPageNumber(koiFishPage.getNumber());
         koiFishResponsePagination.setTotalPages(koiFishPage.getTotalPages());
-        koiFishResponsePagination.setTotalElements(koiFishPage.getNumberOfElements());
+        koiFishResponsePagination.setTotalElements(koiFishPage.getTotalElements());
+        koiFishResponsePagination.setNumberOfElements(koiFishPage.getNumberOfElements());
         return koiFishResponsePagination;
     }
 

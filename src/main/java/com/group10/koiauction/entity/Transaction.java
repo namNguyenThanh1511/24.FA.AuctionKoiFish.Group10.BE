@@ -3,6 +3,7 @@ package com.group10.koiauction.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.group10.koiauction.entity.enums.TransactionEnum;
+import com.group10.koiauction.entity.enums.TransactionStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -26,6 +27,9 @@ public class Transaction {
 
     @Enumerated(EnumType.STRING)
     private TransactionEnum type;
+
+    @Enumerated(EnumType.STRING)
+    private TransactionStatus status;
 
     private double amount;
 
@@ -59,4 +63,9 @@ public class Transaction {
     @ManyToOne
     @JoinColumn(name = "auction_session_id")
     AuctionSession auctionSession;
+
+    @OneToOne
+    @JoinColumn(name = "withdraw_request_id")
+    WithDrawRequest withdrawRequest;
+
 }

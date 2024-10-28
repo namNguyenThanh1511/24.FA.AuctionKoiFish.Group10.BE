@@ -11,7 +11,6 @@ import com.group10.koiauction.exception.EntityNotFoundException;
 import com.group10.koiauction.model.request.ResponseAuctionRequestDTO;
 import com.group10.koiauction.model.request.AuctionRequestDTO;
 import com.group10.koiauction.model.request.AuctionRequestUpdateDTO;
-import com.group10.koiauction.model.response.AcceptedAuctionRequestResponse;
 import com.group10.koiauction.model.response.AuctionRequestResponse;
 import com.group10.koiauction.model.response.BreederResponseDTO;
 import com.group10.koiauction.repository.AccountRepository;
@@ -21,9 +20,6 @@ import com.group10.koiauction.utilities.AccountUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

@@ -4,7 +4,9 @@ import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.Payment;
 import com.group10.koiauction.entity.Transaction;
 import com.group10.koiauction.entity.enums.PaymentMethodEnum;
+import com.group10.koiauction.entity.enums.PaymentStatusEnum;
 import com.group10.koiauction.entity.enums.TransactionEnum;
+import com.group10.koiauction.entity.enums.TransactionStatus;
 import com.group10.koiauction.model.request.DepositFundsRequest;
 import com.group10.koiauction.repository.PaymentRepository;
 import com.group10.koiauction.repository.TransactionRepository;
@@ -49,6 +51,7 @@ public class VNPayConfig {
         payment.setAmount(fundsRequest.getAmount());
         payment.setCreateAt(new Date());
         payment.setMethod(PaymentMethodEnum.BANKING);
+        payment.setStatus(PaymentStatusEnum.PENDING);
 
 
         Account member = accountUtils.getCurrentAccount();
@@ -59,7 +62,8 @@ public class VNPayConfig {
 
         transaction.setCreateAt(new Date());
         transaction.setAmount(fundsRequest.getAmount());
-        transaction.setType(TransactionEnum.PENDING);
+        transaction.setType(TransactionEnum.DEPOSIT_FUNDS);
+        transaction.setStatus(TransactionStatus.PENDING);
         transaction.setTo(member);
         transaction.setDescription("Deposit funds");
 

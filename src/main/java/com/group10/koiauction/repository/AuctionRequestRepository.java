@@ -2,8 +2,6 @@ package com.group10.koiauction.repository;
 
 import com.group10.koiauction.entity.AuctionRequest;
 import com.group10.koiauction.entity.enums.AuctionRequestStatusEnum;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -21,8 +19,4 @@ public interface AuctionRequestRepository extends JpaRepository<AuctionRequest, 
     List<AuctionRequest> findByBreederId(@Param("koiBreederId") Long koiBreederId);
 
     AuctionRequest findAuctionRequestByTitle(String title);
-
-    @Query("SELECT U FROM AuctionRequest U WHERE U.status = :status")
-    Page<AuctionRequest> findByStatus(@Param("status") AuctionRequestStatusEnum status, Pageable pageable);
-
 }
