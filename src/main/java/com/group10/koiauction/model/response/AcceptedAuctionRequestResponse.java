@@ -15,4 +15,8 @@ public class AcceptedAuctionRequestResponse {
     private AuctionRequestStatusEnum status;
     private BreederResponseDTO breeder;
     private Long koiId;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> bb6f36f00b2310d3d003f3c5df89f41fc1ac6a49
