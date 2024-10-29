@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.Date;
@@ -447,19 +448,15 @@ public class AuctionSessionService {
     }
 
     public AuctionSessionResponsePagination getAuctionSessionsByCurrentUser(int page, int size) {
-        Long currentUserId = accountUtils.getCurrentAccount().getUser_id(); // Lấy ID của user hiện tại
+        Long currentUserId = accountUtils.getCurrentAccount().getUser_id();
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<AuctionSession> auctionSessionsPage = auctionSessionRepository.findAuctionSessionsByUserId(currentUserId, pageable);
+        Page<AuctionSession> auctionSessionsPage = auctionSessionRepository.findLatestBidAuctionSessionsByUserId(currentUserId, pageable);
 
-        // Chuyển đổi từ entity sang DTO
-        List<AuctionSession> auctionSessions = auctionSessionsPage.toList();
-        List<AuctionSessionResponsePrimaryDataDTO> responseList = new ArrayList<>();
-        for(AuctionSession auctionSession : auctionSessions){
-            AuctionSessionResponsePrimaryDataDTO response = getAuctionSessionResponsePrimaryDataDTO(auctionSession);
-            responseList.add(response);
-        }
-        // Trả về đối tượng phân trang
+        List<AuctionSessionResponsePrimaryDataDTO> responseList = auctionSessionsPage.stream()
+                .map(this::convertToAuctionSessionResponsePrimaryDataDTO)
+                .collect(Collectors.toList());
+
         return new AuctionSessionResponsePagination(
                 responseList,
                 auctionSessionsPage.getNumber(),
@@ -475,12 +472,33 @@ public class AuctionSessionService {
         responseDTO.setTitle(auctionSession.getTitle());
         responseDTO.setStartingPrice(auctionSession.getStartingPrice());
         responseDTO.setCurrentPrice(auctionSession.getCurrentPrice());
-        responseDTO.getStartDate();
-        responseDTO.getEndDate();
+        responseDTO.setBuyNowPrice(auctionSession.getBuyNowPrice());
+        responseDTO.setBidIncrement(auctionSession.getBidIncrement());
+        // Convert LocalDateTime to Date
+        responseDTO.setStartDate(convertToDate(auctionSession.getStartDate()));
+        responseDTO.setEndDate(convertToDate(auctionSession.getEndDate()));
+
+        responseDTO.setMinBalanceToJoin(auctionSession.getMinBalanceToJoin());
         responseDTO.setAuctionStatus(auctionSession.getStatus());
+
+        // Add only the latest bid by the user
+        if (auctionSession.getBidSet() != null && !auctionSession.getBidSet().isEmpty()) {
+            Bid latestBid = auctionSession.getBidSet().stream()
+                    .max(Comparator.comparing(Bid::getBidAt))
+                    .orElse(null);
+
+            if (latestBid != null) {
+                responseDTO.setBids(Collections.singletonList(getBidResponseDTO(auctionSession, latestBid)));
+            }
+        }
 
         return responseDTO;
     }
+
+    private Date convertToDate(LocalDateTime localDateTime) {
+        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+    }
+
 
     public AuctionSessionResponsePrimaryDataDTO getAuctionSessionResponsePrimaryDataDTO(Long id) {
         AuctionSession auctionSession = auctionSessionRepository.findAuctionSessionById(id);
