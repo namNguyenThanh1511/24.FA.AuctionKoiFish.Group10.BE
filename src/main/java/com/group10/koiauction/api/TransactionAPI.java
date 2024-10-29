@@ -2,6 +2,7 @@ package com.group10.koiauction.api;
 
 import com.group10.koiauction.entity.Transaction;
 import com.group10.koiauction.entity.enums.TransactionEnum;
+import com.group10.koiauction.model.response.AuctionSessionResponsePagination;
 import com.group10.koiauction.model.response.TransactionResponseDTO;
 import com.group10.koiauction.model.response.TransactionResponsePaginationDTO;
 import com.group10.koiauction.service.TransactionService;
@@ -51,6 +52,17 @@ public class TransactionAPI {
         TransactionResponsePaginationDTO response = transactionService.filterTransactions(
                 transactionType, fromUserId, toUserId, startDate, endDate, minAmount, maxAmount, auctionSessionId, page, size);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/my-transactions")
+    public TransactionResponsePaginationDTO getMyTransactions(
+            @RequestParam(required = false) TransactionEnum transactionType,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date endDate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        return transactionService.getTransactionsByCurrentUser(page, size, transactionType, startDate, endDate);
     }
 
 }

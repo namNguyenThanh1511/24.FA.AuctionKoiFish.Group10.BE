@@ -1,13 +1,11 @@
 package com.group10.koiauction.service;
 
 import com.group10.koiauction.entity.Account;
+import com.group10.koiauction.entity.AuctionSession;
 import com.group10.koiauction.entity.Transaction;
 import com.group10.koiauction.entity.enums.TransactionEnum;
 import com.group10.koiauction.mapper.AccountMapper;
-import com.group10.koiauction.model.response.AccountResponse;
-import com.group10.koiauction.model.response.AuctionSessionResponseAccountDTO;
-import com.group10.koiauction.model.response.TransactionResponseDTO;
-import com.group10.koiauction.model.response.TransactionResponsePaginationDTO;
+import com.group10.koiauction.model.response.*;
 import com.group10.koiauction.repository.TransactionRepository;
 import com.group10.koiauction.utilities.AccountUtils;
 import org.checkerframework.checker.units.qual.A;
@@ -20,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class TransactionService {
@@ -167,4 +166,44 @@ public class TransactionService {
         return response;
     }
 
+    public TransactionResponsePaginationDTO getTransactionsByCurrentUser(
+            int page,
+            int size,
+            TransactionEnum transactionType,
+            Date startDate,
+            Date endDate) {
+
+        Long currentUserId = accountUtils.getCurrentAccount().getUser_id();
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Transaction> transactionsPage = transactionRepository.findTransactionsByUserIdAndFilters(
+                currentUserId, transactionType, startDate, endDate, pageable);
+
+        List<TransactionResponseDTO> responseList = transactionsPage.getContent().stream()
+                .map(this::mapToTransactionResponseDTO)
+                .collect(Collectors.toList());
+
+        return new TransactionResponsePaginationDTO(
+                responseList,
+                transactionsPage.getNumber(),
+                transactionsPage.getTotalPages(),
+                transactionsPage.getTotalElements()
+        );
+    }
+
+    private TransactionResponseDTO mapToTransactionResponseDTO(Transaction transaction) {
+        // Khởi tạo TransactionResponseDTO
+        TransactionResponseDTO transactionResponseDTO = new TransactionResponseDTO();
+        // Set các trường cần thiết từ Transaction sang TransactionResponseDTO
+        transactionResponseDTO.setId(transaction.getId());
+        transactionResponseDTO.setCreateAt(transaction.getCreateAt());
+        transactionResponseDTO.setType(transaction.getType());
+        transactionResponseDTO.setAmount(transaction.getAmount());
+        transactionResponseDTO.setDescription(transaction.getDescription());
+        transactionResponseDTO.setFromAccount(getAuctionSessionResponseAccountDTO(transaction.getFrom()));
+        transactionResponseDTO.setToAccount(getAuctionSessionResponseAccountDTO(transaction.getTo()));
+        transactionResponseDTO.setAuctionSessionId(transaction.getAuctionSession().getAuctionSessionId());
+
+        return transactionResponseDTO;
+    }
 }
