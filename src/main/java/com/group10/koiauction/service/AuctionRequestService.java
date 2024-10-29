@@ -13,6 +13,7 @@ import com.group10.koiauction.mapper.AuctionRequestMapper;
 import com.group10.koiauction.model.request.ResponseAuctionRequestDTO;
 import com.group10.koiauction.model.request.AuctionRequestDTO;
 import com.group10.koiauction.model.request.AuctionRequestUpdateDTO;
+import com.group10.koiauction.model.response.AcceptedAuctionRequestResponse;
 import com.group10.koiauction.model.response.AuctionRequestResponse;
 import com.group10.koiauction.model.response.AuctionRequestResponsePagination;
 import com.group10.koiauction.model.response.BreederResponseDTO;
@@ -391,6 +392,32 @@ public class AuctionRequestService {
         auctionRequestResponsePagination.setNumberOfElements(auctionRequestPage.getNumberOfElements());
         return auctionRequestResponsePagination;
 
+    }
+
+    public Page<AcceptedAuctionRequestResponse> getAcceptedByStaffAuctionRequests(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        //ACCEPTED_BY_STAFF
+        Page<AuctionRequest> auctionRequests = auctionRequestRepository.findByStatus(AuctionRequestStatusEnum.ACCEPTED_BY_STAFF, pageable);
+
+        return auctionRequests.map(auctionRequest -> {
+            // Tạo đối tượng phản hồi
+            AcceptedAuctionRequestResponse response = new AcceptedAuctionRequestResponse();
+            response.setId(auctionRequest.getAuction_request_id());
+            response.setCreatedAt(auctionRequest.getCreatedDate());
+            response.setDescription(auctionRequest.getDescription());
+            response.setStatus(auctionRequest.getStatus());
+
+            // Thêm thông tin breeder
+            BreederResponseDTO breeder = new BreederResponseDTO();
+            breeder.setId(auctionRequest.getAccount().getUser_id());
+            breeder.setUsername(auctionRequest.getAccount().getUsername());
+            response.setBreeder(breeder);
+
+            // Thêm koiId
+            response.setKoiId(auctionRequest.getKoiFish().getKoi_id());
+
+            return response;
+        });
     }
 
 }

@@ -24,4 +24,7 @@ public interface AuctionRequestRepository extends JpaRepository<AuctionRequest, 
 
     @Query("SELECT a FROM AuctionRequest a WHERE a.account.user_id = :koiBreederId")
     Page<AuctionRequest> findAllAuctionRequestOfCurrentBreederPagination(@Param("koiBreederId")Long koiBreederId,Pageable pageable);
+
+    @Query("SELECT U FROM AuctionRequest U WHERE U.status = :status")
+    Page<AuctionRequest> findByStatus(@Param("status") AuctionRequestStatusEnum status, Pageable pageable);
 }
