@@ -57,6 +57,13 @@ public class KoiFishAPI {
         return ResponseEntity.ok(koiFishResponsePaginationList);
     }
 
+    @GetMapping("/koiBreeder/pagination")
+    public ResponseEntity<KoiFishResponsePagination>getAllKoiFishOfCurrentBreederPagination(@RequestParam int page,
+                                                                                            @RequestParam(defaultValue = "5") int size){
+        KoiFishResponsePagination koiFishResponsePagination = koiFishService.getAllKoiFishOfCurrentBreederPagination(page, size);
+        return ResponseEntity.ok(koiFishResponsePagination);
+    }
+
     @GetMapping("/koiBreeder")
     public ResponseEntity<List<KoiFishResponse>>getAllKoiFishOfCurrentBreeder(){
         List<KoiFishResponse> koiFishResponseList = koiFishService.getAllKoiFishByCurrentBreeder("");

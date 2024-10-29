@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.Set;
 
 
 @Getter
@@ -58,5 +59,8 @@ public class AuctionRequest
     @ManyToOne // nhieu request -> 1 con ca koi
     @JoinColumn(name = "koi_id")//đặt tên cho khóa ngoại ở bảng AuctionRequest
     KoiFish koiFish;           // ánh xạ tới khóa chính trong bảng koi_fish
+
+    @OneToMany(mappedBy = "auctionRequest",cascade = CascadeType.ALL)
+    Set<AuctionRequestProcess> auctionRequestProcessSet;
 
 }

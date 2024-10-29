@@ -7,6 +7,7 @@ import com.group10.koiauction.mapper.AccountMapper;
 import com.group10.koiauction.mapper.AuctionSessionMapper;
 import com.group10.koiauction.mapper.BidMapper;
 import com.group10.koiauction.mapper.KoiMapper;
+import com.group10.koiauction.model.datasource.DsAuctionRequestDTO;
 import com.group10.koiauction.model.datasource.DsBidRequestDTO;
 import com.group10.koiauction.model.request.*;
 import com.group10.koiauction.model.response.AuctionSessionResponseAccountDTO;
@@ -18,7 +19,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Service
@@ -78,7 +82,7 @@ public class DataSourceService {
     List<RegisterAccountRequest> registerAccountRequestList = new ArrayList<>();
     List<KoiFishRequest> koiFishRequestList = new ArrayList<>();
     List<VarietyRequest> varietyList = new ArrayList<>();
-    List<AuctionRequestDTO> auctionRequestDTOList = new ArrayList<>();
+    List<DsAuctionRequestDTO> dsAuctionRequestDTOList = new ArrayList<>();
     List<AuctionSessionRequestDTO> auctionSessionRequestDTOList = new ArrayList<>();
     List<DsBidRequestDTO> dsBidRequestDTOList = new ArrayList<>();
 
@@ -139,21 +143,22 @@ public class DataSourceService {
         }
     }
 
-    public void createAuctionRequest(AuctionRequestDTO auctionRequestDTO) {
+    public void createAuctionRequest(DsAuctionRequestDTO dsAuctionRequestDTO) {
         AuctionRequest auctionRequest = new AuctionRequest();
         try {
-            auctionRequest.setTitle(auctionRequestDTO.getTitle());
-            auctionRequest.setDescription(auctionRequestDTO.getDescription());
+            auctionRequest.setCreatedDate(dsAuctionRequestDTO.getCreatedDate());
+            auctionRequest.setTitle(dsAuctionRequestDTO.getTitle());
+            auctionRequest.setDescription(dsAuctionRequestDTO.getDescription());
             auctionRequest.setStatus(AuctionRequestStatusEnum.PENDING);
             auctionRequest.setAccount(accountRepository.findAccountByUsername("koibreeder1"));
-            auctionRequest.setKoiFish(koiFishRepository.findByKoiId(auctionRequestDTO.getKoiFish_id()));
+            auctionRequest.setKoiFish(koiFishRepository.findByKoiId(dsAuctionRequestDTO.getKoiFish_id()));
             auctionRequestRepository.save(auctionRequest);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
     }
 
-    public void createAuctionSession(AuctionSessionRequestDTO auctionSessionRequestDTO , boolean isParticipated) {
+    public void createAuctionSession(AuctionSessionRequestDTO auctionSessionRequestDTO, boolean isParticipated) {
         try {
             AuctionSession auctionSession = auctionSessionMapper.toAuctionSession(auctionSessionRequestDTO);
             AuctionRequest auctionRequest = auctionRequestRepository.findByAuctionRequestId(auctionSessionRequestDTO.getAuction_request_id());
@@ -167,7 +172,7 @@ public class DataSourceService {
             auctionSession.setUpdateAt(auctionSession.getCreateAt());
             auctionSession = auctionSessionRepository.save(auctionSession);
             auctionSessionService.updateKoiStatus(auctionRequest.getKoiFish().getKoi_id(), auctionSession.getStatus());
-            auctionRequestService.approveAuctionRequest(auctionRequest.getAuction_request_id());
+//            auctionRequestService.approveAuctionRequest(auctionRequest.getAuction_request_id());
             auctionSessionService.scheduleActivationJob(auctionSession);
 
         } catch (Exception e) {
@@ -198,9 +203,9 @@ public class DataSourceService {
         return varietyRequest;
     }
 
-    public AuctionRequestDTO createAuctionRequestDTO(String title, String description, Long koiFishId) {
-        AuctionRequestDTO request = new AuctionRequestDTO(title, description, koiFishId);
-        auctionRequestDTOList.add(request);
+    public DsAuctionRequestDTO createAuctionRequestDTO(String title, String description, Long koiFishId, Date createdDate) {
+        DsAuctionRequestDTO request = new DsAuctionRequestDTO(title, description, koiFishId, createdDate);
+        dsAuctionRequestDTOList.add(request);
         return request;
     }
 
@@ -215,22 +220,24 @@ public class DataSourceService {
         auctionSessionRequestDTOList.add(request);
         return request;
     }
-    public DsBidRequestDTO createDsBidRequestDTO (double amount , Long auctionSessionId , Long memberId){
+
+    public DsBidRequestDTO createDsBidRequestDTO(double amount, Long auctionSessionId, Long memberId) {
         DsBidRequestDTO request = new DsBidRequestDTO(amount, auctionSessionId, memberId);
         dsBidRequestDTOList.add(request);
         return request;
     }
-    public Bid createBid(DsBidRequestDTO bidRequestDTO ) {
+
+    public Bid createBid(DsBidRequestDTO bidRequestDTO) {
         AuctionSession auctionSession =
                 auctionSessionRepository.findAuctionSessionById(bidRequestDTO.getAuctionSessionId());
         Account memberAccount = accountRepository.findByUser_id(bidRequestDTO.getMemberId());
         double bidRequestAmountIncrement = bidRequestDTO.getBidAmount();
         double previousMaxBidAmount;
 
-        if(auctionSession.getBidSet() == null){
+        if (auctionSession.getBidSet() == null) {
             previousMaxBidAmount = 0;
-        }else{
-             previousMaxBidAmount = bidService.findMaxBidAmount(auctionSession.getBidSet());// ko co ai dau gia ->
+        } else {
+            previousMaxBidAmount = bidService.findMaxBidAmount(auctionSession.getBidSet());// ko co ai dau gia ->
         }
         // lay gia
         // hien tai
@@ -268,7 +275,7 @@ public class DataSourceService {
             throw new RuntimeException("You can buy now this fish");
         }
         Set<Bid> bidSet = auctionSession.getBidSet();
-        if(bidSet == null){
+        if (bidSet == null) {
             bidSet = new HashSet<>();
         }
         Bid bid = new Bid();
@@ -306,6 +313,26 @@ public class DataSourceService {
 
 
     public void createDataSource() {
+        createAccountsCollections();
+
+        createVarietyCollections();
+
+        createKoiFishCollections();
+
+        createAuctionRequestCollections();
+
+        createAuctionSessionCollections();
+
+        auctionSessionRequestDTOList.clear();
+
+        createCompletedAuctionSessionCollections();
+
+        dsBidRequestDTOList.clear();
+        customBid();
+
+    }
+
+    public void createAccountsCollections() {
         RegisterAccountRequest registerAccountRequest1 = createRegisterAccountRequest("manager", "11111111", "Nguyen", "Thanh Nam", "namntse170239@fpt.edu.vn", "0829017281", "ABC 123", "MANAGER");
         RegisterAccountRequest registerAccountRequest2 = createRegisterAccountRequest("staff", "11111111", "Makise", "Kurisu", "makise@gmail.com", "0829017282", "ABC 123", "STAFF");
         RegisterAccountRequest registerAccountRequest3 = createRegisterAccountRequest("koibreeder1", "11111111", "Le",
@@ -333,8 +360,9 @@ public class DataSourceService {
         for (RegisterAccountRequest registerAccountRequest : registerAccountRequestList) {
             createAccount(registerAccountRequest);
         }
-        //----------------------------------------------------------------------------------
+    }
 
+    public void createVarietyCollections() {
         createVarietyRequest("Kohaku");
         createVarietyRequest("Sowa");
         createVarietyRequest("Ochibashigure");
@@ -345,8 +373,9 @@ public class DataSourceService {
         for (VarietyRequest varietyRequest : varietyList) {
             createVariety(varietyRequest);
         }
-        //----------------------------------------------------------------------------------
+    }
 
+    public void createKoiFishCollections() {
         createKoiFishRequest("Kohaku", KoiSexEnum.MALE, 50, 4.5, new Date(120, 5, 15), KOI_IMAGE_URLS.get(0),
                 "Beautiful " +
                         "Kohaku with deep red pattern", 3000, "video_url1", Set.of(1L));
@@ -366,7 +395,7 @@ public class DataSourceService {
         createKoiFishRequest("Yamabuki Ogon", KoiSexEnum.FEMALE, 62, 5.3, new Date(117, 10, 14), KOI_IMAGE_URLS.get(3), "Bright Yamabuki Ogon with golden scales", 5000, "video_url8", Set.of(5L));
 
         createKoiFishRequest("Kikokuryu", KoiSexEnum.FEMALE, 61, 4.9, new Date(116, 2, 15), KOI_IMAGE_URLS.get(0),
-                "Kikokuryu with striking black and silver pattern", 4600, "video_url9", Set.of(1L,2L));
+                "Kikokuryu with striking black and silver pattern", 4600, "video_url9", Set.of(1L, 2L));
         createKoiFishRequest("Hi Utsuri", KoiSexEnum.MALE, 53, 4.3, new Date(118, 9, 17), KOI_IMAGE_URLS.get(1), "Hi " +
                 "Utsuri with vibrant red and black", 3200, "video_url10", Set.of(5L));
         createKoiFishRequest("Shusui", KoiSexEnum.FEMALE, 57, 5.0, new Date(117, 12, 5), KOI_IMAGE_URLS.get(2),
@@ -376,27 +405,59 @@ public class DataSourceService {
         for (KoiFishRequest koiFishRequest : koiFishRequestList) {
             createKoiFish(koiFishRequest);
         }
-        //----------------------------------------------------------------------------------
+    }
+
+    public void createAuctionRequestCollections() {
         createAuctionRequestDTO("Kohaku Auction", "Auction for a beautiful Kohaku",
-                koiFishRepository.findExactKoiFishByVideoUrl("video_url1").getKoi_id());
+                koiFishRepository.findExactKoiFishByVideoUrl("video_url1").getKoi_id(), new Date());
         createAuctionRequestDTO("Sanke Auction", "Auction for a well-balanced Sanke",
-                koiFishRepository.findExactKoiFishByVideoUrl("video_url2").getKoi_id());
+                koiFishRepository.findExactKoiFishByVideoUrl("video_url2").getKoi_id(), new Date());
         createAuctionRequestDTO("Asagi Auction", "Auction for a stunning Asagi",
-                koiFishRepository.findExactKoiFishByVideoUrl("video_url6").getKoi_id());
+                koiFishRepository.findExactKoiFishByVideoUrl("video_url6").getKoi_id(), new Date());
         createAuctionRequestDTO("Goshiki Auction", "Auction for a vibrant Goshiki",
-                koiFishRepository.findExactKoiFishByVideoUrl("video_url7").getKoi_id());
+                koiFishRepository.findExactKoiFishByVideoUrl("video_url7").getKoi_id(), new Date());
         createAuctionRequestDTO("Yamabuki Ogon Auction", "Auction for a bright Yamabuki Ogon",
-                koiFishRepository.findExactKoiFishByVideoUrl("video_url8").getKoi_id());
-        createAuctionRequestDTO("Kikokuryu Auction", "Auction for a striking Kikokuryu", koiFishRepository.findExactKoiFishByVideoUrl("video_url9").getKoi_id());
-        createAuctionRequestDTO("Hi Utsuri Auction", "Auction for a vibrant Hi Utsuri", koiFishRepository.findExactKoiFishByVideoUrl("video_url10").getKoi_id());
-        createAuctionRequestDTO("Shusui Auction", "Auction for a beautiful Shusui", koiFishRepository.findExactKoiFishByVideoUrl("video_url11").getKoi_id());
+                koiFishRepository.findExactKoiFishByVideoUrl("video_url8").getKoi_id(), new Date());
+        createAuctionRequestDTO("Kikokuryu Auction", "Auction for a striking Kikokuryu",
+                koiFishRepository.findExactKoiFishByVideoUrl("video_url9").getKoi_id(), getPastDate(4));
+        createAuctionRequestDTO("Hi Utsuri Auction", "Auction for a vibrant Hi Utsuri",
+                koiFishRepository.findExactKoiFishByVideoUrl("video_url10").getKoi_id(), getPastDate(4));
+        createAuctionRequestDTO("Shusui Auction", "Auction for a beautiful Shusui",
+                koiFishRepository.findExactKoiFishByVideoUrl("video_url11").getKoi_id(), getPastDate(5));
 
 
         //----------------------------------------------------------------------------------
-        for (AuctionRequestDTO auctionRequestDTO : auctionRequestDTOList) {
-            createAuctionRequest(auctionRequestDTO);
+        for (DsAuctionRequestDTO dsAuctionRequestDTO : dsAuctionRequestDTOList) {
+            createAuctionRequest(dsAuctionRequestDTO);
         }
-        //----------------------------------------------------------------------------------
+    }
+
+    public void createAuctionSessionCollections() {
+        String[] auctionRequestTitles = {
+                "Kohaku Auction",
+                "Sanke Auction",
+                "Asagi Auction",
+                "Goshiki Auction",
+                "Yamabuki Ogon Auction",
+                "Kikokuryu Auction",
+                "Hi Utsuri Auction",
+                "Shusui Auction"
+        };
+
+        for (String title : auctionRequestTitles) {
+            AuctionRequest auctionRequest = auctionRequestRepository.findAuctionRequestByTitle(title);
+            Date createdDate = auctionRequest.getCreatedDate();
+            LocalDate createdLocalDate = createdDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+            long daysInThePast = ChronoUnit.DAYS.between(createdLocalDate, LocalDate.now());
+            Long auctionRequestId = auctionRequestRepository.findAuctionRequestByTitle(title).getAuction_request_id();
+
+            auctionRequestService.approveAuctionRequest(auctionRequestId, accountRepository.findAccountByUsername(
+                    "staff"), getPastDate((int) daysInThePast - 1));
+            auctionRequestService.approveAuctionRequest(auctionRequestId, accountRepository.findAccountByUsername(
+                    "manager"), getPastDate((int)daysInThePast - 2));
+        }
+
         createAuctionSessionRequestDTO(
                 "Kohaku Special Auction",
                 3000,
@@ -455,11 +516,11 @@ public class DataSourceService {
 
         //----------------------------------------------------------------------------------
         for (AuctionSessionRequestDTO auctionSessionRequestDTO : auctionSessionRequestDTOList) {
-            createAuctionSession(auctionSessionRequestDTO,false);
+            createAuctionSession(auctionSessionRequestDTO, false);
         }
-        auctionSessionRequestDTOList.clear();
-        //----------------------------------------------------------------------------------
+    }
 
+    public void createCompletedAuctionSessionCollections() {
         createAuctionSessionRequestDTO(
                 "Kikokuryu Exclusive Auction",
                 4600,
@@ -497,79 +558,49 @@ public class DataSourceService {
                 accountRepository.findAccountByUsername("staff").getUser_id());
         //----------------------------------------------------------------------------------
         for (AuctionSessionRequestDTO auctionSessionRequestDTO : auctionSessionRequestDTOList) {
-            createAuctionSession(auctionSessionRequestDTO,true);
+            createAuctionSession(auctionSessionRequestDTO, true);
         }
-        //----------------------------------------------------------------------------------
-//        Long kikokuryuAuctionId = auctionSessionRepository.findAuctionSessionByTitle("Kikokuryu Exclusive Auction").getAuctionSessionId();
-//        Long hiUtsuriAuctionId = auctionSessionRepository.findAuctionSessionByTitle("Hi Utsuri Special Auction").getAuctionSessionId();
-//        Long shusuiAuctionId = auctionSessionRepository.findAuctionSessionByTitle("Shusui Auction Event").getAuctionSessionId();
-//        List<Account> memberAccounts = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.MEMBER);
-//        List<Double> bidAmounts = List.of(150.00, 200.00, 250.00, 300.00);
-//
-//        for(Account member : memberAccounts) {
-//            Long memberId = member.getUser_id();
-//            for(double bidAmount : bidAmounts) {
-//                // Add bids to Kikokuryu Exclusive Auction
-//                DsBidRequestDTO bidRequestKikokuryu = createDsBidRequestDTO(bidAmount, kikokuryuAuctionId, memberId);
-//                createBid(bidRequestKikokuryu);
-//
-//                // Add bids to Hi Utsuri Special Auction
-//                DsBidRequestDTO bidRequestHiUtsuri = createDsBidRequestDTO(bidAmount, hiUtsuriAuctionId, memberId);
-//                createBid(bidRequestHiUtsuri);
-//
-//                // Add bids to Shusui Auction Event
-//                DsBidRequestDTO bidRequestShusui = createDsBidRequestDTO(bidAmount, shusuiAuctionId, memberId);
-//                createBid(bidRequestShusui);
-//            }
-//        }
-        dsBidRequestDTOList.clear();
-        customBid();
-
-        //----------------------------------------------------------------------------------
-
-        //----------------------------------------------------------------------------------
-
-
     }
-    public void customBid(){
-        createDsBidRequestDTO(150 ,
-                auctionSessionRepository.findAuctionSessionByTitle("Kikokuryu Exclusive Auction").getAuctionSessionId() ,accountRepository.findAccountByUsername("member").getUser_id());
-        createDsBidRequestDTO(150 ,
-                auctionSessionRepository.findAuctionSessionByTitle("Kikokuryu Exclusive Auction").getAuctionSessionId() ,accountRepository.findAccountByUsername("member").getUser_id());
-        createDsBidRequestDTO(150 ,
-                auctionSessionRepository.findAuctionSessionByTitle("Kikokuryu Exclusive Auction").getAuctionSessionId() ,accountRepository.findAccountByUsername("member").getUser_id());
 
-        createDsBidRequestDTO(150 ,
-                auctionSessionRepository.findAuctionSessionByTitle("Kikokuryu Exclusive Auction").getAuctionSessionId() ,accountRepository.findAccountByUsername("member").getUser_id());
-        createDsBidRequestDTO(150 ,
-                auctionSessionRepository.findAuctionSessionByTitle("Kikokuryu Exclusive Auction").getAuctionSessionId() ,accountRepository.findAccountByUsername("member1").getUser_id());
+    public void customBid() {
+        createDsBidRequestDTO(150,
+                auctionSessionRepository.findAuctionSessionByTitle("Kikokuryu Exclusive Auction").getAuctionSessionId(), accountRepository.findAccountByUsername("member").getUser_id());
+        createDsBidRequestDTO(150,
+                auctionSessionRepository.findAuctionSessionByTitle("Kikokuryu Exclusive Auction").getAuctionSessionId(), accountRepository.findAccountByUsername("member").getUser_id());
+        createDsBidRequestDTO(150,
+                auctionSessionRepository.findAuctionSessionByTitle("Kikokuryu Exclusive Auction").getAuctionSessionId(), accountRepository.findAccountByUsername("member").getUser_id());
 
-        createDsBidRequestDTO(150 ,
-                auctionSessionRepository.findAuctionSessionByTitle("Kikokuryu Exclusive Auction").getAuctionSessionId() ,accountRepository.findAccountByUsername("member3").getUser_id());
+        createDsBidRequestDTO(150,
+                auctionSessionRepository.findAuctionSessionByTitle("Kikokuryu Exclusive Auction").getAuctionSessionId(), accountRepository.findAccountByUsername("member").getUser_id());
+        createDsBidRequestDTO(150,
+                auctionSessionRepository.findAuctionSessionByTitle("Kikokuryu Exclusive Auction").getAuctionSessionId(), accountRepository.findAccountByUsername("member1").getUser_id());
 
-        createDsBidRequestDTO(150 ,
-                auctionSessionRepository.findAuctionSessionByTitle("Hi Utsuri Special Auction").getAuctionSessionId() ,accountRepository.findAccountByUsername("member").getUser_id());
+        createDsBidRequestDTO(150,
+                auctionSessionRepository.findAuctionSessionByTitle("Kikokuryu Exclusive Auction").getAuctionSessionId(), accountRepository.findAccountByUsername("member3").getUser_id());
 
-        createDsBidRequestDTO(150 ,
-                auctionSessionRepository.findAuctionSessionByTitle("Hi Utsuri Special Auction").getAuctionSessionId() ,accountRepository.findAccountByUsername("member1").getUser_id());
+        createDsBidRequestDTO(150,
+                auctionSessionRepository.findAuctionSessionByTitle("Hi Utsuri Special Auction").getAuctionSessionId(), accountRepository.findAccountByUsername("member").getUser_id());
+
+        createDsBidRequestDTO(150,
+                auctionSessionRepository.findAuctionSessionByTitle("Hi Utsuri Special Auction").getAuctionSessionId(), accountRepository.findAccountByUsername("member1").getUser_id());
 
 
-
-        for(DsBidRequestDTO dsBidRequestDTO : dsBidRequestDTOList){
+        for (DsBidRequestDTO dsBidRequestDTO : dsBidRequestDTOList) {
             createBid(dsBidRequestDTO);
         }
         auctionSessionService.closeAuctionSession(auctionSessionRepository.findAuctionSessionByTitle("Kikokuryu Exclusive Auction"));
     }
-    public void collectorBid(){
+
+    public void collectorBid() {
         Long kikokuryuAuctionId = auctionSessionRepository.findAuctionSessionByTitle("Kikokuryu Exclusive Auction").getAuctionSessionId();
         Long hiUtsuriAuctionId = auctionSessionRepository.findAuctionSessionByTitle("Hi Utsuri Special Auction").getAuctionSessionId();
         Long shusuiAuctionId = auctionSessionRepository.findAuctionSessionByTitle("Shusui Auction Event").getAuctionSessionId();
         List<Account> memberAccounts = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.MEMBER);
         List<Double> bidAmounts = List.of(150.00, 200.00, 250.00, 300.00);
 
-        for(Account member : memberAccounts) {
+        for (Account member : memberAccounts) {
             Long memberId = member.getUser_id();
-            for(double bidAmount : bidAmounts) {
+            for (double bidAmount : bidAmounts) {
                 // Add bids to Kikokuryu Exclusive Auction
                 DsBidRequestDTO bidRequestKikokuryu = createDsBidRequestDTO(bidAmount, kikokuryuAuctionId, memberId);
                 createBid(bidRequestKikokuryu);
@@ -584,4 +615,10 @@ public class DataSourceService {
             }
         }
     }
+
+    public Date getPastDate(int daysInThePast) {
+        LocalDateTime pastDate = LocalDateTime.now().minusDays(daysInThePast);
+        return Date.from(pastDate.atZone(ZoneId.systemDefault()).toInstant());
+    }
+
 }

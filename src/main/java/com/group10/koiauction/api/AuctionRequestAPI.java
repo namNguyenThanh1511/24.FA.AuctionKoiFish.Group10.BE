@@ -1,10 +1,14 @@
 package com.group10.koiauction.api;
 
 import com.group10.koiauction.entity.AuctionRequest;
+import com.group10.koiauction.entity.AuctionRequestProcess;
 import com.group10.koiauction.model.request.AuctionRequestDTO;
 import com.group10.koiauction.model.request.AuctionRequestUpdateDTO;
 import com.group10.koiauction.model.request.ResponseAuctionRequestDTO;
+import com.group10.koiauction.model.response.AuctionRequestProcessResponseDTO;
 import com.group10.koiauction.model.response.AuctionRequestResponse;
+import com.group10.koiauction.model.response.AuctionRequestResponsePagination;
+import com.group10.koiauction.service.AuctionRequestProcessService;
 import com.group10.koiauction.service.AuctionRequestService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -23,6 +27,9 @@ public class AuctionRequestAPI {
 
     @Autowired
     AuctionRequestService auctionRequestService;
+
+    @Autowired
+    AuctionRequestProcessService auctionRequestProcessService;
 
     @PostMapping()
     @PreAuthorize("hasAuthority('KOI_BREEDER')")
@@ -79,5 +86,18 @@ public class AuctionRequestAPI {
         auctionRequestService.revertApproveAuctionRequest(id);
         return ResponseEntity.ok("Revert request successful");
     }
+
+    @GetMapping("/processLog")
+    public ResponseEntity<List<AuctionRequestProcessResponseDTO>> getAllProcessedAuctionRequests() {
+        List<AuctionRequestProcessResponseDTO> auctionRequestProcessList = auctionRequestProcessService.getAllAuctionRequestProcess();
+        return ResponseEntity.ok(auctionRequestProcessList);
+    }
+
+    @GetMapping("/koiBreeder/pagination")
+    public ResponseEntity<AuctionRequestResponsePagination> getAllAuctionRequestOfCurrentBreederPagination(@RequestParam int page , @RequestParam int size){
+        AuctionRequestResponsePagination auctionRequestResponsePagination = auctionRequestService.getAuctionRequestResponsesPagination(page,size);
+        return ResponseEntity.ok(auctionRequestResponsePagination);
+    }
+
 
 }

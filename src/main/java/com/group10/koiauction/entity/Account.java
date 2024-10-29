@@ -100,6 +100,13 @@ public class Account implements UserDetails {
     @OneToMany(mappedBy = "staff")
     Set<WithDrawRequest> withdrawRequestSetOfStaff;
 
+    @OneToMany(mappedBy = "manager")
+    Set<AuctionRequestProcess> auctionRequestProcessSetOfManager;
+
+    @OneToMany(mappedBy = "staff")
+    Set<AuctionRequestProcess> auctionRequestProcessSetOfStaff;
+
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() { // đinh nghĩa quyền hạn account này làm đc

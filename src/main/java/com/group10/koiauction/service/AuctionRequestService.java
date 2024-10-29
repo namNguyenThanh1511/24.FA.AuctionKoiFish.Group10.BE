@@ -2,16 +2,19 @@ package com.group10.koiauction.service;
 
 import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.AuctionRequest;
+import com.group10.koiauction.entity.AuctionRequestProcess;
 import com.group10.koiauction.entity.KoiFish;
 import com.group10.koiauction.entity.enums.AccountRoleEnum;
 import com.group10.koiauction.entity.enums.AccountStatusEnum;
 import com.group10.koiauction.entity.enums.AuctionRequestStatusEnum;
 import com.group10.koiauction.entity.enums.KoiStatusEnum;
 import com.group10.koiauction.exception.EntityNotFoundException;
+import com.group10.koiauction.mapper.AuctionRequestMapper;
 import com.group10.koiauction.model.request.ResponseAuctionRequestDTO;
 import com.group10.koiauction.model.request.AuctionRequestDTO;
 import com.group10.koiauction.model.request.AuctionRequestUpdateDTO;
 import com.group10.koiauction.model.response.AuctionRequestResponse;
+import com.group10.koiauction.model.response.AuctionRequestResponsePagination;
 import com.group10.koiauction.model.response.BreederResponseDTO;
 import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.repository.AuctionRequestRepository;
@@ -20,11 +23,12 @@ import com.group10.koiauction.utilities.AccountUtils;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Service
 public class AuctionRequestService {
@@ -45,6 +49,9 @@ public class AuctionRequestService {
 
     @Autowired
     private AccountUtils accountUtils;
+
+    @Autowired
+    private AuctionRequestMapper auctionRequestMapper;
 
 
     public AuctionRequestResponse createAuctionRequest(AuctionRequestDTO auctionRequestDTO) {
@@ -112,9 +119,12 @@ public class AuctionRequestService {
         auctionRequest.setStatus(account.getRoleEnum() == AccountRoleEnum.STAFF ?
                 AuctionRequestStatusEnum.ACCEPTED_BY_STAFF : AuctionRequestStatusEnum.APPROVED_BY_MANAGER );//
         // update status
-//        updateKoiStatus(auctionRequest.getKoiFish().getKoi_id(),auctionRequest.getStatus());
+        // updateKoiStatus(auctionRequest.getKoiFish().getKoi_id(),auctionRequest.getStatus());
         auctionRequest.setAccount(auctionRequest.getAccount());
         auctionRequest.setResponse_note(responseAuctionRequestDTO.getResponseNote());
+
+        auctionRequest.setAuctionRequestProcessSet(getAuctionRequestProcesses(auctionRequest,account , new Date()));
+
         try {
             auctionRequestRepository.save(auctionRequest);
         } catch (Exception e) {
@@ -136,11 +146,14 @@ public class AuctionRequestService {
         return auctionRequestResponse;
     }
 
-    public void approveAuctionRequest(Long id) {
+    public void approveAuctionRequest(Long id , Account account , Date processAt) {
         AuctionRequest auctionRequest = getAuctionRequestById(id);
         auctionRequest.setUpdatedDate(new Date());
-        auctionRequest.setStatus(AuctionRequestStatusEnum.APPROVED_BY_MANAGER);//
+        auctionRequest.setStatus(account.getRoleEnum() == AccountRoleEnum.STAFF ?
+                AuctionRequestStatusEnum.ACCEPTED_BY_STAFF : AuctionRequestStatusEnum.APPROVED_BY_MANAGER );
         auctionRequest.setAccount(auctionRequest.getAccount());
+        auctionRequest.setAuctionRequestProcessSet(getAuctionRequestProcesses(auctionRequest,account, processAt  ));
+
         try {
             auctionRequestRepository.save(auctionRequest);
         } catch (Exception e) {
@@ -158,6 +171,9 @@ public class AuctionRequestService {
         updateKoiStatus(auctionRequest.getKoiFish().getKoi_id(),auctionRequest.getStatus());
         auctionRequest.setAccount(auctionRequest.getAccount());
         auctionRequest.setResponse_note(responseAuctionRequestDTO.getResponseNote());
+
+        auctionRequest.setAuctionRequestProcessSet(getAuctionRequestProcesses(auctionRequest,account, new Date()));
+
         try {
             auctionRequestRepository.save(auctionRequest);
         } catch (Exception e) {
@@ -333,5 +349,48 @@ public class AuctionRequestService {
 
     }
 
+    public Set<AuctionRequestProcess> getAuctionRequestProcesses(AuctionRequest auctionRequest , Account account , Date processAt) {
+        Set<AuctionRequestProcess> auctionRequestProcessSet;
+        if(auctionRequest.getAuctionRequestProcessSet() == null) {
+            auctionRequestProcessSet = new HashSet<AuctionRequestProcess>();
+        }else{
+            auctionRequestProcessSet = auctionRequest.getAuctionRequestProcessSet();
+        }
+        AuctionRequestProcess auctionRequestProcess = new AuctionRequestProcess();
+        auctionRequestProcess.setDate(processAt);
+        auctionRequestProcess.setAuctionRequest(auctionRequest);
+        auctionRequestProcess.setStaff(account.getRoleEnum() == AccountRoleEnum.STAFF ? account : null);
+        auctionRequestProcess.setManager(account.getRoleEnum() == AccountRoleEnum.MANAGER ? account : null);
+        auctionRequestProcess.setStatus(auctionRequest.getStatus());
+        auctionRequestProcessSet.add(auctionRequestProcess);
+
+        return auctionRequestProcessSet;
+    }
+
+    public AuctionRequestResponsePagination getAuctionRequestResponsesPagination(int page , int size) {
+        Account currentBreeder = accountUtils.getCurrentAccount();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AuctionRequest> auctionRequestPage =
+                auctionRequestRepository.findAllAuctionRequestOfCurrentBreederPagination(currentBreeder.getUser_id(),pageable);
+        List<AuctionRequestResponse> auctionRequestResponseList = new ArrayList<>();
+        for(AuctionRequest auctionRequest : auctionRequestPage.getContent()) {
+            AuctionRequestResponse auctionRequestResponse = auctionRequestMapper.toAuctionRequestResponse(auctionRequest);
+            auctionRequestResponse.setKoi_id(auctionRequest.getKoiFish().getKoi_id());
+            BreederResponseDTO breederResponseDTO = new BreederResponseDTO();
+            breederResponseDTO.setId(currentBreeder.getUser_id());
+            breederResponseDTO.setUsername(currentBreeder.getUsername());
+            auctionRequestResponse.setBreeder(breederResponseDTO);
+            auctionRequestResponseList.add(auctionRequestResponse);
+
+        }
+        AuctionRequestResponsePagination auctionRequestResponsePagination = new AuctionRequestResponsePagination();
+        auctionRequestResponsePagination.setAuctionRequestResponseList(auctionRequestResponseList);
+        auctionRequestResponsePagination.setPageNumber(auctionRequestPage.getNumber());
+        auctionRequestResponsePagination.setTotalPages(auctionRequestPage.getTotalPages());
+        auctionRequestResponsePagination.setTotalElements(auctionRequestPage.getTotalElements());
+        auctionRequestResponsePagination.setNumberOfElements(auctionRequestPage.getNumberOfElements());
+        return auctionRequestResponsePagination;
+
+    }
 
 }
