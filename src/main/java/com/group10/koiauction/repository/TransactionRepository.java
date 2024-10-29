@@ -44,6 +44,18 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("maxAmount") Double maxAmount,
             @Param("auctionSessionId") Long auctionSessionId,
             Pageable pageable);
+
+    @Query("SELECT t FROM Transaction t WHERE (t.from.user_id = :userId OR t.to.user_id = :userId) " +
+            "AND (:transactionType IS NULL OR t.type = :transactionType) " +
+            "AND (:startDate IS NULL OR t.createAt >= :startDate) " +
+            "AND (:endDate IS NULL OR t.createAt <= :endDate)")
+    Page<Transaction> findTransactionsByUserIdAndFilters(
+            @Param("userId") Long userId,
+            @Param("transactionType") TransactionEnum transactionType,
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate,
+            Pageable pageable);
+
 }
 
 

@@ -42,8 +42,12 @@ public interface AuctionSessionRepository extends JpaRepository<AuctionSession, 
             @Param("maxWeightKg") Double maxWeightKg,
             Pageable pageable);
 
-    @Query("SELECT DISTINCT a FROM AuctionSession a JOIN a.bidSet b WHERE b.member.user_id = :userId")
-    Page<AuctionSession> findAuctionSessionsByUserId(@Param("userId") Long userId, Pageable pageable);
+    @Query("SELECT a FROM AuctionSession a " +
+            "JOIN a.bidSet b " +
+            "WHERE b.member.user_id = :userId " +
+            "AND b.bidAt = (SELECT MAX(b2.bidAt) FROM Bid b2 WHERE b2.auctionSession.auctionSessionId = a.auctionSessionId AND b2.member.user_id = :userId)")
+    Page<AuctionSession> findLatestBidAuctionSessionsByUserId(@Param("userId") Long userId, Pageable pageable);
+
 
 
 
