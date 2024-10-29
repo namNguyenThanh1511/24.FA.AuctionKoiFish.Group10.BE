@@ -21,6 +21,7 @@ import com.group10.koiauction.utilities.AccountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -101,6 +102,25 @@ public class KoiFishService {
         }
         return koiFishResponseList;
     }
+
+    public KoiFishResponsePagination getAllKoiFishOfCurrentBreederPagination(int page , int size) {
+        Account koiBreeder = accountUtils.getCurrentAccount();
+        Pageable pageable = PageRequest.of(page,size);
+        Page<KoiFish> koiFishPage = koiFishRepository.findKoiFishByBreederPaginationExceptStatus(koiBreeder.getUser_id(),KoiStatusEnum.IS_DELETED,pageable);
+        List<KoiFishResponse> koiFishResponseList = new ArrayList<>();
+        for (KoiFish koiFish : koiFishPage.getContent()) {
+            KoiFishResponse koiFishResponse = getKoiMapperResponse(koiFish);
+            koiFishResponseList.add(koiFishResponse);
+        }
+        KoiFishResponsePagination koiFishResponsePagination = new KoiFishResponsePagination();
+        koiFishResponsePagination.setKoiFishResponseList(koiFishResponseList);
+        koiFishResponsePagination.setPageNumber(koiFishPage.getNumber());
+        koiFishResponsePagination.setTotalPages(koiFishPage.getTotalPages());
+        koiFishResponsePagination.setTotalElements(koiFishPage.getTotalElements());
+        koiFishResponsePagination.setNumberOfElements(koiFishPage.getNumberOfElements());
+        return koiFishResponsePagination;
+    }
+
 
     public KoiFishResponse updateKoiFish(Long koi_id, KoiFishRequest koiFishRequest) {
         KoiFish oldKoi = getKoiFishByID(koi_id);

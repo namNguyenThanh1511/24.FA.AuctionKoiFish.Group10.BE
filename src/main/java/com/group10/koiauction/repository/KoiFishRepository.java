@@ -4,6 +4,8 @@ import com.group10.koiauction.entity.KoiFish;
 import com.group10.koiauction.entity.Variety;
 import com.group10.koiauction.entity.enums.KoiSexEnum;
 import com.group10.koiauction.entity.enums.KoiStatusEnum;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -38,6 +40,9 @@ public interface KoiFishRepository extends JpaRepository<KoiFish, Long> {
 
     @Query("SELECT U FROM KoiFish U WHERE U.video_url = :video_url")
     KoiFish findExactKoiFishByVideoUrl(@Param("video_url") String video_url);
+
+    @Query("SELECT k from KoiFish k WHERE k.account.user_id = :koiBreederId AND k.koiStatus != :koiStatus")
+    Page<KoiFish> findKoiFishByBreederPaginationExceptStatus(@Param("koiBreederId") Long koiBreederId,  @Param("koiStatus")KoiStatusEnum status ,Pageable pageable);
 
 
 

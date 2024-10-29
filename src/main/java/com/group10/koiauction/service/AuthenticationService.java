@@ -165,7 +165,7 @@ public class AuthenticationService implements UserDetailsService {
                 Account newAccount = new Account();
                 newAccount.setEmail(email);
                 newAccount.setFirstName(decodedToken.getName());
-                newAccount.setLastName(decodedToken.getName());
+//                newAccount.setLastName(decodedToken.getName());
                 newAccount.setRoleEnum(AccountRoleEnum.MEMBER);
                 newAccount.setStatus(AccountStatusEnum.ACTIVE);
                 newAccount.setUsername(email);
