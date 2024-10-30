@@ -24,7 +24,7 @@ public interface AuctionSessionRepository extends JpaRepository<AuctionSession, 
     @Query("SELECT a FROM AuctionSession a WHERE a.staff.user_id = :accountId")
     Page<AuctionSession> findAllByStaffAccountId(@Param("accountId") Long accountId, Pageable pageable);
 
-    @Query("SELECT a FROM AuctionSession a JOIN a.koiFish.varieties v WHERE " +
+    @Query("SELECT a FROM AuctionSession a JOIN a.koiFish v WHERE " +
             "(a.auctionType = :auctionType OR :auctionType IS NULL) AND " +
             "(a.koiFish.sex = :sex OR :sex IS NULL) AND " +
             "(a.koiFish.account.username = :breederName OR :breederName IS NULL) AND " + // Use the correct field here

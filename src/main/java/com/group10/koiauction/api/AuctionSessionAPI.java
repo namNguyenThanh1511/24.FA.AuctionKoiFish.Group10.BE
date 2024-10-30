@@ -84,7 +84,7 @@ public class AuctionSessionAPI {
             @RequestParam(required = false) AuctionSessionType auctionType,
             @RequestParam(required = false) KoiSexEnum sex,
             @RequestParam(required = false) String breederName,
-            @RequestParam(required = false) Set<String> varieties,  // Change to Set<String>
+            @RequestParam(required = false) Set<String> varieties, // Change to Set<String>
             @RequestParam(required = false) Double minSizeCm,
             @RequestParam(required = false) Double maxSizeCm,
             @RequestParam(required = false) Double minWeightKg,
