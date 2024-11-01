@@ -14,6 +14,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface AuctionSessionRepository extends JpaRepository<AuctionSession, Long> {
@@ -49,8 +50,6 @@ public interface AuctionSessionRepository extends JpaRepository<AuctionSession, 
     Page<AuctionSession> findLatestBidAuctionSessionsByUserId(@Param("userId") Long userId, Pageable pageable);
 
 
-
-
     @Query("SELECT U FROM AuctionSession U  WHERE  U.title = :title")
     AuctionSession findAuctionSessionByTitle(@Param("title") String title);
 
@@ -60,4 +59,6 @@ public interface AuctionSessionRepository extends JpaRepository<AuctionSession, 
     @Query("SELECT COUNT(a) FROM AuctionSession a WHERE a.status NOT IN (:statuses) ")
     long countdAuctionSessionExceptStatus(List<AuctionSessionStatus> statuses);
 
+    @Query("SELECT a FROM AuctionSession a WHERE a.auctionSessionId = :auctionSessionId AND a.status = :status")
+    Optional<AuctionSession> findByIdAndStatus(@Param("auctionSessionId") Long auctionSessionId, @Param("status") Enum status);
 }

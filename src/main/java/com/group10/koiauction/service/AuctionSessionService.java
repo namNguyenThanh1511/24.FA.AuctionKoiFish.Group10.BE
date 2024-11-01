@@ -530,33 +530,84 @@ public class AuctionSessionService {
         );
     }
 
-    private AuctionSessionResponsePrimaryDataDTO convertToAuctionSessionResponsePrimaryDataDTO(AuctionSession auctionSession) {
-        AuctionSessionResponsePrimaryDataDTO responseDTO = new AuctionSessionResponsePrimaryDataDTO();
-        responseDTO.setAuctionSessionId(auctionSession.getAuctionSessionId());
-        responseDTO.setTitle(auctionSession.getTitle());
-        responseDTO.setStartingPrice(auctionSession.getStartingPrice());
-        responseDTO.setCurrentPrice(auctionSession.getCurrentPrice());
-        responseDTO.setBuyNowPrice(auctionSession.getBuyNowPrice());
-        responseDTO.setBidIncrement(auctionSession.getBidIncrement());
-        // Convert LocalDateTime to Date
-        responseDTO.setStartDate(convertToDate(auctionSession.getStartDate()));
-        responseDTO.setEndDate(convertToDate(auctionSession.getEndDate()));
-
-        responseDTO.setMinBalanceToJoin(auctionSession.getMinBalanceToJoin());
-        responseDTO.setAuctionStatus(auctionSession.getStatus());
-
-        // Add only the latest bid by the user
-        if (auctionSession.getBidSet() != null && !auctionSession.getBidSet().isEmpty()) {
-            Bid latestBid = auctionSession.getBidSet().stream()
-                    .max(Comparator.comparing(Bid::getBidAt))
-                    .orElse(null);
-
-            if (latestBid != null) {
-                responseDTO.setBids(Collections.singletonList(getBidResponseDTO(auctionSession, latestBid)));
-            }
+    public AuctionSessionResponsePrimaryDataDTO convertToAuctionSessionResponsePrimaryDataDTO(AuctionSession auctionSession) {
+        if (auctionSession == null) {
+            return null;
         }
 
-        return responseDTO;
+        AuctionSessionResponsePrimaryDataDTO dto = new AuctionSessionResponsePrimaryDataDTO();
+
+        dto.setAuctionSessionId(auctionSession.getAuctionSessionId());
+        dto.setTitle(auctionSession.getTitle());
+        dto.setStartingPrice(auctionSession.getStartingPrice());
+        dto.setCurrentPrice(auctionSession.getCurrentPrice());
+        dto.setBuyNowPrice(auctionSession.getBuyNowPrice());
+        dto.setBidIncrement(auctionSession.getBidIncrement());
+//        dto.setStartDate(auctionSession.getStartDate());
+//        dto.setEndDate(auctionSession.getEndDate());
+        dto.setMinBalanceToJoin(auctionSession.getMinBalanceToJoin());
+
+        // Manually map Koi
+        if (auctionSession.getKoiFish() != null) {
+            AuctionSessionResponseKoiDTO koiDto = new AuctionSessionResponseKoiDTO();
+            koiDto.setId(auctionSession.getKoiFish().getKoi_id());
+            koiDto.setName(auctionSession.getKoiFish().getName());
+            // Map additional fields as needed
+            dto.setKoi(koiDto);
+        }
+
+        // Manually map Auction Request
+        if (auctionSession.getAuctionRequest() != null) {
+            AuctionSessionResponseAuctionRequestDTO auctionRequestDto = new AuctionSessionResponseAuctionRequestDTO();
+            auctionRequestDto.setAuction_request_id(auctionSession.getAuctionRequest().getAuction_request_id());
+            auctionRequestDto.setAuction_request_id(auctionSession.getAuctionRequest().getCreatedDate().getTime());
+            // Map additional fields as needed
+            dto.setAuctionRequest(auctionRequestDto);
+        }
+
+        // Manually map Winner
+        if (auctionSession.getWinner() != null) {
+            AuctionSessionResponseAccountDTO winnerDto = new AuctionSessionResponseAccountDTO();
+            winnerDto.setId(auctionSession.getWinner().getUser_id());
+            winnerDto.setUsername(auctionSession.getWinner().getUsername());
+            // Map additional fields as needed
+            dto.setWinner(winnerDto);
+        }
+
+        // Manually map Staff
+        if (auctionSession.getStaff() != null) {
+            AuctionSessionResponseAccountDTO staffDto = new AuctionSessionResponseAccountDTO();
+            staffDto.setId(auctionSession.getStaff().getUser_id());
+            staffDto.setUsername(auctionSession.getStaff().getUsername());
+            dto.setStaff(staffDto);
+        }
+
+        // Manually map Manager
+        if (auctionSession.getManager() != null) {
+            AuctionSessionResponseAccountDTO managerDto = new AuctionSessionResponseAccountDTO();
+            managerDto.setId(auctionSession.getManager().getUser_id());
+            managerDto.setUsername(auctionSession.getManager().getUsername());
+            // Map additional fields as needed
+            dto.setManager(managerDto);
+        }
+
+        dto.setAuctionType(auctionSession.getAuctionType());
+        dto.setAuctionStatus(auctionSession.getStatus());
+
+        // Manually map Bids
+        if (auctionSession.getBidSet() != null) {
+            List<BidResponseDTO> bidDtos = auctionSession.getBidSet().stream().map(bid -> {
+                BidResponseDTO bidDto = new BidResponseDTO();
+                bidDto.setId(bid.getId());
+                bidDto.setBidAmount(bid.getBidAmount());
+                bidDto.setBidAt(bid.getBidAt());
+                // Map additional fields as needed
+                return bidDto;
+            }).collect(Collectors.toList());
+            dto.setBids(bidDtos);
+        }
+
+        return dto;
     }
 
     private Date convertToDate(LocalDateTime localDateTime) {
@@ -640,6 +691,96 @@ public class AuctionSessionService {
         bidResponseDTO.setMember(memberResponse);
         bidResponseDTO.setAutoBid(bid.isAutoBid());
         return bidResponseDTO;
+    }
+
+    public AuctionSessionResponsePrimaryDataDTO placeBid(Long auctionId, Long userId, boolean isBuyNow, double bidAmount) {
+        // Find the auction session and user
+        AuctionSession auctionSession = auctionSessionRepository.findByIdAndStatus(auctionId, AuctionSessionStatus.ONGOING)
+                .orElseThrow(() -> new RuntimeException("Auction not found or not active"));
+
+        Account user = accountRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Check if the user has already placed a bid in this auction session
+        boolean hasBid = auctionSession.getBidSet().stream()
+                .anyMatch(bid -> bid.getMember().getUser_id() == userId);
+
+        if (hasBid) {
+            throw new RuntimeException("User has already placed a bid");
+        }
+
+        // If the user chose Buy Now
+        if (isBuyNow) {
+            auctionSession.setWinner(user);
+            auctionSession.setStatus(AuctionSessionStatus.COMPLETED);
+            auctionSessionRepository.save(auctionSession);
+            return convertToAuctionSessionResponsePrimaryDataDTO(auctionSession);
+        }
+
+        // Place bid with the specified bid amount
+        Bid bid = new Bid();
+        bid.setAuctionSession(auctionSession);
+        bid.setMember(user);
+        bid.setBidAmount(bidAmount); // Use bidAmount instead of starting price
+        bid.setBidAt(new Date());
+        auctionSession.getBidSet().add(bid);
+        auctionSessionRepository.save(auctionSession);
+
+        return convertToAuctionSessionResponsePrimaryDataDTO(auctionSession);
+    }
+
+    public AuctionSessionResponsePrimaryDataDTO finalizeAuctionSession(Long auctionId) {
+        AuctionSession auctionSession = auctionSessionRepository.findByIdAndStatus(auctionId, AuctionSessionStatus.ONGOING)
+                .orElseThrow(() -> new RuntimeException("Auction not found or not active"));
+
+        if (auctionSession.getBidSet().isEmpty()) {
+            // No participants in the auction session
+            auctionSession.setUpdateAt(new Date());
+            auctionSession.setNote("No participant");
+            auctionSession.setStatus(AuctionSessionStatus.NO_WINNER);
+            auctionSessionRepository.save(auctionSession);
+            updateKoiStatus(auctionSession.getKoiFish().getKoi_id(), auctionSession.getStatus());
+        } else {
+            // Select a random winner from the participants
+            List<Bid> eligibleBids = new ArrayList<>(auctionSession.getBidSet());
+            Account winner = eligibleBids.get(new Random().nextInt(eligibleBids.size())).getMember();
+
+            auctionSession.setWinner(winner);
+            auctionSession.setStatus(AuctionSessionStatus.COMPLETED);
+            auctionSessionRepository.save(auctionSession);
+
+            // Additional actions after the auction is complete
+            createTransactionsAfterAuctionSessionComplete(auctionSession);
+            updateKoiStatus(auctionSession.getKoiFish().getKoi_id(), auctionSession.getStatus());
+            returnMoneyAfterClosedAuctionSession(auctionSession);
+        }
+
+        return convertToAuctionSessionResponsePrimaryDataDTO(auctionSession);
+    }
+
+    public AuctionSessionResponsePrimaryDataDTO processAuctionSessionById(Long auctionSessionId) {
+        AuctionSession auctionSession = auctionSessionRepository.findById(auctionSessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Auction session not found"));
+
+        processAuctionSession(auctionSession);
+
+        return auctionSessionMapper.toAuctionSessionResponsePrimaryDataDto(auctionSession);
+    }
+
+    public void processAuctionSession(AuctionSession auctionSession) {
+        if (auctionSession.getAuctionType() == AuctionSessionType.ASCENDING) {
+            closeAuctionSession(auctionSession);
+        } else if (auctionSession.getAuctionType() == AuctionSessionType.SINGLE_BID) {
+            finalizeAuctionSession(auctionSession.getAuctionSessionId());
+//
+//            Long auctionSessionId = auctionSession.getAuctionSessionId();
+//            Long userId = getAccountById(accountUtils.getCurrentAccount().getUser_id()).getUser_id();
+//            boolean isAutoBid = false;
+//            double bidAmount = auctionSession.getStartingPrice();
+//            placeBid(auctionSessionId, userId, isAutoBid, bidAmount);
+        } else {
+            throw new UnsupportedOperationException("Unsupported auction type: " + auctionSession.getAuctionType());
+        }
     }
 
 }
