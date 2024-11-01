@@ -25,12 +25,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.Date;
 import java.util.stream.Collectors;
+
+import static shaded_package.net.minidev.asm.ConvertDate.convertToDate;
 
 @Service
 public class AuctionSessionService {
@@ -529,91 +530,42 @@ public class AuctionSessionService {
                 auctionSessionsPage.getTotalPages()
         );
     }
+    private AuctionSessionResponsePrimaryDataDTO convertToAuctionSessionResponsePrimaryDataDTO(AuctionSession auctionSession) {
+        AuctionSessionResponsePrimaryDataDTO responseDTO = new AuctionSessionResponsePrimaryDataDTO();
+        responseDTO.setAuctionSessionId(auctionSession.getAuctionSessionId());
+        responseDTO.setTitle(auctionSession.getTitle());
+        responseDTO.setStartingPrice(auctionSession.getStartingPrice());
+        responseDTO.setCurrentPrice(auctionSession.getCurrentPrice());
+        responseDTO.setBuyNowPrice(auctionSession.getBuyNowPrice());
+        responseDTO.setBidIncrement(auctionSession.getBidIncrement());
 
-    public AuctionSessionResponsePrimaryDataDTO convertToAuctionSessionResponsePrimaryDataDTO(AuctionSession auctionSession) {
-        if (auctionSession == null) {
-            return null;
-        }
+        // Use the conversion method here
+        responseDTO.setStartDate(convertLocalDateTimeToDate(auctionSession.getStartDate()));
+        responseDTO.setEndDate(convertLocalDateTimeToDate(auctionSession.getEndDate()));
 
-        AuctionSessionResponsePrimaryDataDTO dto = new AuctionSessionResponsePrimaryDataDTO();
+        responseDTO.setMinBalanceToJoin(auctionSession.getMinBalanceToJoin());
+        responseDTO.setAuctionStatus(auctionSession.getStatus());
 
-        dto.setAuctionSessionId(auctionSession.getAuctionSessionId());
-        dto.setTitle(auctionSession.getTitle());
-        dto.setStartingPrice(auctionSession.getStartingPrice());
-        dto.setCurrentPrice(auctionSession.getCurrentPrice());
-        dto.setBuyNowPrice(auctionSession.getBuyNowPrice());
-        dto.setBidIncrement(auctionSession.getBidIncrement());
-//        dto.setStartDate(auctionSession.getStartDate());
-//        dto.setEndDate(auctionSession.getEndDate());
-        dto.setMinBalanceToJoin(auctionSession.getMinBalanceToJoin());
-
-        // Manually map Koi
-        if (auctionSession.getKoiFish() != null) {
-            AuctionSessionResponseKoiDTO koiDto = new AuctionSessionResponseKoiDTO();
-            koiDto.setId(auctionSession.getKoiFish().getKoi_id());
-            koiDto.setName(auctionSession.getKoiFish().getName());
-            // Map additional fields as needed
-            dto.setKoi(koiDto);
-        }
-
-        // Manually map Auction Request
-        if (auctionSession.getAuctionRequest() != null) {
-            AuctionSessionResponseAuctionRequestDTO auctionRequestDto = new AuctionSessionResponseAuctionRequestDTO();
-            auctionRequestDto.setAuction_request_id(auctionSession.getAuctionRequest().getAuction_request_id());
-            auctionRequestDto.setAuction_request_id(auctionSession.getAuctionRequest().getCreatedDate().getTime());
-            // Map additional fields as needed
-            dto.setAuctionRequest(auctionRequestDto);
-        }
-
-        // Manually map Winner
-        if (auctionSession.getWinner() != null) {
-            AuctionSessionResponseAccountDTO winnerDto = new AuctionSessionResponseAccountDTO();
-            winnerDto.setId(auctionSession.getWinner().getUser_id());
-            winnerDto.setUsername(auctionSession.getWinner().getUsername());
-            // Map additional fields as needed
-            dto.setWinner(winnerDto);
-        }
-
-        // Manually map Staff
-        if (auctionSession.getStaff() != null) {
-            AuctionSessionResponseAccountDTO staffDto = new AuctionSessionResponseAccountDTO();
-            staffDto.setId(auctionSession.getStaff().getUser_id());
-            staffDto.setUsername(auctionSession.getStaff().getUsername());
-            dto.setStaff(staffDto);
-        }
-
-        // Manually map Manager
-        if (auctionSession.getManager() != null) {
-            AuctionSessionResponseAccountDTO managerDto = new AuctionSessionResponseAccountDTO();
-            managerDto.setId(auctionSession.getManager().getUser_id());
-            managerDto.setUsername(auctionSession.getManager().getUsername());
-            // Map additional fields as needed
-            dto.setManager(managerDto);
-        }
-
-        dto.setAuctionType(auctionSession.getAuctionType());
-        dto.setAuctionStatus(auctionSession.getStatus());
-
-        // Manually map Bids
-        if (auctionSession.getBidSet() != null) {
-            List<BidResponseDTO> bidDtos = auctionSession.getBidSet().stream().map(bid -> {
-                BidResponseDTO bidDto = new BidResponseDTO();
-                bidDto.setId(bid.getId());
-                bidDto.setBidAmount(bid.getBidAmount());
-                bidDto.setBidAt(bid.getBidAt());
-                // Map additional fields as needed
-                return bidDto;
-            }).collect(Collectors.toList());
-            dto.setBids(bidDtos);
-        }
-
-        return dto;
+        return responseDTO;
     }
 
-    private Date convertToDate(LocalDateTime localDateTime) {
-        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+    private Date convertLocalDateTimeToDate(LocalDateTime localDateTime) {
+        if (localDateTime != null) {
+            return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
+        }
+        return null; // or throw an exception if null is not acceptable
     }
 
+    private AuctionSessionResponseAccountDTO getAccountDTO(Account account) {
+        if (account == null) {
+            return new AuctionSessionResponseAccountDTO(); // Return a default instance
+        }
+        AuctionSessionResponseAccountDTO accountDTO = new AuctionSessionResponseAccountDTO();
+        accountDTO.setId(account.getUser_id());
+        accountDTO.setUsername(account.getUsername());
+        accountDTO.setFullName(account.getFirstName() + " " + account.getLastName());
+        return accountDTO;
+    }
 
     public AuctionSessionResponsePrimaryDataDTO getAuctionSessionResponsePrimaryDataDTO(Long id) {
         AuctionSession auctionSession = auctionSessionRepository.findAuctionSessionById(id);
@@ -721,7 +673,7 @@ public class AuctionSessionService {
         Bid bid = new Bid();
         bid.setAuctionSession(auctionSession);
         bid.setMember(user);
-        bid.setBidAmount(bidAmount); // Use bidAmount instead of starting price
+        bid.setBidAmount(bidAmount);
         bid.setBidAt(new Date());
         auctionSession.getBidSet().add(bid);
         auctionSessionRepository.save(auctionSession);
@@ -757,30 +709,19 @@ public class AuctionSessionService {
 
         return convertToAuctionSessionResponsePrimaryDataDTO(auctionSession);
     }
-
     public AuctionSessionResponsePrimaryDataDTO processAuctionSessionById(Long auctionSessionId) {
         AuctionSession auctionSession = auctionSessionRepository.findById(auctionSessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Auction session not found"));
-
-        processAuctionSession(auctionSession);
-
-        return auctionSessionMapper.toAuctionSessionResponsePrimaryDataDto(auctionSession);
+        return processAuctionSession(auctionSession);
     }
 
-    public void processAuctionSession(AuctionSession auctionSession) {
+    public AuctionSessionResponsePrimaryDataDTO processAuctionSession(AuctionSession auctionSession) {
         if (auctionSession.getAuctionType() == AuctionSessionType.ASCENDING) {
-            closeAuctionSession(auctionSession);
+            return closeAuctionSession(auctionSession.getAuctionSessionId());
         } else if (auctionSession.getAuctionType() == AuctionSessionType.FIXED_PRICE) {
-            finalizeAuctionSession(auctionSession.getAuctionSessionId());
-//
-//            Long auctionSessionId = auctionSession.getAuctionSessionId();
-//            Long userId = getAccountById(accountUtils.getCurrentAccount().getUser_id()).getUser_id();
-//            boolean isAutoBid = false;
-//            double bidAmount = auctionSession.getStartingPrice();
-//            placeBid(auctionSessionId, userId, isAutoBid, bidAmount);
+            return finalizeAuctionSession(auctionSession.getAuctionSessionId()); // Return the DTO from finalizeAuctionSession
         } else {
             throw new UnsupportedOperationException("Unsupported auction type: " + auctionSession.getAuctionType());
         }
     }
-
 }

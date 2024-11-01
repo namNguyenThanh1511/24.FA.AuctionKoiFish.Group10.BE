@@ -60,5 +60,5 @@ public interface AuctionSessionRepository extends JpaRepository<AuctionSession, 
     long countdAuctionSessionExceptStatus(List<AuctionSessionStatus> statuses);
 
     @Query("SELECT a FROM AuctionSession a WHERE a.auctionSessionId = :auctionSessionId AND a.status = :status")
-    Optional<AuctionSession> findByIdAndStatus(@Param("auctionSessionId") Long auctionSessionId, @Param("status") Enum status);
+    Optional<AuctionSession> findByIdAndStatus(@Param("auctionSessionId") Long auctionSessionId, @Param("status") AuctionSessionStatus status);
 }
