@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -104,6 +105,12 @@ public class AuctionSessionAPI {
             @RequestParam(defaultValue = "10") int size) {
         AuctionSessionResponsePagination response = auctionSessionService.getAuctionSessionsByCurrentUser(page, size);
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/end-session/{id}")
+    public ResponseEntity<AuctionSessionResponsePrimaryDataDTO> processAuctionSession(@PathVariable Long id) {
+        AuctionSessionResponsePrimaryDataDTO auctionSessionResponsePrimaryDataDTO = auctionSessionService.processAuctionSessionById(id);
+        return ResponseEntity.ok(auctionSessionResponsePrimaryDataDTO);
     }
 
 }
