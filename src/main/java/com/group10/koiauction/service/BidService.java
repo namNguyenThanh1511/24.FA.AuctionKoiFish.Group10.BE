@@ -57,9 +57,9 @@ public class BidService {
             throw new BidException("This auction session has already ended.");
         }
 
-        if (auctionSession.getAuctionType() == AuctionSessionType.SINGLE_BID) {
-            // Logic đấu giá cố định (single bid)
-            return handleSingleBid(bidRequestDTO, auctionSession, memberAccount);
+        if (auctionSession.getAuctionType() == AuctionSessionType.FIXED_PRICE) {
+            // Logic đấu giá cố định (fixed price)
+            return handleFixedPrice(bidRequestDTO, auctionSession, memberAccount);
         } else if (auctionSession.getAuctionType() == AuctionSessionType.ASCENDING) {
             // Logic đấu giá tăng dần (ascending)
             return handleAscendingBid(bidRequestDTO, auctionSession, memberAccount);
@@ -68,7 +68,7 @@ public class BidService {
         }
     }
 
-    private BidResponseDTO handleSingleBid(BidRequestDTO bidRequestDTO, AuctionSession auctionSession, Account memberAccount) {
+    private BidResponseDTO handleFixedPrice(BidRequestDTO bidRequestDTO, AuctionSession auctionSession, Account memberAccount) {
         boolean hasUserAlreadyBid = bidRepository.existsByMemberAndAuctionSession(memberAccount, auctionSession);
         if (hasUserAlreadyBid) {
             throw new BidException("You can only bid once in this auction session.");
@@ -77,7 +77,7 @@ public class BidService {
         double bidAmount = auctionSession.getStartingPrice();
 
         if (bidRequestDTO.getBidAmount() > bidAmount || bidRequestDTO.getBidAmount() < bidAmount) {
-            throw new BidException("Your bid amount cannot exceed the starting price for a single bid auction.");
+            throw new BidException("Your bid amount cannot exceed the starting price for a fixed price auction.");
         }
 
         if (memberAccount.getBalance() < auctionSession.getMinBalanceToJoin()) {
@@ -130,35 +130,42 @@ public class BidService {
         if (previousMaxBidAmount == 0) {
             previousMaxBidAmount = auctionSession.getCurrentPrice();
         }
+        //Lấy bid gần nhất của member hiện tại (người đang đấu giá ) để tính lượng tiêu hao trong ví
         double currentBidAmount = previousMaxBidAmount + bidRequestAmountIncrement;
+        Bid latestBidOfCurrentMember =
+                bidRepository.getLatestBidAmountOfCurrentMemberOfAuctionSession(memberAccount.getUser_id(),
+                        auctionSession.getAuctionSessionId());
+        double memberLostAmount;
 
-        Bid latestBidOfCurrentMember = bidRepository.getLatestBidAmountOfCurrentMemberOfAuctionSession(
-                memberAccount.getUser_id(), auctionSession.getAuctionSessionId());
-
-        double memberLostAmount = latestBidOfCurrentMember != null
-                ? currentBidAmount - latestBidOfCurrentMember.getBidAmount()
-                : auctionSession.getCurrentPrice() + bidRequestAmountIncrement;
-
+        if (latestBidOfCurrentMember != null) {// nếu member đã có đấu giá trong phiên này
+            memberLostAmount = currentBidAmount - latestBidOfCurrentMember.getBidAmount();
+        } else {// lần đầu tiên member  đấu giá trong phiên này
+            memberLostAmount = auctionSession.getCurrentPrice() + bidRequestAmountIncrement;
+        }
         if (memberAccount.getBalance() < auctionSession.getMinBalanceToJoin()) {
-            throw new BidException("Your balance does not have enough money to join the auction.");
+            throw new BidException("Your balance does not have enough money to join the auction." + "You currently " +
+                    "have  " + memberAccount.getBalance() + " but required : " + auctionSession.getMinBalanceToJoin());
         }
         if (bidRequestDTO.getBidAmount() > memberAccount.getBalance()) {
-            throw new BidException("Your account does not have enough money to bid this amount.");
+            throw new BidException("Your account does not have enough money to bid this amount ");
         }
         if (currentBidAmount < previousMaxBidAmount + auctionSession.getBidIncrement()) {
             throw new BidException("Your bid is lower than the required minimum increment.");
         }
+
         if (memberLostAmount > memberAccount.getBalance()) {
-            throw new BidException("Insufficient funds for this bid.");
+            throw new BidException("Your account does not have enough money to bid ! " + "You currently have : " + memberAccount.getBalance() + " But required " + memberLostAmount);
         }
-        if (bidRequestDTO.getBidAmount() >= auctionSession.getBuyNowPrice()) {
-            throw new RuntimeException("You can buy now this item.");
+
+        if (bidRequestDTO.getBidAmount() >= auctionSession.getBuyNowPrice()) {//khi đấu giá vượt quá Buy Now ->
+            // chuyển sang buy now , ko tính là bid nữa
+            throw new RuntimeException("You can buy now this fish");
         }
 
         Bid bid = new Bid();
         bid.setBidAt(new Date());
         bid.setBidAmount(currentBidAmount);
-        bid.setAuctionSession(auctionSession);
+        bid.setAuctionSession(getAuctionSessionByID(bidRequestDTO.getAuctionSessionId()));
         bid.setMember(memberAccount);
         updateAuctionSessionCurrentPrice(currentBidAmount, auctionSession);
 
@@ -167,7 +174,8 @@ public class BidService {
         transaction.setFrom(memberAccount);
         transaction.setType(TransactionEnum.BID);
         transaction.setAmount(bidRequestDTO.getBidAmount());
-        transaction.setDescription("Bidding (-) " + memberLostAmount);
+        transaction.setDescription("Bidding (-)  " + memberLostAmount);
+
         transaction.setBid(bid);
         transaction.setAuctionSession(auctionSession);
         transaction.setStatus(TransactionStatus.SUCCESS);
@@ -180,7 +188,6 @@ public class BidService {
         } catch (RuntimeException e) {
             throw new RuntimeException(e.getMessage());
         }
-
         BidResponseDTO bidResponseDTO = bidMapper.toBidResponseDTO(bid);
         AuctionSessionResponseAccountDTO memberResponse = new AuctionSessionResponseAccountDTO();
         memberResponse.setId(memberAccount.getUser_id());
@@ -188,10 +195,8 @@ public class BidService {
         memberResponse.setFullName(memberAccount.getFirstName() + " " + memberAccount.getLastName());
         bidResponseDTO.setMember(memberResponse);
         bidResponseDTO.setAuctionSessionId(auctionSession.getAuctionSessionId());
-
         return bidResponseDTO;
     }
-
 
 
     public void buyNow(BuyNowRequestDTO buyNowRequestDTO) {//khi mức giá hiện tại của phiên đấu giá cao hơn giá buy

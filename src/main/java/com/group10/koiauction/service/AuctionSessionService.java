@@ -770,7 +770,7 @@ public class AuctionSessionService {
     public void processAuctionSession(AuctionSession auctionSession) {
         if (auctionSession.getAuctionType() == AuctionSessionType.ASCENDING) {
             closeAuctionSession(auctionSession);
-        } else if (auctionSession.getAuctionType() == AuctionSessionType.SINGLE_BID) {
+        } else if (auctionSession.getAuctionType() == AuctionSessionType.FIXED_PRICE) {
             finalizeAuctionSession(auctionSession.getAuctionSessionId());
 //
 //            Long auctionSessionId = auctionSession.getAuctionSessionId();
