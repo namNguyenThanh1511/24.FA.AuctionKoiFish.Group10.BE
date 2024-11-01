@@ -1,5 +1,7 @@
 package com.group10.koiauction.repository;
 
+import com.group10.koiauction.entity.Account;
+import com.group10.koiauction.entity.AuctionSession;
 import com.group10.koiauction.entity.Bid;
 import com.group10.koiauction.model.MemberBidProjectionDTO;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -98,6 +100,9 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
 //            "  GROUP BY b.auctionSession " +
 //            "  ORDER BY COUNT(b.id) DESC )")
 //    double calculateAvgBidCountPerAuctionSession();
+
+
+    boolean existsByMemberAndAuctionSession(Account member, AuctionSession auctionSession);
 
 
 }
