@@ -79,9 +79,12 @@ public class AuthenticationService implements UserDetailsService {
 //        }
         Account newAccount = new Account();
         newAccount = modelMapper.map(registerAccountRequest, Account.class);
+        String trimmedUsername = registerAccountRequest.getUsername().trim();
+        String trimmedPassword = registerAccountRequest.getPassword().trim();
         try {
+            newAccount.setUsername(trimmedUsername);
             newAccount.setRoleEnum(getRoleEnumX(registerAccountRequest.getRoleEnum()));
-            newAccount.setPassword(passwordEncoder.encode(registerAccountRequest.getPassword()));
+            newAccount.setPassword(passwordEncoder.encode(trimmedPassword));
             newAccount = accountRepository.save(newAccount);
             EmailDetail emailDetail = new EmailDetail();
             emailDetail.setAccount(newAccount);
@@ -105,9 +108,12 @@ public class AuthenticationService implements UserDetailsService {
     }
     public AccountResponse registerMember(RegisterMemberRequest registerAccountRequest) {
         Account newAccount = modelMapper.map(registerAccountRequest, Account.class);// Account.class : tự động new Account() rồi mapping
+        String trimmedUsername = registerAccountRequest.getUsername().trim();
+        String trimmedPassword = registerAccountRequest.getPassword().trim();
         try {
+            newAccount.setUsername(trimmedUsername);
             newAccount.setRoleEnum(AccountRoleEnum.MEMBER);
-            newAccount.setPassword(passwordEncoder.encode(registerAccountRequest.getPassword()));
+            newAccount.setPassword(passwordEncoder.encode(trimmedPassword));
             accountRepository.save(newAccount);
             EmailDetail emailDetail = new EmailDetail();
             emailDetail.setAccount(newAccount);
@@ -134,7 +140,7 @@ public class AuthenticationService implements UserDetailsService {
 
         try {
             Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                    loginAccountRequest.getUsername(), loginAccountRequest.getPassword()
+                    loginAccountRequest.getUsername().trim(), loginAccountRequest.getPassword().trim()
                     // go to loadByUsername check username first
                     // so sanh password db vs request password
             ));

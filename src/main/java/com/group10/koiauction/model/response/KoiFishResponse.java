@@ -1,5 +1,6 @@
 package com.group10.koiauction.model.response;
 
+import com.group10.koiauction.entity.Variety;
 import com.group10.koiauction.entity.enums.KoiSexEnum;
 import com.group10.koiauction.entity.enums.KoiStatusEnum;
 import jakarta.persistence.Column;
@@ -30,5 +31,5 @@ public class KoiFishResponse {
     private String video_url;
     private String healthNote;
     private Long breeder_id;
-    private Set<Long> varietiesID;
+    private Set<Variety> varieties;
 }

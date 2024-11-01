@@ -1,5 +1,6 @@
 package com.group10.koiauction.repository;
 
+import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.AuctionRequest;
 import com.group10.koiauction.entity.enums.AuctionRequestStatusEnum;
 import org.springframework.data.domain.Page;
@@ -14,6 +15,9 @@ public interface AuctionRequestRepository extends JpaRepository<AuctionRequest, 
     @Query("SELECT U FROM AuctionRequest U WHERE U.auction_request_id = ?1")
     AuctionRequest findByAuctionRequestId(@Param("auction_request_id") Long id);
 
+    @Query("SELECT  a FROM AuctionRequest a WHERE a.account.username IN (:usernameList) ")
+    List<AuctionRequest> findByUsernameList(@Param("usernameList") List<String> usernameList);
+
     @Query("SELECT U FROM AuctionRequest U WHERE U.status = ?1")
     List<AuctionRequest> findByStatus(@Param("status") AuctionRequestStatusEnum status);
 
@@ -24,6 +28,20 @@ public interface AuctionRequestRepository extends JpaRepository<AuctionRequest, 
 
     @Query("SELECT a FROM AuctionRequest a WHERE a.account.user_id = :koiBreederId")
     Page<AuctionRequest> findAllAuctionRequestOfCurrentBreederPagination(@Param("koiBreederId")Long koiBreederId,Pageable pageable);
+
+    @Query("SELECT a FROM AuctionRequest a ")
+    Page<AuctionRequest> findAllAuctionRequestPaginationForStaff(Pageable pageable);
+
+    @Query("SELECT a FROM AuctionRequest a " +
+            "WHERE (a.status IN (:statuses) OR :statuses IS NULL) and " +
+            "      ( a.account IN (:breeders) OR :breeders IS NULL ) ")
+    Page<AuctionRequest> findAllAuctionRequestPaginationForStaffFilter(Pageable pageable ,
+                                                                       @Param("statuses") List<AuctionRequestStatusEnum> statuses , @Param("breeders") List<Account> breeders );
+
+    @Query("SELECT  a FROM  AuctionRequest a WHERE a.status IN (:statuses)")
+    Page<AuctionRequest> findAllAuctionRequestPaginationForStaffByStatus(Pageable pageable,
+                                                                         @Param("statuses") List<AuctionRequestStatusEnum> statusList);
+
 
     @Query("SELECT U FROM AuctionRequest U WHERE U.status = :status")
     Page<AuctionRequest> findByStatus(@Param("status") AuctionRequestStatusEnum status, Pageable pageable);

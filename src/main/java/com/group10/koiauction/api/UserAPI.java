@@ -8,6 +8,7 @@ import com.group10.koiauction.model.request.DepositFundsRequest;
 import com.group10.koiauction.model.request.DepositFundsRequestDTO;
 import com.group10.koiauction.model.request.WithDrawRequestDTO;
 import com.group10.koiauction.model.response.BalanceResponseDTO;
+import com.group10.koiauction.model.response.WithDrawRequestResponsePaginationDTO;
 import com.group10.koiauction.service.UserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +65,18 @@ public class UserAPI {
     public ResponseEntity rejectWithDrawRequest(@PathVariable("id") Long id, @RequestBody ApproveWithDrawRequestDTO approveWithDrawRequestDTO){
         WithDrawRequest withDrawRequest = userService.rejectWithDrawRequest(id,approveWithDrawRequestDTO);
         return ResponseEntity.ok(withDrawRequest);
+    }
+
+    @GetMapping("withDrawRequest/pagination")
+    public ResponseEntity getWithDrawRequestPagination(@RequestParam int page , @RequestParam int size , @RequestParam(required = false) Long userId){
+        WithDrawRequestResponsePaginationDTO withDrawRequestResponsePaginationDTO = userService.getWithDrawRequestPagination(page,size,userId);
+        return ResponseEntity.ok(withDrawRequestResponsePaginationDTO);
+    }
+
+    @GetMapping("withDrawRequest/currentUser/pagination")
+    public ResponseEntity getWithDrawRequestOfCurrentUserPagination(@RequestParam int page , @RequestParam int size){
+        WithDrawRequestResponsePaginationDTO withDrawRequestResponsePaginationDTO = userService.getWithDrawRequestOfCurrentUserPagination(page,size);
+        return ResponseEntity.ok(withDrawRequestResponsePaginationDTO);
     }
 
     @GetMapping("user/balance")

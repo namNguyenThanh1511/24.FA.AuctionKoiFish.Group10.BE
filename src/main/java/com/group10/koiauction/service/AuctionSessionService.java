@@ -242,6 +242,22 @@ public class AuctionSessionService {
             }
         }
     }
+    @Transactional
+    public void closeAuctionSessionWhenBuyNow(AuctionSession target) {
+        if (target.getBidSet().isEmpty()) {
+            try {
+                returnMoneyAfterClosedAuctionSessionWhenBuyNow(target);
+            } catch (RuntimeException e) {
+                throw new RuntimeException(e.getMessage());
+            }
+        } else {
+            try {
+                returnMoneyAfterClosedAuctionSessionWhenBuyNow(target);
+            } catch (Exception e) {
+                throw new RuntimeException(e.getMessage());
+            }
+        }
+    }
 
     @Transactional
     public void createTransactionsAfterAuctionSessionComplete(AuctionSession auctionSession) {
@@ -253,7 +269,7 @@ public class AuctionSessionService {
         double profit = auctionSession.getCurrentPrice() * serviceFeePercent;
 
         transaction.setCreateAt(new Date());
-        transaction.setType(TransactionEnum.TRANSFER_FUNDS);
+        transaction.setType(TransactionEnum.FEE_TRANSFER);
         transaction.setFrom(winner);
         transaction.setTo(manager);
         transaction.setAmount(profit);
@@ -294,6 +310,15 @@ public class AuctionSessionService {
             createTransactionWhenReturnMoney(loserBid);
         }
 
+    }
+
+    @Transactional
+    public void returnMoneyAfterClosedAuctionSessionWhenBuyNow(AuctionSession auctionSession) {
+        List<MemberBidProjectionDTO> allMaxBids =
+                bidRepository.findMaxBidForEachMemberInAuctionSession(auctionSession.getAuctionSessionId());
+        for (MemberBidProjectionDTO maxBids : allMaxBids) {
+            createTransactionWhenReturnMoney(maxBids);
+        }
     }
 
     @Transactional

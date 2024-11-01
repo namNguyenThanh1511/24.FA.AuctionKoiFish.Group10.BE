@@ -18,6 +18,7 @@ import com.group10.koiauction.repository.TransactionRepository;
 import com.group10.koiauction.utilities.AccountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.HashSet;
@@ -199,6 +200,7 @@ public class BidService {
     }
 
 
+    @Transactional
     public void buyNow(BuyNowRequestDTO buyNowRequestDTO) {//khi mức giá hiện tại của phiên đấu giá cao hơn giá buy
         // now -> disable buy now
         AuctionSession auctionSession = getAuctionSessionByID(buyNowRequestDTO.getAuctionSessionId());
@@ -228,7 +230,7 @@ public class BidService {
             double profit = auctionSession.getBuyNowPrice() * serviceFeePercent;
 
             transaction.setCreateAt(new Date());
-            transaction.setType(TransactionEnum.TRANSFER_FUNDS);
+            transaction.setType(TransactionEnum.FEE_TRANSFER);
             transaction.setFrom(memberAccount);
             transaction.setTo(manager);
             transaction.setAmount(profit);
@@ -274,7 +276,7 @@ public class BidService {
             auctionSession.setTransactionSet(transactionSet);
             auctionSessionService.updateKoiStatus(auctionSession.getKoiFish().getKoi_id(), auctionSession.getStatus());
             auctionSessionRepository.save(auctionSession);
-
+            auctionSessionService.closeAuctionSessionWhenBuyNow(auctionSession);
         } else {
             throw new BidException("Your balance does not have enough money to buy");
         }
