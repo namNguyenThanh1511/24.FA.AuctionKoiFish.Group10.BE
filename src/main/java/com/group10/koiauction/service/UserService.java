@@ -147,7 +147,8 @@ public class UserService {
             withDrawRequest = withDrawRequestRepository.save(withDrawRequest);
             Transaction transaction = new Transaction();
             transaction.setCreateAt(new Date());
-            transaction.setType(TransactionEnum.WITHDRAW_SUCCESS);
+            transaction.setType(TransactionEnum.WITHDRAW_FUNDS);
+            transaction.setStatus(TransactionStatus.SUCCESS);
             transaction.setAmount(withDrawRequest.getAmount());
             transaction.setFrom(withDrawRequest.getUser());
             transaction.setDescription("Withdraw (-) : " + withDrawRequest.getAmount());

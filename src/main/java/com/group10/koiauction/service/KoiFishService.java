@@ -260,7 +260,7 @@ public class KoiFishService {
     public KoiFishResponse getKoiMapperResponse(KoiFish koiFish) {
         KoiFishResponse koiFishResponse = koiMapper.toKoiFishResponse(koiFish);
         koiFishResponse.setBreeder_id(koiFish.getAccount().getUser_id());
-        koiFishResponse.setVarietiesID(getVarietiesIdOfKoi(koiFish));// return varieties of KoiFish which is
+        koiFishResponse.setVarieties(koiFish.getVarieties());// return varieties of KoiFish which is
         // currently ACTIVE
         koiFishResponse.setHealthNote(koiFish.getHealth_note());
         return koiFishResponse;

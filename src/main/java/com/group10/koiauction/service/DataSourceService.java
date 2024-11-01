@@ -364,7 +364,7 @@ public class DataSourceService {
 
     public void createVarietyCollections() {
         createVarietyRequest("Kohaku");
-        createVarietyRequest("Sowa");
+        createVarietyRequest("Showa");
         createVarietyRequest("Ochibashigure");
         createVarietyRequest("Hirenaga");
         createVarietyRequest("Tancho");
