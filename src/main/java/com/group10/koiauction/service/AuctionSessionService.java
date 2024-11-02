@@ -488,7 +488,17 @@ public class AuctionSessionService {
                 koiDTO.setEstimatedValue(auctionSession.getKoiFish().getEstimatedValue());
                 koiDTO.setKoiStatus(auctionSession.getKoiFish().getKoiStatus());
                 koiDTO.setVideo_url(auctionSession.getKoiFish().getVideo_url());
-                koiDTO.setBreeder(koiDTO.getBreeder());
+
+                // Map breeder details
+                BreederResponseDTO breederDTO = new BreederResponseDTO();
+                breederDTO.setId(auctionSession.getKoiFish().getAccount().getUser_id());
+                breederDTO.setUsername(auctionSession.getKoiFish().getAccount().getUsername());
+                koiDTO.setBreeder(breederDTO);
+
+                // Map varieties
+                Set<Variety> varietiesSet = auctionSession.getKoiFish().getVarieties();
+                koiDTO.setVarieties(varietiesSet);
+
                 koiDTO.setVarieties(koiDTO.getVarieties());
                 dto.setKoi(koiDTO);
             }
@@ -508,6 +518,7 @@ public class AuctionSessionService {
                 AuctionSessionResponseAccountDTO winnerDTO = new AuctionSessionResponseAccountDTO();
                 winnerDTO.setId(auctionSession.getWinner().getUser_id());
                 winnerDTO.setUsername(auctionSession.getWinner().getUsername());
+                winnerDTO.setFullName(auctionSession.getWinner().getFirstName() + " " + auctionSession.getWinner().getLastName());
                 dto.setWinner(winnerDTO);
             }
 
@@ -515,6 +526,7 @@ public class AuctionSessionService {
                 AuctionSessionResponseAccountDTO staffDTO = new AuctionSessionResponseAccountDTO();
                 staffDTO.setId(auctionSession.getStaff().getUser_id());
                 staffDTO.setUsername(auctionSession.getStaff().getUsername());
+                staffDTO.setFullName(auctionSession.getStaff().getFirstName() + " " + auctionSession.getStaff().getLastName());
                 dto.setStaff(staffDTO);
             }
 
@@ -522,8 +534,31 @@ public class AuctionSessionService {
                 AuctionSessionResponseAccountDTO managerDTO = new AuctionSessionResponseAccountDTO();
                 managerDTO.setId(auctionSession.getManager().getUser_id());
                 managerDTO.setUsername(auctionSession.getManager().getUsername());
+                managerDTO.setFullName(auctionSession.getManager().getFirstName() + " " + auctionSession.getManager().getLastName());
                 dto.setManager(managerDTO);
             }
+
+            // Map bids
+            List<BidResponseDTO> bidDTOs = auctionSession.getBidSet().stream().map(bid -> {
+                BidResponseDTO bidDTO = new BidResponseDTO();
+                bidDTO.setId(bid.getId());
+                bidDTO.setBidAmount(bid.getBidAmount());
+                bidDTO.setBidAt(bid.getBidAt());
+                bidDTO.setAutoBid(bid.isAutoBid());
+
+                // Map member details for the bid
+                AuctionSessionResponseAccountDTO memberDTO = new AuctionSessionResponseAccountDTO();
+                memberDTO.setId(bid.getMember().getUser_id());
+                memberDTO.setUsername(bid.getMember().getUsername());
+                memberDTO.setFullName(bid.getMember().getFirstName() + " " + bid.getMember().getLastName());
+                bidDTO.setMember(memberDTO);
+
+                bidDTO.setAuctionSessionId(auctionSession.getAuctionSessionId());
+
+                return bidDTO;
+            }).collect(Collectors.toList());
+
+            dto.setBids(bidDTOs);
 
             responseList.add(dto);
         }
