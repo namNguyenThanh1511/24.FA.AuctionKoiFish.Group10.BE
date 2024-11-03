@@ -113,4 +113,12 @@ public class AuctionSessionAPI {
         return ResponseEntity.ok(auctionSessionResponsePrimaryDataDTO);
     }
 
+    @GetMapping("/current-staff")
+    public ResponseEntity<AuctionSessionResponsePagination> getAuctionSessionsByCurrentStaff(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        AuctionSessionResponsePagination response = auctionSessionService.getAuctionSessionsByCurrentStaff(page, size);
+        return ResponseEntity.ok(response);
+    }
+
 }
