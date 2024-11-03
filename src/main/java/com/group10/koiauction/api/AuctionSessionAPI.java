@@ -3,6 +3,7 @@ package com.group10.koiauction.api;
 import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.AuctionSession;
 import com.group10.koiauction.entity.Variety;
+import com.group10.koiauction.entity.enums.AuctionSessionStatus;
 import com.group10.koiauction.entity.enums.AuctionSessionType;
 import com.group10.koiauction.entity.enums.KoiSexEnum;
 import com.group10.koiauction.model.request.AuctionSessionRequestDTO;
@@ -118,6 +119,19 @@ public class AuctionSessionAPI {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         AuctionSessionResponsePagination response = auctionSessionService.getAuctionSessionsByCurrentStaff(page, size);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/current-staff/filter")
+    public ResponseEntity<AuctionSessionResponsePagination> getFilteredAuctionSessionsByCurrentStaff(
+            @RequestParam(required = false) AuctionSessionStatus auctionStatus,
+            @RequestParam(required = false) AuctionSessionType auctionType,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        AuctionSessionResponsePagination response = auctionSessionService.getFilteredAuctionSessionsByCurrentStaff(
+                auctionStatus, auctionType, page, size);
+
         return ResponseEntity.ok(response);
     }
 
