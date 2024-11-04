@@ -22,8 +22,13 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query("SELECT t.auctionSession.auctionSessionId , t.amount FROM Transaction t WHERE t.to.username = 'manager' ")
     List<Object[]> findRevenueOfAuctionSession();
 
-    @Query("SELECT YEAR(s.date) , MONTH(s.date) , s.balance FROM SystemProfit s")
-    List<Object[]> calculateSystemRevenue();
+
+    @Query("SELECT YEAR(s.date) , MONTH(s.date) ,DAY(s.date) , MAX(s.balance) FROM SystemProfit s GROUP BY YEAR(s" +
+            ".date) , MONTH(s.date) ,DAY(s.date) ")
+    List<Object[]> calculateDailySystemRevenue();
+
+    @Query("SELECT YEAR(s.date) , MONTH(s.date) , MAX(s.balance) FROM SystemProfit s GROUP BY YEAR(s.date) , MONTH(s.date)")
+    List<Object[]> calculateMonthLySystemRevenue();
 
     @Query("SELECT t FROM Transaction t WHERE "
             + "(:transactionType IS NULL OR t.type = :transactionType) "

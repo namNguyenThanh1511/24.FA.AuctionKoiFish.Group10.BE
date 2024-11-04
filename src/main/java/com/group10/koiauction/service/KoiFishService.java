@@ -3,6 +3,7 @@ package com.group10.koiauction.service;
 import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.KoiFish;
 import com.group10.koiauction.entity.Variety;
+import com.group10.koiauction.entity.enums.KoiSexEnum;
 import com.group10.koiauction.entity.enums.KoiStatusEnum;
 import com.group10.koiauction.entity.enums.VarietyStatusEnum;
 import com.group10.koiauction.mapper.KoiMapper;
@@ -72,9 +73,9 @@ public class KoiFishService {
         return koiFishResponseList;
     }
 
-    public KoiFishResponsePagination getAllKoiFishPagination(int page , int size) {
+    public KoiFishResponsePagination getAllKoiFishPagination(int page, int size) {
 
-        Page<KoiFish> koiFishPage = koiFishRepository.findAll(PageRequest.of(page , size));
+        Page<KoiFish> koiFishPage = koiFishRepository.findAll(PageRequest.of(page, size));
         List<KoiFishResponse> koiFishResponseList = new ArrayList<>();
         for (KoiFish koiFish : koiFishPage.getContent()) {
             KoiFishResponse koiFishResponse = getKoiMapperResponse(koiFish);
@@ -89,11 +90,11 @@ public class KoiFishService {
         return koiFishResponsePagination;
     }
 
-    public List<KoiFishResponse> getAllKoiFishByCurrentBreeder(String status){
+    public List<KoiFishResponse> getAllKoiFishByCurrentBreeder(String status) {
         List<KoiFish> koiFishList;
-        if(status.equals("")){
-            koiFishList = koiFishRepository.findKoiFishByBreederExceptStatus(accountUtils.getCurrentAccount().getUser_id(),KoiStatusEnum.IS_DELETED);
-        }else{
+        if (status.equals("")) {
+            koiFishList = koiFishRepository.findKoiFishByBreederExceptStatus(accountUtils.getCurrentAccount().getUser_id(), KoiStatusEnum.IS_DELETED);
+        } else {
             koiFishList = koiFishRepository.findKoiFishByBreederAndStatus(accountUtils.getCurrentAccount().getUser_id(), getKoiStatusEnum(status));
         }
         List<KoiFishResponse> koiFishResponseList = new ArrayList<>();
@@ -103,10 +104,41 @@ public class KoiFishService {
         return koiFishResponseList;
     }
 
-    public KoiFishResponsePagination getAllKoiFishOfCurrentBreederPagination(int page , int size) {
+    public KoiFishResponsePagination getAllKoiFishOfCurrentBreederPagination(int page, int size) {
         Account koiBreeder = accountUtils.getCurrentAccount();
-        Pageable pageable = PageRequest.of(page,size);
-        Page<KoiFish> koiFishPage = koiFishRepository.findKoiFishByBreederPaginationExceptStatus(koiBreeder.getUser_id(),KoiStatusEnum.IS_DELETED,pageable);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<KoiFish> koiFishPage = koiFishRepository.findKoiFishByBreederPaginationExceptStatus(koiBreeder.getUser_id(), KoiStatusEnum.IS_DELETED, pageable);
+        List<KoiFishResponse> koiFishResponseList = new ArrayList<>();
+        for (KoiFish koiFish : koiFishPage.getContent()) {
+            KoiFishResponse koiFishResponse = getKoiMapperResponse(koiFish);
+            koiFishResponseList.add(koiFishResponse);
+        }
+        KoiFishResponsePagination koiFishResponsePagination = new KoiFishResponsePagination();
+        koiFishResponsePagination.setKoiFishResponseList(koiFishResponseList);
+        koiFishResponsePagination.setPageNumber(koiFishPage.getNumber());
+        koiFishResponsePagination.setTotalPages(koiFishPage.getTotalPages());
+        koiFishResponsePagination.setTotalElements(koiFishPage.getTotalElements());
+        koiFishResponsePagination.setNumberOfElements(koiFishPage.getNumberOfElements());
+        return koiFishResponsePagination;
+    }
+
+    public KoiFishResponsePagination getAllKoiFishOfCurrentBreederPaginationWithFilter(KoiStatusEnum status,
+                                                                                       KoiSexEnum sex,
+                                                                                       Double minSizeCm,
+                                                                                       Double maxSizeCm,
+                                                                                       Double minWeightKg,
+                                                                                       Double maxWeightKg,
+                                                                                       Double upperEstimatedValue,
+                                                                                       Double lowerEstimatedValue,
+                                                                                       Set<String> varietiesName,
+                                                                                       int page,
+                                                                                       int size) {
+        Account koiBreeder = accountUtils.getCurrentAccount();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<KoiFish> koiFishPage = koiFishRepository.filterKoiFish(status, sex, minSizeCm,maxSizeCm, minWeightKg,maxWeightKg,
+                upperEstimatedValue,
+                lowerEstimatedValue, varietiesName, koiBreeder, KoiStatusEnum.IS_DELETED,
+                pageable);
         List<KoiFishResponse> koiFishResponseList = new ArrayList<>();
         for (KoiFish koiFish : koiFishPage.getContent()) {
             KoiFishResponse koiFishResponse = getKoiMapperResponse(koiFish);

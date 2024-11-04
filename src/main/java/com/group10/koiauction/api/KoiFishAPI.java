@@ -1,6 +1,8 @@
 package com.group10.koiauction.api;
 
 import com.group10.koiauction.entity.KoiFish;
+import com.group10.koiauction.entity.enums.KoiSexEnum;
+import com.group10.koiauction.entity.enums.KoiStatusEnum;
 import com.group10.koiauction.model.request.HealthStatusRequest;
 import com.group10.koiauction.model.request.KoiFishRequest;
 import com.group10.koiauction.model.response.HealthStatusResponse;
@@ -11,11 +13,13 @@ import com.group10.koiauction.service.KoiFishService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/koiFish")
@@ -73,6 +77,22 @@ public class KoiFishAPI {
     @GetMapping("/koiBreeder/available")
     public ResponseEntity<List<KoiFishResponse>>getAllAvailableKoiFishOfCurrentBreeder(){
         List<KoiFishResponse> koiFishResponseList = koiFishService.getAllKoiFishByCurrentBreeder("AVAILABLE");
+        return ResponseEntity.ok(koiFishResponseList);
+    }
+
+    @GetMapping("/koiBreeder/pagination/filter")
+    public ResponseEntity<KoiFishResponsePagination> getAllKoiFishOfCurrentBreederFilter(@RequestParam(required = false)KoiStatusEnum status,
+                                                                                     @RequestParam(required = false)KoiSexEnum sex,
+                                                                                     @RequestParam(required = false)Double minSizeCm, @RequestParam(required = false)Double maxSizeCm,
+                                                                                     @RequestParam(required = false)Double minWeightKg,@RequestParam(required = false)Double maxWeightKg,
+                                                                                     @RequestParam(required = false)Double upperEstimatedValue,
+                                                                                     @RequestParam(required = false)Double lowerEstimatedValue,
+                                                                                     @RequestParam(required = false) Set<String> varietiesName,
+                                                                                     @RequestParam int page,
+                                                                                     @RequestParam int size){
+       KoiFishResponsePagination koiFishResponseList =
+               koiFishService.getAllKoiFishOfCurrentBreederPaginationWithFilter(status,sex,minSizeCm,maxSizeCm,
+                       minWeightKg,maxWeightKg,upperEstimatedValue,lowerEstimatedValue,varietiesName,page,size);
         return ResponseEntity.ok(koiFishResponseList);
     }
 
