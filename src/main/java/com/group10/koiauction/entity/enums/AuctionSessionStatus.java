@@ -7,5 +7,5 @@ public enum AuctionSessionStatus {
     CANCELLED,    // Phiên đấu giá đã bị hủy.
     NO_WINNER,    // Phiên đấu giá kết thúc nhưng không có người thắng (không ai đấu giá).
     DRAWN,        // Phiên đấu giá kết thúc với bốc thăm (trong trường hợp phương thức "Fixed Price").
-    WAITING_FOR_PAYMENT//Đang chờ thanh toán từ người thắng cuộc trước khi kết thúc hoàn toàn phiên đấu giá.
+
 }

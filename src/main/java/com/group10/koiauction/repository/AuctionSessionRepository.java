@@ -25,31 +25,25 @@ public interface AuctionSessionRepository extends JpaRepository<AuctionSession, 
     @Query("SELECT a FROM AuctionSession a WHERE a.staff.user_id = :accountId")
     Page<AuctionSession> findAllByStaffAccountId(@Param("accountId") Long accountId, Pageable pageable);
 
-    @Query("SELECT a FROM AuctionSession a WHERE a.staff.user_id = :staffId " +
-            "AND (:auctionStatus IS NULL OR a.status = :auctionStatus) " +
-            "AND (:auctionType IS NULL OR a.auctionType = :auctionType)")
-    Page<AuctionSession> findByStaffIdAndFilters(
-            @Param("staffId") Long staffId,
-            @Param("auctionStatus") AuctionSessionStatus auctionStatus,
-            @Param("auctionType") AuctionSessionType auctionType,
-            Pageable pageable);
-
-    @Query("SELECT a FROM AuctionSession a JOIN a.koiFish v WHERE " +
+    @Query("SELECT distinct a FROM AuctionSession a JOIN a.koiFish k JOIN k.varieties v WHERE " +
             "(a.auctionType = :auctionType OR :auctionType IS NULL) AND " +
             "(a.koiFish.sex = :sex OR :sex IS NULL) AND " +
             "(a.koiFish.account.username = :breederName OR :breederName IS NULL) AND " + // Use the correct field here
             "(:varieties IS NULL OR v.name IN :varieties) AND " +
             "(COALESCE(:minSizeCm, 0) <= a.koiFish.sizeCm AND (COALESCE(:maxSizeCm, 100) >= a.koiFish.sizeCm)) AND " +
-            "(COALESCE(:minWeightKg, 0) <= a.koiFish.weightKg AND (COALESCE(:maxWeightKg, 100) >= a.koiFish.weightKg))")
+            "(COALESCE(:minWeightKg, 0) <= a.koiFish.weightKg AND (COALESCE(:maxWeightKg, 100) >= a.koiFish.weightKg)" +
+            ") AND " +
+            "(a.status = :status OR :status IS NULL)")
     Page<AuctionSession> searchAuctionSessions(
             @Param("auctionType") AuctionSessionType auctionType,
             @Param("sex") KoiSexEnum sex,
             @Param("breederName") String breederName,
-            @Param("varieties") Set<String> varieties,
+            @Param("varieties") Set<String> varietiesName,
             @Param("minSizeCm") Double minSizeCm,
             @Param("maxSizeCm") Double maxSizeCm,
             @Param("minWeightKg") Double minWeightKg,
             @Param("maxWeightKg") Double maxWeightKg,
+            @Param("status") AuctionSessionStatus status,
             Pageable pageable);
 
     @Query("SELECT a FROM AuctionSession a " +

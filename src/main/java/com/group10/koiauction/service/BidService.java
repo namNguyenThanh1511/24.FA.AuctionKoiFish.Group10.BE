@@ -340,8 +340,8 @@ public class BidService {
                 target.setUpdatedDate(new Date());
                 break;
             }
-            case COMPLETED, DRAWN, WAITING_FOR_PAYMENT: {
-                target.setKoiStatus(KoiStatusEnum.WAITING_FOR_PAYMENT);
+            case COMPLETED, DRAWN: {
+                target.setKoiStatus(KoiStatusEnum.SOLD);
                 target.setUpdatedDate(new Date());
                 break;
             }

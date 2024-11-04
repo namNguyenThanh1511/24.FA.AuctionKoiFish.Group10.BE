@@ -19,10 +19,14 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,7 +110,19 @@ public class AuctionRequestAPI {
         AuctionRequestResponsePagination auctionRequestResponsePagination = auctionRequestService.getAuctionRequestResponsesPagination(page, size);
         return ResponseEntity.ok(auctionRequestResponsePagination);
     }
-
+    @GetMapping("/koiBreeder/pagination/filter")
+    public ResponseEntity<AuctionRequestResponsePagination> getAllAuctionRequestOfCurrentBreederPagination(
+            @RequestParam(required = false) AuctionRequestStatusEnum status,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @RequestParam int page,
+            @RequestParam int size) {
+        Date startDateConverted = startDate != null ? Date.from(startDate.atStartOfDay(ZoneId.systemDefault()).toInstant()) : null;
+        Date endDateConverted = endDate != null ? Date.from(endDate.atStartOfDay(ZoneId.systemDefault()).toInstant()) : null;
+        AuctionRequestResponsePagination auctionRequestResponsePagination =
+                auctionRequestService.getAuctionRequestResponsesPaginationOfCurrentBreederFilter(status, startDateConverted, endDateConverted, page, size);
+        return ResponseEntity.ok(auctionRequestResponsePagination);
+    }
     @GetMapping("/staff-only/pagination")
     public ResponseEntity<AuctionRequestResponsePagination> getAllAuctionRequestPaginationForStaff(@RequestParam int page, @RequestParam int size) {
         AuctionRequestResponsePagination auctionRequestResponsePagination = auctionRequestService.getAuctionRequestResponsesPaginationForStaff(page, size);
@@ -115,11 +131,11 @@ public class AuctionRequestAPI {
 
     @GetMapping("/staff-only/pagination/filter")
     public ResponseEntity<AuctionRequestResponsePagination> getAllAuctionRequestPaginationForStaff(@RequestParam int page, @RequestParam int size,
-                                                                                                   @RequestParam(required = false) List<AuctionRequestStatusEnum> statusEnumList ,
-                                                                                                   @RequestParam(required = false) List<String> breederUsernameList ) {
+                                                                                                   @RequestParam(required = false) List<AuctionRequestStatusEnum> statusEnumList,
+                                                                                                   @RequestParam(required = false) List<String> breederUsernameList) {
         AuctionRequestResponsePagination auctionRequestResponsePagination =
                 auctionRequestService.getAuctionRequestResponsesPaginationForStaffWithFilter(page, size,
-                        statusEnumList,breederUsernameList);
+                        statusEnumList, breederUsernameList);
         return ResponseEntity.ok(auctionRequestResponsePagination);
     }
 
