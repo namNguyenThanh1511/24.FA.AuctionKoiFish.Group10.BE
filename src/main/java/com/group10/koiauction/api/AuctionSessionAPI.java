@@ -115,4 +115,6 @@ public class AuctionSessionAPI {
         return ResponseEntity.ok(auctionSessionResponsePrimaryDataDTO);
     }
 
+
+
 }
