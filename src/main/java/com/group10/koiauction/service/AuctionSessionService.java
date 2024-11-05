@@ -74,6 +74,9 @@ public class AuctionSessionService {
     @Autowired
     private BidRepository bidRepository;
 
+    @Autowired
+    private VarietyRepository varietyRepository;
+
 
     public AuctionSessionResponsePrimaryDataDTO createAuctionSession(AuctionSessionRequestDTO auctionSessionRequestDTO) {
         AuctionSession auctionSession = auctionSessionMapper.toAuctionSession(auctionSessionRequestDTO);
@@ -242,6 +245,7 @@ public class AuctionSessionService {
             }
         }
     }
+
     @Transactional
     public void closeAuctionSessionWhenBuyNow(AuctionSession target) {
         if (target.getBidSet().isEmpty()) {
@@ -386,7 +390,6 @@ public class AuctionSessionService {
             case "cancelled" -> AuctionSessionStatus.CANCELLED;
             case "nowinner" -> AuctionSessionStatus.NO_WINNER;
             case "drawn" -> AuctionSessionStatus.DRAWN;
-            case "waitingforpayment" -> AuctionSessionStatus.WAITING_FOR_PAYMENT;
             default -> throw new EntityNotFoundException("Invalid status");
         };
     }
@@ -494,119 +497,21 @@ public class AuctionSessionService {
             AuctionSessionType auctionType,
             KoiSexEnum sex,
             String breederName,
-            Set<String> varieties,
+            Set<String> varietiesName,
             Double minSizeCm,
             Double maxSizeCm,
             Double minWeightKg,
             Double maxWeightKg,
+            AuctionSessionStatus status,
             int page,
             int size) {
-
         Pageable pageable = PageRequest.of(page, size);
         Page<AuctionSession> auctionSessions = auctionSessionRepository.searchAuctionSessions(
-                auctionType, sex, breederName, varieties, minSizeCm, maxSizeCm, minWeightKg, maxWeightKg, pageable);
+                auctionType, sex, breederName, varietiesName, minSizeCm, maxSizeCm, minWeightKg, maxWeightKg, status, pageable);
 
         List<AuctionSessionResponsePrimaryDataDTO> responseList = new ArrayList<>();
         for (AuctionSession auctionSession : auctionSessions.getContent()) {
-            AuctionSessionResponsePrimaryDataDTO dto = new AuctionSessionResponsePrimaryDataDTO();
-
-            dto.setAuctionSessionId(auctionSession.getAuctionSessionId());
-            dto.setTitle(auctionSession.getTitle());
-            dto.setStartingPrice(auctionSession.getStartingPrice());
-            dto.setCurrentPrice(auctionSession.getCurrentPrice());
-            dto.setBuyNowPrice(auctionSession.getBuyNowPrice());
-            dto.setBidIncrement(auctionSession.getBidIncrement());
-            dto.setStartDate(Date.from(auctionSession.getStartDate().atZone(ZoneId.systemDefault()).toInstant()));
-            dto.setEndDate(Date.from(auctionSession.getEndDate().atZone(ZoneId.systemDefault()).toInstant()));
-            dto.setMinBalanceToJoin(auctionSession.getMinBalanceToJoin());
-            dto.setAuctionType(auctionSession.getAuctionType());
-            dto.setAuctionStatus(auctionSession.getStatus());
-
-            if (auctionSession.getKoiFish() != null) {
-                AuctionSessionResponseKoiDTO koiDTO = new AuctionSessionResponseKoiDTO();
-                koiDTO.setId(auctionSession.getKoiFish().getKoi_id());
-                koiDTO.setName(auctionSession.getKoiFish().getName());
-                koiDTO.setSex(auctionSession.getKoiFish().getSex());
-                koiDTO.setSizeCm(auctionSession.getKoiFish().getSizeCm()); // Assuming KoiFish has getSizeCm()
-                koiDTO.setWeightKg(auctionSession.getKoiFish().getWeightKg()); // Assuming KoiFish has getWeightKg()
-                koiDTO.setBornIn(auctionSession.getKoiFish().getBornIn());
-                koiDTO.setImage_url(auctionSession.getKoiFish().getImage_url());
-                koiDTO.setDescription(auctionSession.getKoiFish().getDescription());
-                koiDTO.setEstimatedValue(auctionSession.getKoiFish().getEstimatedValue());
-                koiDTO.setKoiStatus(auctionSession.getKoiFish().getKoiStatus());
-                koiDTO.setVideo_url(auctionSession.getKoiFish().getVideo_url());
-
-                // Map breeder details
-                BreederResponseDTO breederDTO = new BreederResponseDTO();
-                breederDTO.setId(auctionSession.getKoiFish().getAccount().getUser_id());
-                breederDTO.setUsername(auctionSession.getKoiFish().getAccount().getUsername());
-                koiDTO.setBreeder(breederDTO);
-
-                // Map varieties
-                Set<Variety> varietiesSet = auctionSession.getKoiFish().getVarieties();
-                koiDTO.setVarieties(varietiesSet);
-
-                koiDTO.setVarieties(koiDTO.getVarieties());
-                dto.setKoi(koiDTO);
-            }
-
-            if (auctionSession.getAuctionRequest() != null) {
-                AuctionSessionResponseAuctionRequestDTO requestDTO = new AuctionSessionResponseAuctionRequestDTO();
-                requestDTO.setAuction_request_id(auctionSession.getAuctionRequest().getAuction_request_id());
-                requestDTO.setTitle(auctionSession.getAuctionRequest().getTitle());
-                requestDTO.setCreatedDate(auctionSession.getAuctionRequest().getCreatedDate());
-                requestDTO.setDescription(auctionSession.getAuctionRequest().getDescription());
-                requestDTO.setResponse_note(auctionSession.getAuctionRequest().getResponse_note());
-                requestDTO.setStatus(auctionSession.getAuctionRequest().getStatus());
-                dto.setAuctionRequest(requestDTO);
-            }
-
-            if (auctionSession.getWinner() != null) {
-                AuctionSessionResponseAccountDTO winnerDTO = new AuctionSessionResponseAccountDTO();
-                winnerDTO.setId(auctionSession.getWinner().getUser_id());
-                winnerDTO.setUsername(auctionSession.getWinner().getUsername());
-                winnerDTO.setFullName(auctionSession.getWinner().getFirstName() + " " + auctionSession.getWinner().getLastName());
-                dto.setWinner(winnerDTO);
-            }
-
-            if (auctionSession.getStaff() != null) {
-                AuctionSessionResponseAccountDTO staffDTO = new AuctionSessionResponseAccountDTO();
-                staffDTO.setId(auctionSession.getStaff().getUser_id());
-                staffDTO.setUsername(auctionSession.getStaff().getUsername());
-                staffDTO.setFullName(auctionSession.getStaff().getFirstName() + " " + auctionSession.getStaff().getLastName());
-                dto.setStaff(staffDTO);
-            }
-
-            if (auctionSession.getManager() != null) {
-                AuctionSessionResponseAccountDTO managerDTO = new AuctionSessionResponseAccountDTO();
-                managerDTO.setId(auctionSession.getManager().getUser_id());
-                managerDTO.setUsername(auctionSession.getManager().getUsername());
-                managerDTO.setFullName(auctionSession.getManager().getFirstName() + " " + auctionSession.getManager().getLastName());
-                dto.setManager(managerDTO);
-            }
-
-            // Map bids
-            List<BidResponseDTO> bidDTOs = auctionSession.getBidSet().stream().map(bid -> {
-                BidResponseDTO bidDTO = new BidResponseDTO();
-                bidDTO.setId(bid.getId());
-                bidDTO.setBidAmount(bid.getBidAmount());
-                bidDTO.setBidAt(bid.getBidAt());
-                bidDTO.setAutoBid(bid.isAutoBid());
-
-                // Map member details for the bid
-                AuctionSessionResponseAccountDTO memberDTO = new AuctionSessionResponseAccountDTO();
-                memberDTO.setId(bid.getMember().getUser_id());
-                memberDTO.setUsername(bid.getMember().getUsername());
-                memberDTO.setFullName(bid.getMember().getFirstName() + " " + bid.getMember().getLastName());
-                bidDTO.setMember(memberDTO);
-
-                bidDTO.setAuctionSessionId(auctionSession.getAuctionSessionId());
-
-                return bidDTO;
-            }).collect(Collectors.toList());
-
-            dto.setBids(bidDTOs);
-
+            AuctionSessionResponsePrimaryDataDTO dto = getAuctionSessionResponsePrimaryDataDTO(auctionSession);
             responseList.add(dto);
         }
 
@@ -637,6 +542,7 @@ public class AuctionSessionService {
                 auctionSessionsPage.getTotalPages()
         );
     }
+
     private AuctionSessionResponsePrimaryDataDTO convertToAuctionSessionResponsePrimaryDataDTO(AuctionSession auctionSession) {
         AuctionSessionResponsePrimaryDataDTO responseDTO = new AuctionSessionResponsePrimaryDataDTO();
         responseDTO.setAuctionSessionId(auctionSession.getAuctionSessionId());
@@ -816,6 +722,7 @@ public class AuctionSessionService {
 
         return convertToAuctionSessionResponsePrimaryDataDTO(auctionSession);
     }
+
     public AuctionSessionResponsePrimaryDataDTO processAuctionSessionById(Long auctionSessionId) {
         AuctionSession auctionSession = auctionSessionRepository.findById(auctionSessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Auction session not found"));

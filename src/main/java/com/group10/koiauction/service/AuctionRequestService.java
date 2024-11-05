@@ -4,10 +4,7 @@ import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.AuctionRequest;
 import com.group10.koiauction.entity.AuctionRequestProcess;
 import com.group10.koiauction.entity.KoiFish;
-import com.group10.koiauction.entity.enums.AccountRoleEnum;
-import com.group10.koiauction.entity.enums.AccountStatusEnum;
-import com.group10.koiauction.entity.enums.AuctionRequestStatusEnum;
-import com.group10.koiauction.entity.enums.KoiStatusEnum;
+import com.group10.koiauction.entity.enums.*;
 import com.group10.koiauction.exception.EntityNotFoundException;
 import com.group10.koiauction.mapper.AuctionRequestMapper;
 import com.group10.koiauction.model.request.ResponseAuctionRequestDTO;
@@ -377,6 +374,32 @@ public class AuctionRequestService {
         Pageable pageable = PageRequest.of(page, size);
         Page<AuctionRequest> auctionRequestPage =
                 auctionRequestRepository.findAllAuctionRequestOfCurrentBreederPagination(currentBreeder.getUser_id(), pageable);
+        List<AuctionRequestResponse> auctionRequestResponseList = new ArrayList<>();
+        for (AuctionRequest auctionRequest : auctionRequestPage.getContent()) {
+            AuctionRequestResponse auctionRequestResponse = auctionRequestMapper.toAuctionRequestResponse(auctionRequest);
+            auctionRequestResponse.setKoi_id(auctionRequest.getKoiFish().getKoi_id());
+            BreederResponseDTO breederResponseDTO = new BreederResponseDTO();
+            breederResponseDTO.setId(currentBreeder.getUser_id());
+            breederResponseDTO.setUsername(currentBreeder.getUsername());
+            auctionRequestResponse.setBreeder(breederResponseDTO);
+            auctionRequestResponseList.add(auctionRequestResponse);
+
+        }
+        AuctionRequestResponsePagination auctionRequestResponsePagination = new AuctionRequestResponsePagination();
+        auctionRequestResponsePagination.setAuctionRequestResponseList(auctionRequestResponseList);
+        auctionRequestResponsePagination.setPageNumber(auctionRequestPage.getNumber());
+        auctionRequestResponsePagination.setTotalPages(auctionRequestPage.getTotalPages());
+        auctionRequestResponsePagination.setTotalElements(auctionRequestPage.getTotalElements());
+        auctionRequestResponsePagination.setNumberOfElements(auctionRequestPage.getNumberOfElements());
+        return auctionRequestResponsePagination;
+
+    }
+
+    public AuctionRequestResponsePagination getAuctionRequestResponsesPaginationOfCurrentBreederFilter(AuctionRequestStatusEnum status, Date startDate , Date endDate, int page, int size) {
+        Account currentBreeder = accountUtils.getCurrentAccount();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AuctionRequest> auctionRequestPage =
+                auctionRequestRepository.filterAuctionRequestForKoiBreeder(status,startDate,endDate,currentBreeder, pageable);
         List<AuctionRequestResponse> auctionRequestResponseList = new ArrayList<>();
         for (AuctionRequest auctionRequest : auctionRequestPage.getContent()) {
             AuctionRequestResponse auctionRequestResponse = auctionRequestMapper.toAuctionRequestResponse(auctionRequest);

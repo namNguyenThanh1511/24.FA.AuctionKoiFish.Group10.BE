@@ -91,11 +91,12 @@ public class AuctionSessionAPI {
             @RequestParam(required = false) Double maxSizeCm,
             @RequestParam(required = false) Double minWeightKg,
             @RequestParam(required = false) Double maxWeightKg,
+            @RequestParam(required = false) AuctionSessionStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         AuctionSessionResponsePagination response = auctionSessionService.searchAuctionSessions(
-                auctionType, sex, breederName, varieties, minSizeCm, maxSizeCm, minWeightKg, maxWeightKg, page, size);
+                auctionType, sex, breederName, varieties, minSizeCm, maxSizeCm, minWeightKg, maxWeightKg, status, page, size);
 
         return ResponseEntity.ok(response); // Returns 200 OK status
     }
@@ -133,5 +134,7 @@ public class AuctionSessionAPI {
 
         return ResponseEntity.ok(response);
     }
+
+
 
 }
