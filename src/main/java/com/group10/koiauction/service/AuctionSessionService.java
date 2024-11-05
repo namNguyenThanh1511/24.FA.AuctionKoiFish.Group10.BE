@@ -443,6 +443,53 @@ public class AuctionSessionService {
         );
     }
 
+    public AuctionSessionResponsePagination getAuctionSessionsByCurrentStaff(int page, int size) {
+        Long currentAccountId = accountUtils.getCurrentAccount().getUser_id();
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AuctionSession> auctionSessions = auctionSessionRepository.findAllByStaffAccountId(currentAccountId, pageable);
+
+        List<AuctionSessionResponsePrimaryDataDTO> responseList = auctionSessions
+                .stream()
+                .map(this::getAuctionSessionResponsePrimaryDataDTO)
+                .collect(Collectors.toList());
+
+        return new AuctionSessionResponsePagination(
+                responseList,
+                auctionSessions.getNumber(),
+                auctionSessions.getSize(),
+                auctionSessions.getTotalElements(),
+                auctionSessions.getTotalPages()
+        );
+    }
+
+    public AuctionSessionResponsePagination getFilteredAuctionSessionsByCurrentStaff(
+            AuctionSessionStatus auctionStatus,
+            AuctionSessionType auctionType,
+            int page,
+            int size) {
+
+        // Retrieve the current authenticated staff ID
+        Long currentStaffId = accountUtils.getCurrentAccount().getUser_id();
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AuctionSession> auctionSessions = auctionSessionRepository.findByStaffIdAndFilters(
+                currentStaffId, auctionStatus, auctionType, pageable);
+
+        List<AuctionSessionResponsePrimaryDataDTO> responseList = auctionSessions
+                .stream()
+                .map(this::getAuctionSessionResponsePrimaryDataDTO)
+                .collect(Collectors.toList());
+
+        return new AuctionSessionResponsePagination(
+                responseList,
+                auctionSessions.getNumber(),
+                auctionSessions.getSize(),
+                auctionSessions.getTotalElements(),
+                auctionSessions.getTotalPages()
+        );
+    }
+
     public AuctionSessionResponsePagination searchAuctionSessions(
             AuctionSessionType auctionType,
             KoiSexEnum sex,
