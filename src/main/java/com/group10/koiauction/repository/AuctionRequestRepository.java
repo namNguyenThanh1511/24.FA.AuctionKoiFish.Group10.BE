@@ -57,4 +57,14 @@ public interface AuctionRequestRepository extends JpaRepository<AuctionRequest, 
                                                            @Param("koiBreeder") Account koiBreeder,
                                                            Pageable pageable);
 
+    @Query("SELECT u FROM AuctionRequest u WHERE (u.status = :status OR :status IS NULL) " +
+            "AND (:startDate IS NULL OR DATE(u.createdDate) >= DATE(:startDate)) " +
+            "AND (:endDate IS NULL OR DATE(u.createdDate) <= DATE(:endDate)) " +
+            "AND u.account = :koiBreeder")
+    Page<AuctionRequest> filterAuctionRequestForManagerFilter(@Param("status") AuctionRequestStatusEnum status,
+                                                           @Param("startDate") Date startDate,
+                                                           @Param("endDate") Date endDate,
+                                                           @Param("koiBreeder") Account koiBreeder,
+                                                           Pageable pageable);
+
 }

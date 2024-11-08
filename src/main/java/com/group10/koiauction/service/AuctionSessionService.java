@@ -11,6 +11,7 @@ import com.group10.koiauction.mapper.AuctionSessionMapper;
 import com.group10.koiauction.mapper.KoiMapper;
 import com.group10.koiauction.model.MemberBidProjectionDTO;
 import com.group10.koiauction.model.request.AuctionSessionRequestDTO;
+import com.group10.koiauction.model.request.DeliveryStatusUpdateDTO;
 import com.group10.koiauction.model.request.UpdateStatusAuctionSessionRequestDTO;
 import com.group10.koiauction.model.response.*;
 import com.group10.koiauction.repository.*;
@@ -133,7 +134,7 @@ public class AuctionSessionService {
                     .withIdentity("deactivateTrigger_" + auctionSession.getAuctionSessionId(), "auctionSessions")
                     .startAt(Date.from(auctionSession.getEndDate().atZone(ZoneId.systemDefault()).toInstant())) // Thời gian
                     // kết
-                    // thúc kỳ học
+                    // thúc phiên đấu
                     .build();
 
             // Lên lịch job hủy kích hoạt phien dau gia
@@ -190,25 +191,34 @@ public class AuctionSessionService {
 
     @Transactional
     public AuctionSessionResponsePrimaryDataDTO closeAuctionSession(Long auction_session_id) {
-        AuctionSession target = auctionSessionRepository.findById(auction_session_id).orElseThrow(() -> new EntityNotFoundException("Auction session with id " + auction_session_id + " not found"));
-        Set<Bid> bidSet = target.getBidSet();
-        if (bidSet.isEmpty()) {
+        AuctionSession target = auctionSessionRepository.findById(auction_session_id).orElseThrow(()->new EntityNotFoundException("Auction session with id " + auction_session_id + " not found"));
+        if (target.getBidSet().isEmpty()) {
             try {
                 target.setUpdateAt(new Date());
                 target.setNote("No participant");
                 target.setStatus(AuctionSessionStatus.NO_WINNER);
                 auctionSessionRepository.save(target);
                 updateKoiStatus(target.getKoiFish().getKoi_id(), target.getStatus());
+
             } catch (RuntimeException e) {
                 throw new RuntimeException(e.getMessage());
             }
         } else {
             try {
+                if (target.getAuctionType().equals(AuctionSessionType.FIXED_PRICE)) {
+                    List<Bid> eligibleBids = new ArrayList<>(target.getBidSet());
+                    Account winner = eligibleBids.get(new Random().nextInt(eligibleBids.size())).getMember();
+                    target.setWinner(winner);
+                    target.setStatus(AuctionSessionStatus.DRAWN);
+                    target = auctionSessionRepository.save(target);
+                    updateKoiStatus(target.getKoiFish().getKoi_id(), target.getStatus());
+                    returnMoneyAfterClosedAuctionSession(target);
+                    return getAuctionSessionResponsePrimaryDataDTO(target);
+                }
                 target.setWinner(getAuctionSessionWinner(target));
                 target.setUpdateAt(new Date());
                 target.setStatus(AuctionSessionStatus.COMPLETED);
                 auctionSessionRepository.save(target);
-                createTransactionsAfterAuctionSessionComplete(target);
                 updateKoiStatus(target.getKoiFish().getKoi_id(), target.getStatus());
                 returnMoneyAfterClosedAuctionSession(target);
             } catch (Exception e) {
@@ -228,16 +238,26 @@ public class AuctionSessionService {
                 target.setStatus(AuctionSessionStatus.NO_WINNER);
                 auctionSessionRepository.save(target);
                 updateKoiStatus(target.getKoiFish().getKoi_id(), target.getStatus());
+
             } catch (RuntimeException e) {
                 throw new RuntimeException(e.getMessage());
             }
         } else {
             try {
+                if (target.getAuctionType().equals(AuctionSessionType.FIXED_PRICE)) {
+                    List<Bid> eligibleBids = new ArrayList<>(target.getBidSet());
+                    Account winner = eligibleBids.get(new Random().nextInt(eligibleBids.size())).getMember();
+                    target.setWinner(winner);
+                    target.setStatus(AuctionSessionStatus.DRAWN);
+                    auctionSessionRepository.save(target);
+                    updateKoiStatus(target.getKoiFish().getKoi_id(), target.getStatus());
+                    returnMoneyAfterClosedAuctionSession(target);
+                    return;
+                }
                 target.setWinner(getAuctionSessionWinner(target));
                 target.setUpdateAt(new Date());
                 target.setStatus(AuctionSessionStatus.COMPLETED);
                 auctionSessionRepository.save(target);
-                createTransactionsAfterAuctionSessionComplete(target);
                 updateKoiStatus(target.getKoiFish().getKoi_id(), target.getStatus());
                 returnMoneyAfterClosedAuctionSession(target);
             } catch (Exception e) {
@@ -267,10 +287,19 @@ public class AuctionSessionService {
     public void createTransactionsAfterAuctionSessionComplete(AuctionSession auctionSession) {
         Account manager = accountRepository.findAccountByUsername("manager");
         Account winner = auctionSession.getWinner();
+        AuctionSessionStatus auctionSessionStatus = auctionSession.getStatus();
         Transaction transaction = new Transaction();
         SystemProfit systemProfit = new SystemProfit();
         double serviceFeePercent = ServiceFeePercent.SERVICE_FEE_PERCENT;
-        double profit = auctionSession.getCurrentPrice() * serviceFeePercent;
+        double profit = 0;
+        double koiBreederAmount = 0;
+        if (auctionSessionStatus.equals(AuctionSessionStatus.COMPLETED) || auctionSessionStatus.equals(AuctionSessionStatus.DRAWN)) {
+            profit = auctionSession.getCurrentPrice() * serviceFeePercent;
+            koiBreederAmount = auctionSession.getCurrentPrice() - profit;
+        } else if (auctionSessionStatus.equals(AuctionSessionStatus.COMPLETED_WITH_BUYNOW)) {
+            profit = auctionSession.getBuyNowPrice() * serviceFeePercent;
+            koiBreederAmount = auctionSession.getBuyNowPrice() - profit;
+        }
 
         transaction.setCreateAt(new Date());
         transaction.setType(TransactionEnum.FEE_TRANSFER);
@@ -289,7 +318,7 @@ public class AuctionSessionService {
 
         Transaction transaction2 = new Transaction();
         Account koiBreeder = auctionSession.getKoiFish().getAccount();
-        double koiBreederAmount = auctionSession.getCurrentPrice() - profit;
+
         transaction2.setCreateAt(new Date());
         transaction2.setType(TransactionEnum.TRANSFER_FUNDS);
         transaction2.setFrom(manager);
@@ -308,11 +337,102 @@ public class AuctionSessionService {
     }
 
     @Transactional
+    public AuctionSessionResponsePrimaryDataDTO markAuctionSessionAsDelivering(Long auctionSessionId,
+                                                                               DeliveryStatusUpdateDTO deliveryStatusUpdateDTO) {
+        AuctionSession auctionSession =
+                auctionSessionRepository.findById(auctionSessionId).orElseThrow(() -> new EntityNotFoundException(
+                        "Auction session with ID: " + auctionSessionId + " not found"));
+        auctionSession.setDeliveryStatus(DeliveryStatus.DELIVERING);
+        auctionSession.setUpdateAt(new Date());
+        auctionSession.setNote(deliveryStatusUpdateDTO.getNote());
+
+        try {
+            auctionSession = auctionSessionRepository.save(auctionSession);
+
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+        return getAuctionSessionResponsePrimaryDataDTO(auctionSession);
+    }
+
+    @Transactional
+    public AuctionSessionResponsePrimaryDataDTO markAuctionSessionAsDelivered(Long auctionSessionId,
+                                                                              DeliveryStatusUpdateDTO deliveryStatusUpdateDTO) {
+        AuctionSession auctionSession =
+                auctionSessionRepository.findById(auctionSessionId).orElseThrow(() -> new EntityNotFoundException(
+                        "Auction session with ID: " + auctionSessionId + " not found"));
+        auctionSession.setDeliveryStatus(DeliveryStatus.DELIVERED);
+        auctionSession.setUpdateAt(new Date());
+        auctionSession.setNote(deliveryStatusUpdateDTO.getNote());
+
+        try {
+            auctionSession = auctionSessionRepository.save(auctionSession);
+            createTransactionsAfterAuctionSessionComplete(auctionSession);
+            updateKoiStatus(auctionSession.getKoiFish().getKoi_id(), auctionSession.getDeliveryStatus());
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+        return getAuctionSessionResponsePrimaryDataDTO(auctionSession);
+    }
+
+    @Transactional
+    public AuctionSessionResponsePrimaryDataDTO markAuctionSessionAsCancelledDelivery(Long auctionSessionId,
+                                                                                      DeliveryStatusUpdateDTO deliveryStatusUpdateDTO) {
+        AuctionSession auctionSession =
+                auctionSessionRepository.findById(auctionSessionId).orElseThrow(() -> new EntityNotFoundException(
+                        "Auction session with ID: " + auctionSessionId + " not found"));
+        auctionSession.setDeliveryStatus(DeliveryStatus.DELIVERED_CANCELLED);
+        auctionSession.setUpdateAt(new Date());
+        auctionSession.setNote(deliveryStatusUpdateDTO.getNote());
+
+        try {
+            auctionSession = auctionSessionRepository.save(auctionSession);
+            returnMoneyForWinner(auctionSession);
+            updateKoiStatus(auctionSession.getKoiFish().getKoi_id(), auctionSession.getDeliveryStatus());
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+        return getAuctionSessionResponsePrimaryDataDTO(auctionSession);
+    }
+
+    @Transactional
     public void returnMoneyAfterClosedAuctionSession(AuctionSession auctionSession) {
         List<MemberBidProjectionDTO> loserBids = bidRepository.findMaxBidForEachMemberInAuctionSessionExceptWinner(auctionSession.getAuctionSessionId(), auctionSession.getWinner().getUser_id());
         for (MemberBidProjectionDTO loserBid : loserBids) {
             createTransactionWhenReturnMoney(loserBid);
         }
+
+    }
+
+    @Transactional
+    public void returnMoneyForWinner(AuctionSession auctionSession) {
+        Account winner = auctionSession.getWinner();
+        Set<Bid> bidSet = auctionSession.getBidSet();
+        if (!auctionSession.getStatus().equals(AuctionSessionStatus.COMPLETED_WITH_BUYNOW)) {
+            if (auctionSession.getStatus().equals(AuctionSessionStatus.DRAWN)) {
+                for (Bid bid : bidSet) {
+                    if (bid.getMember() == winner) {
+                        MemberBidProjectionDTO memberBidProjectionDTO = new MemberBidProjectionDTO();
+                        memberBidProjectionDTO.setId(bid.getId());
+                        memberBidProjectionDTO.setAuction_session_id(auctionSession.getAuctionSessionId());
+                        memberBidProjectionDTO.setBidAmount(bid.getBidAmount());
+                        memberBidProjectionDTO.setLoser_id(winner.getUser_id());
+                        createTransactionWhenReturnMoney(memberBidProjectionDTO);
+                    }
+                }
+                return;
+            }
+
+            Bid maxBid = bidSet.stream().max(Comparator.comparing(Bid::getBidAmount)).orElseThrow(() -> new BidException("No bid found for this auction session"));
+            MemberBidProjectionDTO maxBidProjectDTO = new MemberBidProjectionDTO();
+            maxBidProjectDTO.setAuction_session_id(auctionSession.getAuctionSessionId());
+            maxBidProjectDTO.setBidAmount(maxBid.getBidAmount());
+            maxBidProjectDTO.setId(maxBid.getId());
+            maxBidProjectDTO.setLoser_id(winner.getUser_id());
+            createTransactionWhenReturnMoney(maxBidProjectDTO);
+            return;
+        }
+        createTransactionWhenReturnMoneyWhenBuyNowAfterCancelledDeliver(auctionSession);
 
     }
 
@@ -341,6 +461,27 @@ public class AuctionSessionService {
         transaction.setDescription("Return funds (+) : " + loserBid.getBidAmount());
         transaction.setAuctionSession(auctionSession);
         loser.setBalance(bidService.increasedBalance(loser, loserBid.getBidAmount()));
+        transaction.setStatus(TransactionStatus.SUCCESS);
+        try {
+            transactionRepository.save(transaction);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @Transactional
+    public void createTransactionWhenReturnMoneyWhenBuyNowAfterCancelledDeliver(AuctionSession auctionSession) {
+        Account loser = getAccountById(auctionSession.getWinner().getUser_id());
+
+        Transaction transaction = new Transaction();
+        transaction.setCreateAt(new Date());
+        transaction.setType(TransactionEnum.TRANSFER_FUNDS);
+        transaction.setFrom(null);
+        transaction.setTo(loser);
+        transaction.setAmount(auctionSession.getBuyNowPrice());
+        transaction.setDescription("Return funds (+) : " + auctionSession.getBuyNowPrice());
+        transaction.setAuctionSession(auctionSession);
+        loser.setBalance(bidService.increasedBalance(loser, auctionSession.getBuyNowPrice()));
         transaction.setStatus(TransactionStatus.SUCCESS);
         try {
             transactionRepository.save(transaction);
@@ -407,14 +548,37 @@ public class AuctionSessionService {
                 target.setUpdatedDate(new Date());
                 break;
             }
-            case COMPLETED, DRAWN: {
+            case COMPLETED, COMPLETED_WITH_BUYNOW, DRAWN: {
 
-                target.setKoiStatus(KoiStatusEnum.SOLD);
+                target.setKoiStatus(KoiStatusEnum.PROCESSING);
                 target.setUpdatedDate(new Date());
                 break;
             }
             case CANCELLED, NO_WINNER: {
                 target.setKoiStatus(KoiStatusEnum.AVAILABLE);
+                target.setUpdatedDate(new Date());
+                break;
+            }
+        }
+        try {
+            koiFishRepository.save(target);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+
+    }
+
+    public void updateKoiStatus(Long id, DeliveryStatus status) {
+        KoiFish target = getKoiFishByID(id);
+        switch (status) {
+            case DELIVERED_CANCELLED: {
+                target.setKoiStatus(KoiStatusEnum.AVAILABLE);
+                target.setUpdatedDate(new Date());
+                break;
+            }
+            case DELIVERED: {
+                target.setKoiStatus(KoiStatusEnum.SOLD);
                 target.setUpdatedDate(new Date());
                 break;
             }
@@ -622,6 +786,7 @@ public class AuctionSessionService {
         auctionSessionResponsePrimaryDataDTO.setAuctionRequest(auctionRequest);
         auctionSessionResponsePrimaryDataDTO.setAuctionType(auctionSession.getAuctionType());
         auctionSessionResponsePrimaryDataDTO.setAuctionStatus(auctionSession.getStatus());
+        auctionSessionResponsePrimaryDataDTO.setDeliveryStatus(auctionSession.getDeliveryStatus());
         if (auctionSession.getBidSet() == null) {
             auctionSessionResponsePrimaryDataDTO.setBids(null);
         } else {
