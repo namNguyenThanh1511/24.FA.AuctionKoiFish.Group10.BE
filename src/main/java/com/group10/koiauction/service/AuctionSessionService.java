@@ -342,6 +342,11 @@ public class AuctionSessionService {
         AuctionSession auctionSession =
                 auctionSessionRepository.findById(auctionSessionId).orElseThrow(() -> new EntityNotFoundException(
                         "Auction session with ID: " + auctionSessionId + " not found"));
+        if(  auctionSession.getDeliveryStatus() == null ||!(auctionSession.getStatus().equals(AuctionSessionStatus.COMPLETED_WITH_BUYNOW)
+                || auctionSession.getStatus().equals(AuctionSessionStatus.DRAWN)
+                || auctionSession.getStatus().equals(AuctionSessionStatus.COMPLETED))) {
+            throw new IllegalArgumentException("Auction session with ID: " + auctionSessionId + " have not been completed yet to deliver ");
+        }
         auctionSession.setDeliveryStatus(DeliveryStatus.DELIVERING);
         auctionSession.setUpdateAt(new Date());
         auctionSession.setNote(deliveryStatusUpdateDTO.getNote());
@@ -361,6 +366,9 @@ public class AuctionSessionService {
         AuctionSession auctionSession =
                 auctionSessionRepository.findById(auctionSessionId).orElseThrow(() -> new EntityNotFoundException(
                         "Auction session with ID: " + auctionSessionId + " not found"));
+        if(  auctionSession.getDeliveryStatus() == null ||!auctionSession.getDeliveryStatus().equals(DeliveryStatus.DELIVERING)) {
+            throw  new IllegalArgumentException("Auction session with ID: " + auctionSessionId + " must be delivering first");
+        }
         auctionSession.setDeliveryStatus(DeliveryStatus.DELIVERED);
         auctionSession.setUpdateAt(new Date());
         auctionSession.setNote(deliveryStatusUpdateDTO.getNote());
@@ -381,6 +389,9 @@ public class AuctionSessionService {
         AuctionSession auctionSession =
                 auctionSessionRepository.findById(auctionSessionId).orElseThrow(() -> new EntityNotFoundException(
                         "Auction session with ID: " + auctionSessionId + " not found"));
+        if(auctionSession.getDeliveryStatus() == null || !auctionSession.getDeliveryStatus().equals(DeliveryStatus.DELIVERING)) {
+            throw  new IllegalArgumentException("Auction session with ID: " + auctionSessionId + " must be delivering first to cancel ");
+        }
         auctionSession.setDeliveryStatus(DeliveryStatus.DELIVERED_CANCELLED);
         auctionSession.setUpdateAt(new Date());
         auctionSession.setNote(deliveryStatusUpdateDTO.getNote());
@@ -549,8 +560,7 @@ public class AuctionSessionService {
                 break;
             }
             case COMPLETED, COMPLETED_WITH_BUYNOW, DRAWN: {
-
-                target.setKoiStatus(KoiStatusEnum.PROCESSING);
+                target.setKoiStatus(KoiStatusEnum.DELIVER_REQUIRED);
                 target.setUpdatedDate(new Date());
                 break;
             }
@@ -559,6 +569,7 @@ public class AuctionSessionService {
                 target.setUpdatedDate(new Date());
                 break;
             }
+
         }
         try {
             koiFishRepository.save(target);
@@ -573,12 +584,17 @@ public class AuctionSessionService {
         KoiFish target = getKoiFishByID(id);
         switch (status) {
             case DELIVERED_CANCELLED: {
-                target.setKoiStatus(KoiStatusEnum.AVAILABLE);
+                target.setKoiStatus(KoiStatusEnum.RETURNING);
                 target.setUpdatedDate(new Date());
                 break;
             }
             case DELIVERED: {
                 target.setKoiStatus(KoiStatusEnum.SOLD);
+                target.setUpdatedDate(new Date());
+                break;
+            }
+            case DELIVERING: {
+                target.setKoiStatus(KoiStatusEnum.DELIVERING_TO_BUYER);
                 target.setUpdatedDate(new Date());
                 break;
             }
