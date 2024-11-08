@@ -115,6 +115,26 @@ public class AuctionSessionAPI {
         AuctionSessionResponsePrimaryDataDTO auctionSessionResponsePrimaryDataDTO = auctionSessionService.processAuctionSessionById(id);
         return ResponseEntity.ok(auctionSessionResponsePrimaryDataDTO);
     }
+    @GetMapping("/current-staff")
+    public ResponseEntity<AuctionSessionResponsePagination> getAuctionSessionsByCurrentStaff(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        AuctionSessionResponsePagination response = auctionSessionService.getAuctionSessionsByCurrentStaff(page, size);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/current-staff/filter")
+    public ResponseEntity<AuctionSessionResponsePagination> getFilteredAuctionSessionsByCurrentStaff(
+            @RequestParam(required = false) AuctionSessionStatus auctionStatus,
+            @RequestParam(required = false) AuctionSessionType auctionType,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        AuctionSessionResponsePagination response = auctionSessionService.getFilteredAuctionSessionsByCurrentStaff(
+                auctionStatus, auctionType, page, size);
+
+        return ResponseEntity.ok(response);
+    }
 
     @PutMapping("/markDelivering/{id}")
     public ResponseEntity<AuctionSessionResponsePrimaryDataDTO> markDelivering(@PathVariable Long id , @RequestBody DeliveryStatusUpdateDTO deliveryStatusUpdateDTO) {
