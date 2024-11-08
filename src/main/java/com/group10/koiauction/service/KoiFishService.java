@@ -1,12 +1,12 @@
 package com.group10.koiauction.service;
 
 import com.group10.koiauction.entity.Account;
+import com.group10.koiauction.entity.AuctionSession;
 import com.group10.koiauction.entity.KoiFish;
 import com.group10.koiauction.entity.Variety;
-import com.group10.koiauction.entity.enums.KoiSexEnum;
-import com.group10.koiauction.entity.enums.KoiStatusEnum;
-import com.group10.koiauction.entity.enums.VarietyStatusEnum;
+import com.group10.koiauction.entity.enums.*;
 import com.group10.koiauction.mapper.KoiMapper;
+import com.group10.koiauction.model.request.DeliveryStatusUpdateDTO;
 import com.group10.koiauction.model.request.HealthStatusRequest;
 import com.group10.koiauction.model.request.KoiFishRequest;
 
@@ -120,6 +120,36 @@ public class KoiFishService {
         koiFishResponsePagination.setTotalElements(koiFishPage.getTotalElements());
         koiFishResponsePagination.setNumberOfElements(koiFishPage.getNumberOfElements());
         return koiFishResponsePagination;
+    }
+
+    public KoiFishResponse markKoiFishAsReturned(Long koi_id,DeliveryStatusUpdateDTO deliveryStatusUpdateDTO) {
+        KoiFish koiFish = getKoiFishByID(koi_id);
+        AuctionSession currentAuctionSession = getCurrentAuctionSessionOfKoiFish(koiFish);
+        if(koiFish.getKoiStatus().equals(KoiStatusEnum.RETURNING)){
+            koiFish.setKoiStatus(KoiStatusEnum.AVAILABLE);
+        }else{
+            throw new IllegalArgumentException("Auction session with ID : "+  currentAuctionSession.getAuctionSessionId() + " must be mark as cancelled first");
+        }
+        try{
+            koiFishRepository.save(koiFish);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        return getKoiMapperResponse(koiFish);
+    }
+    public AuctionSession getCurrentAuctionSessionOfKoiFish(KoiFish koiFish) {
+        Set<AuctionSession> auctionSessionSet = koiFish.getAuctionSessionSet();
+        for (AuctionSession auctionSession : auctionSessionSet) {
+            AuctionSessionStatus auctionSessionStatus = auctionSession.getStatus();
+            DeliveryStatus deliveryStatus = auctionSession.getDeliveryStatus();
+            if(auctionSessionStatus.equals(AuctionSessionStatus.CANCELLED)
+                    || deliveryStatus.equals(DeliveryStatus.DELIVERED_CANCELLED)){
+                return null;
+            }
+            return auctionSession;
+        }
+        return null;
     }
 
     public KoiFishResponsePagination getAllKoiFishOfCurrentBreederPaginationWithFilter(KoiStatusEnum status,
@@ -271,7 +301,6 @@ public class KoiFishService {
             case "isdeleted" -> KoiStatusEnum.IS_DELETED;
             case "pendingauction" -> KoiStatusEnum.PENDING_AUCTION;
             case "selling" -> KoiStatusEnum.SELLING;
-            case "waitingforpayment" -> KoiStatusEnum.WAITING_FOR_PAYMENT;
             case "sold" -> KoiStatusEnum.SOLD;
             case "unavailable" -> KoiStatusEnum.UNAVAILABLE;
             default -> throw new EntityNotFoundException("Invalid status");

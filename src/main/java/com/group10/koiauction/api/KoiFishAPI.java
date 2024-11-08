@@ -3,6 +3,7 @@ package com.group10.koiauction.api;
 import com.group10.koiauction.entity.KoiFish;
 import com.group10.koiauction.entity.enums.KoiSexEnum;
 import com.group10.koiauction.entity.enums.KoiStatusEnum;
+import com.group10.koiauction.model.request.DeliveryStatusUpdateDTO;
 import com.group10.koiauction.model.request.HealthStatusRequest;
 import com.group10.koiauction.model.request.KoiFishRequest;
 import com.group10.koiauction.model.response.HealthStatusResponse;
@@ -119,6 +120,12 @@ public class KoiFishAPI {
     public ResponseEntity<HealthStatusResponse> updateKoiHealth(@PathVariable Long koi_id , @RequestBody HealthStatusRequest healthStatusRequest){
         HealthStatusResponse healthStatusResponse = koiFishService.updateHealthStatus(koi_id, healthStatusRequest);
         return ResponseEntity.ok(healthStatusResponse);
+    }
+
+    @PutMapping("/return/{id}")
+    public ResponseEntity<KoiFishResponse> markKoiFishAsReturned(@PathVariable Long id , @RequestBody DeliveryStatusUpdateDTO deliveryStatusUpdateDTO){
+        KoiFishResponse koiFishResponse = koiFishService.markKoiFishAsReturned(id, deliveryStatusUpdateDTO);
+        return ResponseEntity.ok(koiFishResponse);
     }
 
 
