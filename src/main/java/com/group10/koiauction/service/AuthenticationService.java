@@ -15,9 +15,7 @@ import com.group10.koiauction.exception.EntityNotFoundException;
 import com.group10.koiauction.model.request.RegisterMemberRequest;
 import com.group10.koiauction.model.request.UpdateProfileRequestDTO;
 import com.group10.koiauction.model.request.ResetPasswordRequestDTO;
-import com.group10.koiauction.model.response.AccountResponse;
-import com.group10.koiauction.model.response.AccountResponsePagination;
-import com.group10.koiauction.model.response.EmailDetail;
+import com.group10.koiauction.model.response.*;
 import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.utilities.AccountUtils;
 import org.modelmapper.ModelMapper;
@@ -171,7 +169,7 @@ public class AuthenticationService implements UserDetailsService {
                 Account newAccount = new Account();
                 newAccount.setEmail(email);
                 newAccount.setFirstName(decodedToken.getName());
-//                newAccount.setLastName(decodedToken.getName());
+                newAccount.setLastName("");
                 newAccount.setRoleEnum(AccountRoleEnum.MEMBER);
                 newAccount.setStatus(AccountStatusEnum.ACTIVE);
                 newAccount.setUsername(email);
@@ -211,6 +209,16 @@ public class AuthenticationService implements UserDetailsService {
         return accountRepository.save(target);
     }
 
+    public AccountResponseForManageDTO unlockAccount(Long id) {
+        Account target = getAccountById(id);
+        target.setStatus(AccountStatusEnum.ACTIVE);
+        target.setUpdatedDate(new Date());
+        target = accountRepository.save(target);
+        AccountResponseForManageDTO accountResponseForManageDTO = accountMapper.toAccountResponseForManageDTO(target);
+        accountResponseForManageDTO.setCreatedAt(target.getCreatedDate());
+        accountResponseForManageDTO.setUpdatedAt(target.getUpdatedDate());
+        return  accountResponseForManageDTO ;
+    }
     public Account updateAccount(Long id, RegisterAccountRequest account) {
         try {
             Account target = getAccountById(id);
@@ -434,23 +442,39 @@ public class AuthenticationService implements UserDetailsService {
         return accountRepository.findAccountsByRoleEnum(AccountRoleEnum.STAFF);
     }
 
+    public List<AuctionSessionResponseAccountDTO> getAllStaffAccountsWithShorterResponse() {
+        List<Account> accountList = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.STAFF);
+        List<AuctionSessionResponseAccountDTO> accountDTOList = new ArrayList<>();
+        for (Account account : accountList) {
+            AuctionSessionResponseAccountDTO accountDTO = new AuctionSessionResponseAccountDTO();
+            accountDTO.setId(account.getUser_id());
+            accountDTO.setUsername(account.getUsername());
+            accountDTO.setFullName(account.getFirstName() + " " + account.getLastName());
+            accountDTOList.add(accountDTO);
+        }
+
+        return accountDTOList;
+    }
+
     public List<Account> getAllMemberAccounts() {
         return accountRepository.findAccountsByRoleEnum(AccountRoleEnum.MEMBER);
     }
 
-    public AccountResponsePagination getAllBreederAccountsPagination(int page, int size) {
+    public AccountResponseForManagePagination getAllBreederAccountsPagination(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Account> breederAccounts = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.KOI_BREEDER, pageable);
 
         // Convert Account entities to AccountResponse
-        List<AccountResponse> accountResponseList = new ArrayList<>();
+        List<AccountResponseForManageDTO> accountResponseList = new ArrayList<>();
         for (Account account : breederAccounts.getContent()) {
-            AccountResponse accountResponse = mapToAccountResponse(account);
+            AccountResponseForManageDTO accountResponse = accountMapper.toAccountResponseForManageDTO(account);
+            accountResponse.setCreatedAt(account.getCreatedDate());
+            accountResponse.setUpdatedAt(account.getUpdatedDate());
             accountResponseList.add(accountResponse);
         }
 
         // Use the constructor with arguments
-        return new AccountResponsePagination(
+        return new AccountResponseForManagePagination(
                 accountResponseList,
                 breederAccounts.getNumber(),
                 breederAccounts.getTotalPages(),
@@ -460,19 +484,21 @@ public class AuthenticationService implements UserDetailsService {
     }
 
 
-    public AccountResponsePagination getAllStaffAccountsPagination(int page, int size) {
+    public AccountResponseForManagePagination getAllStaffAccountsPagination(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Account> staffAccounts = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.STAFF, pageable);
 
         // Convert Account entities to AccountResponse
-        List<AccountResponse> accountResponseList = new ArrayList<>();
+        List<AccountResponseForManageDTO> accountResponseList = new ArrayList<>();
         for (Account account : staffAccounts.getContent()) {
-            AccountResponse accountResponse = mapToAccountResponse(account);
+            AccountResponseForManageDTO accountResponse = accountMapper.toAccountResponseForManageDTO(account);
+            accountResponse.setCreatedAt(account.getCreatedDate());
+            accountResponse.setUpdatedAt(account.getUpdatedDate());
             accountResponseList.add(accountResponse);
         }
 
         // Create AccountResponsePagination and set pagination details
-        return new AccountResponsePagination(
+        return new AccountResponseForManagePagination(
                 accountResponseList,
                 staffAccounts.getNumber(),
                 staffAccounts.getTotalPages(),
@@ -482,19 +508,21 @@ public class AuthenticationService implements UserDetailsService {
     }
 
 
-    public AccountResponsePagination getAllMemberAccountsPagintion(int page, int size) {
+    public AccountResponseForManagePagination getAllMemberAccountsPagination(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Account> memberAccounts = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.MEMBER, pageable);
 
         // Convert Account entities to AccountResponse
-        List<AccountResponse> accountResponseList = new ArrayList<>();
+        List<AccountResponseForManageDTO> accountResponseList = new ArrayList<>();
         for (Account account : memberAccounts.getContent()) {
-            AccountResponse accountResponse = mapToAccountResponse(account);
+            AccountResponseForManageDTO accountResponse = accountMapper.toAccountResponseForManageDTO(account);
+            accountResponse.setCreatedAt(account.getCreatedDate());
+            accountResponse.setUpdatedAt(account.getUpdatedDate());
             accountResponseList.add(accountResponse);
         }
 
         // Create AccountResponsePagination and set pagination details
-        return new AccountResponsePagination(
+        return new AccountResponseForManagePagination(
                 accountResponseList,
                 memberAccounts.getNumber(),
                 memberAccounts.getTotalPages(),

@@ -7,6 +7,7 @@ import com.group10.koiauction.entity.enums.AuctionSessionStatus;
 import com.group10.koiauction.entity.enums.AuctionSessionType;
 import com.group10.koiauction.entity.enums.KoiSexEnum;
 import com.group10.koiauction.model.request.AuctionSessionRequestDTO;
+import com.group10.koiauction.model.request.DeliveryStatusUpdateDTO;
 import com.group10.koiauction.model.request.UpdateStatusAuctionSessionRequestDTO;
 import com.group10.koiauction.model.response.AuctionSessionResponsePagination;
 import com.group10.koiauction.model.response.AuctionSessionResponsePrimaryDataDTO;
@@ -112,6 +113,24 @@ public class AuctionSessionAPI {
     @PutMapping("/end-session/{id}")
     public ResponseEntity<AuctionSessionResponsePrimaryDataDTO> processAuctionSession(@PathVariable Long id) {
         AuctionSessionResponsePrimaryDataDTO auctionSessionResponsePrimaryDataDTO = auctionSessionService.processAuctionSessionById(id);
+        return ResponseEntity.ok(auctionSessionResponsePrimaryDataDTO);
+    }
+
+    @PutMapping("/markDelivering/{id}")
+    public ResponseEntity<AuctionSessionResponsePrimaryDataDTO> markDelivering(@PathVariable Long id , @RequestBody DeliveryStatusUpdateDTO deliveryStatusUpdateDTO) {
+        AuctionSessionResponsePrimaryDataDTO auctionSessionResponsePrimaryDataDTO = auctionSessionService.markAuctionSessionAsDelivering(id, deliveryStatusUpdateDTO);
+        return ResponseEntity.ok(auctionSessionResponsePrimaryDataDTO);
+    }
+
+    @PutMapping("/markDelivered/{id}")
+    public ResponseEntity<AuctionSessionResponsePrimaryDataDTO> markDelivered(@PathVariable Long id , @RequestBody DeliveryStatusUpdateDTO deliveryStatusUpdateDTO) {
+        AuctionSessionResponsePrimaryDataDTO auctionSessionResponsePrimaryDataDTO = auctionSessionService.markAuctionSessionAsDelivered(id, deliveryStatusUpdateDTO);
+        return ResponseEntity.ok(auctionSessionResponsePrimaryDataDTO);
+    }
+
+    @PutMapping("/markDeliveryCancelled/{id}")
+    public ResponseEntity<AuctionSessionResponsePrimaryDataDTO> markDeliveryCancelled(@PathVariable Long id , @RequestBody DeliveryStatusUpdateDTO deliveryStatusUpdateDTO) {
+        AuctionSessionResponsePrimaryDataDTO auctionSessionResponsePrimaryDataDTO = auctionSessionService.markAuctionSessionAsCancelledDelivery(id, deliveryStatusUpdateDTO);
         return ResponseEntity.ok(auctionSessionResponsePrimaryDataDTO);
     }
 

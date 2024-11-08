@@ -3,6 +3,7 @@ package com.group10.koiauction.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.group10.koiauction.entity.enums.AuctionSessionStatus;
 import com.group10.koiauction.entity.enums.AuctionSessionType;
+import com.group10.koiauction.entity.enums.DeliveryStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -58,11 +59,15 @@ public class AuctionSession {
     @Column(name = "status", nullable = false)
     private AuctionSessionStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "delivery_status")
+    private DeliveryStatus deliveryStatus;
+
     private String note;
 
-    Date createAt;
+    private Date createAt;
 
-    Date updateAt;
+    private Date updateAt;
 
     @ManyToOne
     @JoinColumn(name = "winner_id")
@@ -95,6 +100,6 @@ public class AuctionSession {
 
     @OneToMany(mappedBy = "auctionSession",cascade = CascadeType.ALL)
     @JsonIgnore
-    Set<Transaction> transactionSet;
+    private Set<Transaction> transactionSet;
 
 }

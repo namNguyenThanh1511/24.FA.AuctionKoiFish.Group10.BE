@@ -45,7 +45,7 @@ public class AuctionRequestAPI {
 
     @PostMapping()
     @PreAuthorize("hasAuthority('KOI_BREEDER')")
-    public ResponseEntity<AuctionRequestResponse> createAuctionRequest(@RequestBody AuctionRequestDTO auctionRequestDTO) {
+    public ResponseEntity<AuctionRequestResponse> createAuctionRequest(@Valid @RequestBody AuctionRequestDTO auctionRequestDTO) {
         AuctionRequestResponse newAuctionRequest = auctionRequestService.createAuctionRequest(auctionRequestDTO);
         return ResponseEntity.ok(newAuctionRequest);
     }

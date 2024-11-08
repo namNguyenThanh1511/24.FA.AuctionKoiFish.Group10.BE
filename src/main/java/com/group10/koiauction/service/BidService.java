@@ -124,10 +124,18 @@ public class BidService {
         return bidResponseDTO;
     }
 
-    private BidResponseDTO handleAscendingBid(BidRequestDTO bidRequestDTO, AuctionSession auctionSession, Account memberAccount) {
+    @Transactional
+    protected BidResponseDTO handleAscendingBid(BidRequestDTO bidRequestDTO, AuctionSession auctionSession, Account memberAccount) {
         double bidRequestAmountIncrement = bidRequestDTO.getBidAmount();
-        double previousMaxBidAmount = findMaxBidAmount(auctionSession.getBidSet());
+        double previousMaxBidAmount;
 
+        if (auctionSession.getBidSet() == null) {
+            previousMaxBidAmount = 0;
+        } else {
+            previousMaxBidAmount = findMaxBidAmount(auctionSession.getBidSet());// ko co ai dau gia ->
+        }
+        // lay gia
+        // hien tai
         if (previousMaxBidAmount == 0) {
             previousMaxBidAmount = auctionSession.getCurrentPrice();
         }
@@ -158,11 +166,11 @@ public class BidService {
             throw new BidException("Your account does not have enough money to bid ! " + "You currently have : " + memberAccount.getBalance() + " But required " + memberLostAmount);
         }
 
-        if (bidRequestDTO.getBidAmount() >= auctionSession.getBuyNowPrice()) {//khi đấu giá vượt quá Buy Now ->
-            // chuyển sang buy now , ko tính là bid nữa
+        if (currentBidAmount >= auctionSession.getBuyNowPrice()) {//khi đấu giá vượt quá Buy Now ->
+            // thông báo buy now
             throw new RuntimeException("You can buy now this fish");
         }
-
+        Set<Bid> bidSet = auctionSession.getBidSet();
         Bid bid = new Bid();
         bid.setBidAt(new Date());
         bid.setBidAmount(currentBidAmount);
@@ -174,7 +182,7 @@ public class BidService {
         transaction.setCreateAt(new Date());
         transaction.setFrom(memberAccount);
         transaction.setType(TransactionEnum.BID);
-        transaction.setAmount(bidRequestDTO.getBidAmount());
+        transaction.setAmount(memberLostAmount);
         transaction.setDescription("Bidding (-)  " + memberLostAmount);
 
         transaction.setBid(bid);
@@ -183,9 +191,13 @@ public class BidService {
         bid.setTransaction(transaction);
         memberAccount.setBalance(memberAccount.getBalance() - memberLostAmount);
 
+        bidSet.add(bid);
+        auctionSession.setBidSet(bidSet);
+
         try {
             bid = bidRepository.save(bid);
             transactionRepository.save(transaction);
+            auctionSessionRepository.save(auctionSession);
         } catch (RuntimeException e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -201,8 +213,7 @@ public class BidService {
 
 
     @Transactional
-    public void buyNow(BuyNowRequestDTO buyNowRequestDTO) {//khi mức giá hiện tại của phiên đấu giá cao hơn giá buy
-        // now -> disable buy now
+    public void buyNow(BuyNowRequestDTO buyNowRequestDTO) {
         AuctionSession auctionSession = getAuctionSessionByID(buyNowRequestDTO.getAuctionSessionId());
         Account memberAccount = accountUtils.getCurrentAccount();
         if (auctionSession.getCurrentPrice() >= auctionSession.getBuyNowPrice()) {
@@ -268,10 +279,91 @@ public class BidService {
             transactionSet.add(transaction);
             transactionSet.add(transaction2);
 
-            auctionSession.setStatus(AuctionSessionStatus.COMPLETED);
+            auctionSession.setStatus(AuctionSessionStatus.COMPLETED_WITH_BUYNOW);
             auctionSession.setWinner(accountUtils.getCurrentAccount());
             auctionSession.setNote("Auction completed by Buy Now on " + new Date());
-            updateKoiStatus(auctionSession.getKoiFish().getKoi_id(), auctionSession.getStatus());
+
+            auctionSession.setUpdateAt(new Date());
+            auctionSession.setTransactionSet(transactionSet);
+            auctionSessionService.updateKoiStatus(auctionSession.getKoiFish().getKoi_id(), auctionSession.getStatus());
+            auctionSessionRepository.save(auctionSession);
+            auctionSessionService.closeAuctionSessionWhenBuyNow(auctionSession);
+        } else {
+            throw new BidException("Your balance does not have enough money to buy");
+        }
+    }
+
+    @Transactional
+    public void buyNow1(BuyNowRequestDTO buyNowRequestDTO) {
+        AuctionSession auctionSession = getAuctionSessionByID(buyNowRequestDTO.getAuctionSessionId());
+        Account memberAccount = accountUtils.getCurrentAccount();
+        if (auctionSession.getCurrentPrice() >= auctionSession.getBuyNowPrice()) {
+            throw new BidException("Cannot use Buy Now when current session price is higher than buy now price");
+        }
+        if (memberAccount.getBalance() >= auctionSession.getBuyNowPrice()) {
+
+            Account manager = accountRepository.findAccountByUsername("manager");
+            //transaction 0 : member lost how much
+            Transaction transaction0 = new Transaction();
+            transaction0.setCreateAt(new Date());
+            transaction0.setType(TransactionEnum.TRANSFER_FUNDS);
+            transaction0.setFrom(memberAccount);
+            transaction0.setTo(manager);
+            transaction0.setAmount(auctionSession.getBuyNowPrice());
+            transaction0.setDescription("Buy now (-) : " + auctionSession.getBuyNowPrice());
+            transaction0.setAuctionSession(auctionSession);
+            transaction0.setStatus(TransactionStatus.SUCCESS);
+            memberAccount.setBalance(memberAccount.getBalance() - auctionSession.getBuyNowPrice());
+
+//            //transaction 1 : system get profit
+//            double serviceFeePercent = ServiceFeePercent.SERVICE_FEE_PERCENT;
+//            Transaction transaction = new Transaction();
+//            SystemProfit systemProfit = new SystemProfit();
+//            double profit = auctionSession.getBuyNowPrice() * serviceFeePercent;
+//
+//            transaction.setCreateAt(new Date());
+//            transaction.setType(TransactionEnum.FEE_TRANSFER);
+//            transaction.setFrom(memberAccount);
+//            transaction.setTo(manager);
+//            transaction.setAmount(profit);
+//            transaction.setDescription("System take (+) " + profit + " as service fee");
+//            transaction.setStatus(TransactionStatus.SUCCESS);
+//
+//            systemProfit.setBalance(increasedBalance(manager, profit));
+//            systemProfit.setDate(new Date());
+//            systemProfit.setDescription("System revenue increased (+) " + profit);
+//            transaction.setSystemProfit(systemProfit);
+//            transaction.setAuctionSession(auctionSession);
+//            systemProfit.setTransaction(transaction);
+//
+//            //transaction 2 : transfer to koi breeder
+//            Transaction transaction2 = new Transaction();
+//            Account koiBreeder = auctionSession.getKoiFish().getAccount();
+//            double koiBreederAmount = auctionSession.getBuyNowPrice() - profit;
+//            transaction2.setCreateAt(new Date());
+//            transaction2.setType(TransactionEnum.TRANSFER_FUNDS);
+//            transaction2.setFrom(manager);
+//            transaction2.setTo(koiBreeder);
+//            transaction2.setAmount(koiBreederAmount);
+//            transaction2.setDescription("Get (+) " + koiBreederAmount + " from system ");
+//            transaction2.setAuctionSession(auctionSession);
+//            transaction2.setStatus(TransactionStatus.SUCCESS);
+//            koiBreeder.setBalance(increasedBalance(koiBreeder, koiBreederAmount));
+
+            transaction0 = transactionRepository.save(transaction0);
+//            transaction = transactionRepository.save(transaction);
+//            transaction2 = transactionRepository.save(transaction2);
+            accountRepository.save(memberAccount);
+//
+            Set<Transaction> transactionSet = new HashSet<>();
+            transactionSet.add(transaction0);
+//            transactionSet.add(transaction);
+//            transactionSet.add(transaction2);
+
+            auctionSession.setStatus(AuctionSessionStatus.COMPLETED_WITH_BUYNOW);
+            auctionSession.setWinner(accountUtils.getCurrentAccount());
+            auctionSession.setNote("Auction completed by Buy Now on " + new Date());
+
             auctionSession.setUpdateAt(new Date());
             auctionSession.setTransactionSet(transactionSet);
             auctionSessionService.updateKoiStatus(auctionSession.getKoiFish().getKoi_id(), auctionSession.getStatus());
@@ -288,7 +380,7 @@ public class BidService {
         Set<Bid> bidSet = auctionSession.getBidSet();
         double totalCost;
         double previousMaxBidAmount = findMaxBidAmount(bidSet);
-        if(previousMaxBidAmount == 0){
+        if (previousMaxBidAmount == 0) {
             previousMaxBidAmount = auctionSession.getCurrentPrice();
         }
         double currentBidAmount = previousMaxBidAmount + requestDTO.getBidAmount();
@@ -332,33 +424,7 @@ public class BidService {
         return koiFish;
     }
 
-    public void updateKoiStatus(Long id, AuctionSessionStatus status) {
-        KoiFish target = getKoiFishByID(id);
-        switch (status) {
-            case UPCOMING, ONGOING: {
-                target.setKoiStatus(KoiStatusEnum.SELLING);
-                target.setUpdatedDate(new Date());
-                break;
-            }
-            case COMPLETED, DRAWN: {
-                target.setKoiStatus(KoiStatusEnum.SOLD);
-                target.setUpdatedDate(new Date());
-                break;
-            }
-            case CANCELLED, NO_WINNER: {
-                target.setKoiStatus(KoiStatusEnum.AVAILABLE);
-                target.setUpdatedDate(new Date());
-                break;
-            }
-        }
-        try {
-            koiFishRepository.save(target);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e.getMessage());
-        }
 
-
-    }
 
     public AuctionSession getAuctionSessionByID(Long auction_session_id) {
         AuctionSession auctionSession = auctionSessionRepository.findAuctionSessionById(auction_session_id);
