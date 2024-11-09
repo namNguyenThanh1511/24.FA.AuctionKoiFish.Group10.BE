@@ -11,6 +11,7 @@ import com.group10.koiauction.model.request.DeliveryStatusUpdateDTO;
 import com.group10.koiauction.model.request.UpdateStatusAuctionSessionRequestDTO;
 import com.group10.koiauction.model.response.AuctionSessionResponsePagination;
 import com.group10.koiauction.model.response.AuctionSessionResponsePrimaryDataDTO;
+import com.group10.koiauction.model.response.KoiFishResponse;
 import com.group10.koiauction.service.AuctionSessionService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -152,6 +153,12 @@ public class AuctionSessionAPI {
     public ResponseEntity<AuctionSessionResponsePrimaryDataDTO> markDeliveryCancelled(@PathVariable Long id , @RequestBody DeliveryStatusUpdateDTO deliveryStatusUpdateDTO) {
         AuctionSessionResponsePrimaryDataDTO auctionSessionResponsePrimaryDataDTO = auctionSessionService.markAuctionSessionAsCancelledDelivery(id, deliveryStatusUpdateDTO);
         return ResponseEntity.ok(auctionSessionResponsePrimaryDataDTO);
+    }
+
+    @PutMapping("/markKoiFishAsReturned/{id}")
+    public ResponseEntity<KoiFishResponse> markKoiFishAsReturned(@PathVariable Long id , @RequestBody DeliveryStatusUpdateDTO deliveryStatusUpdateDTO){
+        KoiFishResponse koiFishResponse = auctionSessionService.markKoiFishAsReturned(id, deliveryStatusUpdateDTO);
+        return ResponseEntity.ok(koiFishResponse);
     }
 
 

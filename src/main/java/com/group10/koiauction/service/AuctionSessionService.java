@@ -356,7 +356,7 @@ public class AuctionSessionService {
 
         try {
             auctionSession = auctionSessionRepository.save(auctionSession);
-
+            updateKoiStatus(auctionSession.getKoiFish().getKoi_id(),auctionSession.getDeliveryStatus());
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -407,6 +407,23 @@ public class AuctionSessionService {
             throw new RuntimeException(e.getMessage());
         }
         return getAuctionSessionResponsePrimaryDataDTO(auctionSession);
+    }
+
+    public KoiFishResponse markKoiFishAsReturned(Long auctionSessionId,DeliveryStatusUpdateDTO deliveryStatusUpdateDTO) {
+        AuctionSession auctionSession = auctionSessionRepository.findById(auctionSessionId).orElseThrow(()-> new EntityNotFoundException("Auction session not found"));
+        KoiFish koiFish = auctionSession.getKoiFish();
+        if(koiFish.getKoiStatus().equals(KoiStatusEnum.RETURNING)){
+            koiFish.setKoiStatus(KoiStatusEnum.AVAILABLE);
+        }else{
+            throw new IllegalArgumentException("Auction session with ID : "+  auctionSession.getAuctionSessionId() + " must be mark as cancelled first");
+        }
+        try{
+            koiFishRepository.save(koiFish);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        return koiFishService.getKoiMapperResponse(koiFish);
     }
 
     @Transactional

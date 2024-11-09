@@ -15,6 +15,7 @@ import com.group10.koiauction.model.response.HealthStatusResponse;
 import com.group10.koiauction.model.response.KoiFishResponse;
 import com.group10.koiauction.model.response.KoiFishResponsePagination;
 import com.group10.koiauction.repository.AccountRepository;
+import com.group10.koiauction.repository.AuctionSessionRepository;
 import com.group10.koiauction.repository.KoiFishRepository;
 import com.group10.koiauction.repository.VarietyRepository;
 
@@ -41,6 +42,8 @@ public class KoiFishService {
 
     @Autowired
     AccountUtils accountUtils;
+    @Autowired
+    private AuctionSessionRepository auctionSessionRepository;
 
     public KoiFishResponse createKoiFish(KoiFishRequest koiFishRequest) {
         KoiFish koiFish = koiMapper.toKoiFish(koiFishRequest);
@@ -122,22 +125,7 @@ public class KoiFishService {
         return koiFishResponsePagination;
     }
 
-    public KoiFishResponse markKoiFishAsReturned(Long koi_id,DeliveryStatusUpdateDTO deliveryStatusUpdateDTO) {
-        KoiFish koiFish = getKoiFishByID(koi_id);
-        AuctionSession currentAuctionSession = getCurrentAuctionSessionOfKoiFish(koiFish);
-        if(koiFish.getKoiStatus().equals(KoiStatusEnum.RETURNING)){
-            koiFish.setKoiStatus(KoiStatusEnum.AVAILABLE);
-        }else{
-            throw new IllegalArgumentException("Auction session with ID : "+  currentAuctionSession.getAuctionSessionId() + " must be mark as cancelled first");
-        }
-        try{
-            koiFishRepository.save(koiFish);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
 
-        return getKoiMapperResponse(koiFish);
-    }
     public AuctionSession getCurrentAuctionSessionOfKoiFish(KoiFish koiFish) {
         Set<AuctionSession> auctionSessionSet = koiFish.getAuctionSessionSet();
         for (AuctionSession auctionSession : auctionSessionSet) {
