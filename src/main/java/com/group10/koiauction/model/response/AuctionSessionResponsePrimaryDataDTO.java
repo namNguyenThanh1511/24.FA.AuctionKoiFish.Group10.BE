@@ -2,6 +2,7 @@ package com.group10.koiauction.model.response;
 
 import com.group10.koiauction.entity.enums.AuctionSessionStatus;
 import com.group10.koiauction.entity.enums.AuctionSessionType;
+import com.group10.koiauction.entity.enums.DeliveryStatus;
 import lombok.Data;
 
 import java.util.Date;
@@ -45,6 +46,8 @@ public class AuctionSessionResponsePrimaryDataDTO {
     private AuctionSessionType auctionType;
 
     private AuctionSessionStatus auctionStatus;
+
+    private DeliveryStatus deliveryStatus;
 
     private List<BidResponseDTO> bids;
 

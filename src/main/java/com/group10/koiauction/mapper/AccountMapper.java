@@ -5,6 +5,7 @@ import com.group10.koiauction.model.request.LoginAccountRequest;
 import com.group10.koiauction.model.request.RegisterAccountRequest;
 import com.group10.koiauction.model.request.UpdateProfileRequestDTO;
 import com.group10.koiauction.model.response.AccountResponse;
+import com.group10.koiauction.model.response.AccountResponseForManageDTO;
 import com.group10.koiauction.model.response.AuctionSessionResponseAccountDTO;
 import org.mapstruct.Mapper;
 
@@ -17,6 +18,7 @@ public interface AccountMapper {
     AccountResponse toAccountResponse(RegisterAccountRequest registerAccountRequest);
     AccountResponse toAccountResponse(Account account);
     AuctionSessionResponseAccountDTO toAuctionSessionResponseAccountDTO(Account account);
+    AccountResponseForManageDTO toAccountResponseForManageDTO(Account account);
 
 
 }

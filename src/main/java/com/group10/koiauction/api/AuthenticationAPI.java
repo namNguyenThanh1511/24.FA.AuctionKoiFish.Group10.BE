@@ -2,8 +2,7 @@ package com.group10.koiauction.api;
 
 import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.model.request.*;
-import com.group10.koiauction.model.response.AccountResponse;
-import com.group10.koiauction.model.response.AccountResponsePagination;
+import com.group10.koiauction.model.response.*;
 import com.group10.koiauction.service.AuthenticationService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
@@ -72,6 +71,13 @@ public class AuthenticationAPI {
         Account deletedAccount = authenticationService.deleteAccount(id);
         return ResponseEntity.ok(deletedAccount);
     }
+
+    @PutMapping("/account/unlock/{id}")
+    public ResponseEntity<AccountResponseForManageDTO> unlockAccount(@PathVariable Long id) {
+        AccountResponseForManageDTO account = authenticationService.unlockAccount(id);
+        return ResponseEntity.ok(account);
+    }
+
     @PutMapping("/account/{id}")
     public ResponseEntity<Account> updateAccount(@PathVariable Long id , @Valid @RequestBody RegisterAccountRequest account) {
         Account deletedAccount = authenticationService.updateAccount(id,account);
@@ -127,9 +133,15 @@ public class AuthenticationAPI {
         return authenticationService.getAllBreederAccounts();
     }
 
+//    @GetMapping("/staffs")
+//    public List<Account> getStaffAccounts(){
+//        return authenticationService.getAllStaffAccounts();
+//    }
+
     @GetMapping("/staffs")
-    public List<Account> getStaffAccounts(){
-        return authenticationService.getAllStaffAccounts();
+    public ResponseEntity<List<AuctionSessionResponseAccountDTO>> getStaffAccounts(){
+        List<AuctionSessionResponseAccountDTO> response = authenticationService.getAllStaffAccountsWithShorterResponse();
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/members")
@@ -138,26 +150,31 @@ public class AuthenticationAPI {
     }
 
     @GetMapping("/breeders-pagination")
-    public ResponseEntity<AccountResponsePagination> getBreederAccountsPagination(
+    public ResponseEntity<AccountResponseForManagePagination> getBreederAccountsPagination(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        AccountResponsePagination breeders = authenticationService.getAllBreederAccountsPagination(page, size);
+        AccountResponseForManagePagination breeders = authenticationService.getAllBreederAccountsPagination(page, size);
         return ResponseEntity.ok(breeders);
     }
 
     @GetMapping("/staffs-pagination")
-    public ResponseEntity<AccountResponsePagination> getStaffAccountsPagination(
+    public ResponseEntity<AccountResponseForManagePagination> getStaffAccountsPagination(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        AccountResponsePagination staffs = authenticationService.getAllStaffAccountsPagination(page, size);
+        AccountResponseForManagePagination staffs = authenticationService.getAllStaffAccountsPagination(page, size);
         return ResponseEntity.ok(staffs);
     }
 
     @GetMapping("/members-pagination")
-    public ResponseEntity<AccountResponsePagination> getMemberAccountsPagination(
+    public ResponseEntity<AccountResponseForManagePagination> getMemberAccountsPagination(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        AccountResponsePagination members = authenticationService.getAllMemberAccountsPagintion(page, size);
+        AccountResponseForManagePagination members = authenticationService.getAllMemberAccountsPagination(page, size);
         return ResponseEntity.ok(members);
+    }
+    @PatchMapping("/account/fcm")
+    public ResponseEntity updateFCM(@RequestBody UpdateFCMRequestDTO updateFCMRequestDTO) {
+        AccountResponse response = authenticationService.updateFCM(updateFCMRequestDTO);
+        return ResponseEntity.ok(response);
     }
 }

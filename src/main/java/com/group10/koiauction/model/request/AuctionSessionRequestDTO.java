@@ -1,6 +1,8 @@
 package com.group10.koiauction.model.request;
 
 import com.group10.koiauction.entity.enums.AuctionSessionType;
+import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.Past;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -20,7 +22,9 @@ public class AuctionSessionRequestDTO {
 
     private double bidIncrement;
 
+    @Future(message = "Start time must be future")
     private LocalDateTime startDate;
+
 
     private LocalDateTime endDate;
 

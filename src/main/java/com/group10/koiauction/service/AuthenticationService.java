@@ -6,18 +6,10 @@ import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.enums.AccountRoleEnum;
 import com.group10.koiauction.entity.enums.AccountStatusEnum;
 import com.group10.koiauction.mapper.AccountMapper;
-import com.group10.koiauction.model.request.CreateBreederAccountRequest;
-import com.group10.koiauction.model.request.CreateStaffAccountRequest;
-import com.group10.koiauction.model.request.LoginAccountRequest;
-import com.group10.koiauction.model.request.RegisterAccountRequest;
+import com.group10.koiauction.model.request.*;
 import com.group10.koiauction.exception.DuplicatedEntity;
 import com.group10.koiauction.exception.EntityNotFoundException;
-import com.group10.koiauction.model.request.RegisterMemberRequest;
-import com.group10.koiauction.model.request.UpdateProfileRequestDTO;
-import com.group10.koiauction.model.request.ResetPasswordRequestDTO;
-import com.group10.koiauction.model.response.AccountResponse;
-import com.group10.koiauction.model.response.AccountResponsePagination;
-import com.group10.koiauction.model.response.EmailDetail;
+import com.group10.koiauction.model.response.*;
 import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.utilities.AccountUtils;
 import org.modelmapper.ModelMapper;
@@ -79,9 +71,12 @@ public class AuthenticationService implements UserDetailsService {
 //        }
         Account newAccount = new Account();
         newAccount = modelMapper.map(registerAccountRequest, Account.class);
+        String trimmedUsername = registerAccountRequest.getUsername().trim();
+        String trimmedPassword = registerAccountRequest.getPassword().trim();
         try {
+            newAccount.setUsername(trimmedUsername);
             newAccount.setRoleEnum(getRoleEnumX(registerAccountRequest.getRoleEnum()));
-            newAccount.setPassword(passwordEncoder.encode(registerAccountRequest.getPassword()));
+            newAccount.setPassword(passwordEncoder.encode(trimmedPassword));
             newAccount = accountRepository.save(newAccount);
             EmailDetail emailDetail = new EmailDetail();
             emailDetail.setAccount(newAccount);
@@ -103,11 +98,15 @@ public class AuthenticationService implements UserDetailsService {
             throw e;
         }
     }
+
     public AccountResponse registerMember(RegisterMemberRequest registerAccountRequest) {
         Account newAccount = modelMapper.map(registerAccountRequest, Account.class);// Account.class : tự động new Account() rồi mapping
+        String trimmedUsername = registerAccountRequest.getUsername().trim();
+        String trimmedPassword = registerAccountRequest.getPassword().trim();
         try {
+            newAccount.setUsername(trimmedUsername);
             newAccount.setRoleEnum(AccountRoleEnum.MEMBER);
-            newAccount.setPassword(passwordEncoder.encode(registerAccountRequest.getPassword()));
+            newAccount.setPassword(passwordEncoder.encode(trimmedPassword));
             accountRepository.save(newAccount);
             EmailDetail emailDetail = new EmailDetail();
             emailDetail.setAccount(newAccount);
@@ -134,7 +133,7 @@ public class AuthenticationService implements UserDetailsService {
 
         try {
             Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                    loginAccountRequest.getUsername(), loginAccountRequest.getPassword()
+                    loginAccountRequest.getUsername().trim(), loginAccountRequest.getPassword().trim()
                     // go to loadByUsername check username first
                     // so sanh password db vs request password
             ));
@@ -155,30 +154,30 @@ public class AuthenticationService implements UserDetailsService {
 
     }
 
-    public AccountResponse loginGoogle(String token){
-        try{
+    public AccountResponse loginGoogle(String token) {
+        try {
             AccountResponse accountResponse = new AccountResponse();
             FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
             String email = decodedToken.getEmail();
             Account account = accountRepository.findAccountByEmail(email);
-            if(account == null){
+            if (account == null) {
                 Account newAccount = new Account();
                 newAccount.setEmail(email);
                 newAccount.setFirstName(decodedToken.getName());
-//                newAccount.setLastName(decodedToken.getName());
+                newAccount.setLastName("");
                 newAccount.setRoleEnum(AccountRoleEnum.MEMBER);
                 newAccount.setStatus(AccountStatusEnum.ACTIVE);
                 newAccount.setUsername(email);
                 newAccount.setBalance(0);
                 accountRepository.save(newAccount);
 //                return accountMapper.toAccountResponse(newAccount);
-            }else{
+            } else {
                 accountResponse = accountMapper.toAccountResponse(account);
                 accountResponse.setToken(tokenService.generateToken(account));
                 return accountResponse;
             }
 
-        }catch (FirebaseAuthException e){
+        } catch (FirebaseAuthException e) {
             e.printStackTrace();
         }
         return null;
@@ -205,6 +204,17 @@ public class AuthenticationService implements UserDetailsService {
         return accountRepository.save(target);
     }
 
+    public AccountResponseForManageDTO unlockAccount(Long id) {
+        Account target = getAccountById(id);
+        target.setStatus(AccountStatusEnum.ACTIVE);
+        target.setUpdatedDate(new Date());
+        target = accountRepository.save(target);
+        AccountResponseForManageDTO accountResponseForManageDTO = accountMapper.toAccountResponseForManageDTO(target);
+        accountResponseForManageDTO.setCreatedAt(target.getCreatedDate());
+        accountResponseForManageDTO.setUpdatedAt(target.getUpdatedDate());
+        return accountResponseForManageDTO;
+    }
+
     public Account updateAccount(Long id, RegisterAccountRequest account) {
         try {
             Account target = getAccountById(id);
@@ -228,7 +238,8 @@ public class AuthenticationService implements UserDetailsService {
         }
 
     }
-    public AccountResponse getAccountProfile(){
+
+    public AccountResponse getAccountProfile() {
         Account account = accountUtils.getCurrentAccount();
         AccountResponse accountResponse = modelMapper.map(account, AccountResponse.class);
         return accountResponse;
@@ -237,8 +248,7 @@ public class AuthenticationService implements UserDetailsService {
     public AccountResponse updateAccountProfile(Long id, UpdateProfileRequestDTO updateProfileRequestDTO) {
         Account target = getAccountById(id);
         try {
-            if (updateProfileRequestDTO.getUsername() != null && !updateProfileRequestDTO.getUsername().equals(target.getUsername()))
-            {
+            if (updateProfileRequestDTO.getUsername() != null && !updateProfileRequestDTO.getUsername().equals(target.getUsername())) {
                 if (accountRepository.existsByUsername(updateProfileRequestDTO.getUsername())) {
                     throw new DuplicatedEntity("username is already been used ");
                 }
@@ -274,8 +284,7 @@ public class AuthenticationService implements UserDetailsService {
     public AccountResponse updateAccountProfileOfCurrentUser(UpdateProfileRequestDTO updateProfileRequestDTO) {
         Account target = accountUtils.getCurrentAccount();
         try {
-            if (updateProfileRequestDTO.getUsername() != null && !updateProfileRequestDTO.getUsername().equals(target.getUsername()))
-            {
+            if (updateProfileRequestDTO.getUsername() != null && !updateProfileRequestDTO.getUsername().equals(target.getUsername())) {
                 if (accountRepository.existsByUsername(updateProfileRequestDTO.getUsername())) {
                     throw new DuplicatedEntity("username is already been used ");
                 }
@@ -379,14 +388,14 @@ public class AuthenticationService implements UserDetailsService {
 
     public void forgotPassword(String email) {
         Account account = accountRepository.findAccountByEmail(email);
-        if(account == null) {
+        if (account == null) {
             throw new EntityNotFoundException("Account not found");
         }
         String token = tokenService.generateToken(account);
         EmailDetail emailDetail = new EmailDetail();
         emailDetail.setAccount(account);//set receiver
         emailDetail.setSubject("Reset password");
-        emailDetail.setLink("http://www.koiauctionsystem.store/reset-password?token="+token);
+        emailDetail.setLink("http://www.koiauctionsystem.store/reset-password?token=" + token);
         emailService.sentEmail(emailDetail);
 
     }
@@ -394,7 +403,7 @@ public class AuthenticationService implements UserDetailsService {
     public void resetPassword(ResetPasswordRequestDTO resetPasswordRequestDTO) {
         Account account = accountUtils.getCurrentAccount();
         account.setPassword(passwordEncoder.encode(resetPasswordRequestDTO.getPassword()));
-        try{
+        try {
             accountRepository.save(account);
         } catch (RuntimeException e) {
             throw new RuntimeException(e);
@@ -412,6 +421,7 @@ public class AuthenticationService implements UserDetailsService {
         AccountResponse accountResponse = accountMapper.toAccountResponse(target);
         return accountResponse;
     }
+
     public Account getAccountById(Long id) {
         Account account = accountRepository.findByUser_id(id);
         if (account == null) {
@@ -421,30 +431,46 @@ public class AuthenticationService implements UserDetailsService {
     }
 
     public List<Account> getAllBreederAccounts() {
-    return accountRepository.findAccountsByRoleEnum(AccountRoleEnum.KOI_BREEDER);
+        return accountRepository.findAccountsByRoleEnum(AccountRoleEnum.KOI_BREEDER);
     }
 
     public List<Account> getAllStaffAccounts() {
         return accountRepository.findAccountsByRoleEnum(AccountRoleEnum.STAFF);
     }
 
+    public List<AuctionSessionResponseAccountDTO> getAllStaffAccountsWithShorterResponse() {
+        List<Account> accountList = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.STAFF);
+        List<AuctionSessionResponseAccountDTO> accountDTOList = new ArrayList<>();
+        for (Account account : accountList) {
+            AuctionSessionResponseAccountDTO accountDTO = new AuctionSessionResponseAccountDTO();
+            accountDTO.setId(account.getUser_id());
+            accountDTO.setUsername(account.getUsername());
+            accountDTO.setFullName(account.getFirstName() + " " + account.getLastName());
+            accountDTOList.add(accountDTO);
+        }
+
+        return accountDTOList;
+    }
+
     public List<Account> getAllMemberAccounts() {
         return accountRepository.findAccountsByRoleEnum(AccountRoleEnum.MEMBER);
     }
 
-    public AccountResponsePagination getAllBreederAccountsPagination(int page, int size) {
+    public AccountResponseForManagePagination getAllBreederAccountsPagination(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Account> breederAccounts = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.KOI_BREEDER, pageable);
 
         // Convert Account entities to AccountResponse
-        List<AccountResponse> accountResponseList = new ArrayList<>();
+        List<AccountResponseForManageDTO> accountResponseList = new ArrayList<>();
         for (Account account : breederAccounts.getContent()) {
-            AccountResponse accountResponse = mapToAccountResponse(account);
+            AccountResponseForManageDTO accountResponse = accountMapper.toAccountResponseForManageDTO(account);
+            accountResponse.setCreatedAt(account.getCreatedDate());
+            accountResponse.setUpdatedAt(account.getUpdatedDate());
             accountResponseList.add(accountResponse);
         }
 
         // Use the constructor with arguments
-        return new AccountResponsePagination(
+        return new AccountResponseForManagePagination(
                 accountResponseList,
                 breederAccounts.getNumber(),
                 breederAccounts.getTotalPages(),
@@ -454,19 +480,21 @@ public class AuthenticationService implements UserDetailsService {
     }
 
 
-    public AccountResponsePagination getAllStaffAccountsPagination(int page, int size) {
+    public AccountResponseForManagePagination getAllStaffAccountsPagination(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Account> staffAccounts = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.STAFF, pageable);
 
         // Convert Account entities to AccountResponse
-        List<AccountResponse> accountResponseList = new ArrayList<>();
+        List<AccountResponseForManageDTO> accountResponseList = new ArrayList<>();
         for (Account account : staffAccounts.getContent()) {
-            AccountResponse accountResponse = mapToAccountResponse(account);
+            AccountResponseForManageDTO accountResponse = accountMapper.toAccountResponseForManageDTO(account);
+            accountResponse.setCreatedAt(account.getCreatedDate());
+            accountResponse.setUpdatedAt(account.getUpdatedDate());
             accountResponseList.add(accountResponse);
         }
 
         // Create AccountResponsePagination and set pagination details
-        return new AccountResponsePagination(
+        return new AccountResponseForManagePagination(
                 accountResponseList,
                 staffAccounts.getNumber(),
                 staffAccounts.getTotalPages(),
@@ -476,19 +504,21 @@ public class AuthenticationService implements UserDetailsService {
     }
 
 
-    public AccountResponsePagination getAllMemberAccountsPagintion(int page, int size) {
+    public AccountResponseForManagePagination getAllMemberAccountsPagination(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Account> memberAccounts = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.MEMBER, pageable);
 
         // Convert Account entities to AccountResponse
-        List<AccountResponse> accountResponseList = new ArrayList<>();
+        List<AccountResponseForManageDTO> accountResponseList = new ArrayList<>();
         for (Account account : memberAccounts.getContent()) {
-            AccountResponse accountResponse = mapToAccountResponse(account);
+            AccountResponseForManageDTO accountResponse = accountMapper.toAccountResponseForManageDTO(account);
+            accountResponse.setCreatedAt(account.getCreatedDate());
+            accountResponse.setUpdatedAt(account.getUpdatedDate());
             accountResponseList.add(accountResponse);
         }
 
         // Create AccountResponsePagination and set pagination details
-        return new AccountResponsePagination(
+        return new AccountResponseForManagePagination(
                 accountResponseList,
                 memberAccounts.getNumber(),
                 memberAccounts.getTotalPages(),
@@ -510,6 +540,9 @@ public class AuthenticationService implements UserDetailsService {
         response.setStatus(account.getStatus());
         response.setRoleEnum(account.getRoleEnum());
         response.setBalance(account.getBalance());
+        if (account.getFcmToken() != null) {
+            response.setFcmToken(account.getFcmToken());
+        }
         return response;
     }
 
@@ -522,6 +555,18 @@ public class AuthenticationService implements UserDetailsService {
             case "koibreeder" -> AccountRoleEnum.KOI_BREEDER;
             default -> throw new EntityNotFoundException("Invalid role");
         };
+    }
+
+    public AccountResponse updateFCM(UpdateFCMRequestDTO updateFCMRequestDTO) {
+        Account currentAccount = accountUtils.getCurrentAccount();
+        currentAccount.setFcmToken(updateFCMRequestDTO.getFcmToken());
+        try {
+            currentAccount = accountRepository.save(currentAccount);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+        return mapToAccountResponse(currentAccount);
+
     }
 
 

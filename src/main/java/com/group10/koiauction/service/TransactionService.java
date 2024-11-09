@@ -2,6 +2,7 @@ package com.group10.koiauction.service;
 
 import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.AuctionSession;
+import com.group10.koiauction.entity.Bid;
 import com.group10.koiauction.entity.Transaction;
 import com.group10.koiauction.entity.enums.TransactionEnum;
 import com.group10.koiauction.mapper.AccountMapper;
@@ -50,15 +51,22 @@ public class TransactionService {
 
             transactionResponseDTO.setFromAccount(fromAccountResponse);
             transactionResponseDTO.setToAccount(toAccountResponse);
-            transactionResponseDTO.setAuctionSessionId(transaction.getBid().getAuctionSession().getAuctionSessionId());
+
+            if (transaction.getAuctionSession() == null) {
+                transactionResponseDTO.setAuctionSessionId(null);
+            } else {
+                transactionResponseDTO.setAuctionSessionId(transaction.getAuctionSession().getAuctionSessionId());
+            }
+
             transactionResponseDTOs.add(transactionResponseDTO);
         }
         return transactionResponseDTOs;
     }
-    public AuctionSessionResponseAccountDTO getAuctionSessionResponseAccountDTO(Account account){
-        if(account == null){
-            return  null;
-        }else{
+
+    public AuctionSessionResponseAccountDTO getAuctionSessionResponseAccountDTO(Account account) {
+        if (account == null) {
+            return null;
+        } else {
             AuctionSessionResponseAccountDTO accountResponseDTO = accountMapper.toAuctionSessionResponseAccountDTO(account);
             accountResponseDTO.setId(account.getUser_id());
             accountResponseDTO.setFullName(account.getFirstName() + " " + account.getLastName());
@@ -75,7 +83,6 @@ public class TransactionService {
             System.out.println("No transactions found for user ID: " + currentUserId);
             return new ArrayList<>(); // Return an empty list if no transactions
         }
-
         List<TransactionResponseDTO> transactionResponseDTOs = new ArrayList<>();
 
         for (Transaction transaction : transactions) {
@@ -202,7 +209,12 @@ public class TransactionService {
         transactionResponseDTO.setDescription(transaction.getDescription());
         transactionResponseDTO.setFromAccount(getAuctionSessionResponseAccountDTO(transaction.getFrom()));
         transactionResponseDTO.setToAccount(getAuctionSessionResponseAccountDTO(transaction.getTo()));
-        transactionResponseDTO.setAuctionSessionId(transaction.getAuctionSession().getAuctionSessionId());
+        if (transaction.getAuctionSession() == null) {
+            transactionResponseDTO.setAuctionSessionId(null);
+        } else {
+            transactionResponseDTO.setAuctionSessionId(transaction.getAuctionSession().getAuctionSessionId());
+        }
+
 
         return transactionResponseDTO;
     }

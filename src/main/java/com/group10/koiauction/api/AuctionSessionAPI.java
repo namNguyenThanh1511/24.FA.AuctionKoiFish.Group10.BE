@@ -7,9 +7,11 @@ import com.group10.koiauction.entity.enums.AuctionSessionStatus;
 import com.group10.koiauction.entity.enums.AuctionSessionType;
 import com.group10.koiauction.entity.enums.KoiSexEnum;
 import com.group10.koiauction.model.request.AuctionSessionRequestDTO;
+import com.group10.koiauction.model.request.DeliveryStatusUpdateDTO;
 import com.group10.koiauction.model.request.UpdateStatusAuctionSessionRequestDTO;
 import com.group10.koiauction.model.response.AuctionSessionResponsePagination;
 import com.group10.koiauction.model.response.AuctionSessionResponsePrimaryDataDTO;
+import com.group10.koiauction.model.response.KoiFishResponse;
 import com.group10.koiauction.service.AuctionSessionService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,11 +93,12 @@ public class AuctionSessionAPI {
             @RequestParam(required = false) Double maxSizeCm,
             @RequestParam(required = false) Double minWeightKg,
             @RequestParam(required = false) Double maxWeightKg,
+            @RequestParam(required = false) AuctionSessionStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         AuctionSessionResponsePagination response = auctionSessionService.searchAuctionSessions(
-                auctionType, sex, breederName, varieties, minSizeCm, maxSizeCm, minWeightKg, maxWeightKg, page, size);
+                auctionType, sex, breederName, varieties, minSizeCm, maxSizeCm, minWeightKg, maxWeightKg, status, page, size);
 
         return ResponseEntity.ok(response); // Returns 200 OK status
     }
@@ -113,7 +116,6 @@ public class AuctionSessionAPI {
         AuctionSessionResponsePrimaryDataDTO auctionSessionResponsePrimaryDataDTO = auctionSessionService.processAuctionSessionById(id);
         return ResponseEntity.ok(auctionSessionResponsePrimaryDataDTO);
     }
-
     @GetMapping("/current-staff")
     public ResponseEntity<AuctionSessionResponsePagination> getAuctionSessionsByCurrentStaff(
             @RequestParam(defaultValue = "0") int page,
@@ -134,5 +136,31 @@ public class AuctionSessionAPI {
 
         return ResponseEntity.ok(response);
     }
+
+    @PutMapping("/markDelivering/{id}")
+    public ResponseEntity<AuctionSessionResponsePrimaryDataDTO> markDelivering(@PathVariable Long id , @RequestBody DeliveryStatusUpdateDTO deliveryStatusUpdateDTO) {
+        AuctionSessionResponsePrimaryDataDTO auctionSessionResponsePrimaryDataDTO = auctionSessionService.markAuctionSessionAsDelivering(id, deliveryStatusUpdateDTO);
+        return ResponseEntity.ok(auctionSessionResponsePrimaryDataDTO);
+    }
+
+    @PutMapping("/markDelivered/{id}")
+    public ResponseEntity<AuctionSessionResponsePrimaryDataDTO> markDelivered(@PathVariable Long id , @RequestBody DeliveryStatusUpdateDTO deliveryStatusUpdateDTO) {
+        AuctionSessionResponsePrimaryDataDTO auctionSessionResponsePrimaryDataDTO = auctionSessionService.markAuctionSessionAsDelivered(id, deliveryStatusUpdateDTO);
+        return ResponseEntity.ok(auctionSessionResponsePrimaryDataDTO);
+    }
+
+    @PutMapping("/markDeliveryCancelled/{id}")
+    public ResponseEntity<AuctionSessionResponsePrimaryDataDTO> markDeliveryCancelled(@PathVariable Long id , @RequestBody DeliveryStatusUpdateDTO deliveryStatusUpdateDTO) {
+        AuctionSessionResponsePrimaryDataDTO auctionSessionResponsePrimaryDataDTO = auctionSessionService.markAuctionSessionAsCancelledDelivery(id, deliveryStatusUpdateDTO);
+        return ResponseEntity.ok(auctionSessionResponsePrimaryDataDTO);
+    }
+
+    @PutMapping("/markKoiFishAsReturned/{id}")
+    public ResponseEntity<KoiFishResponse> markKoiFishAsReturned(@PathVariable Long id , @RequestBody DeliveryStatusUpdateDTO deliveryStatusUpdateDTO){
+        KoiFishResponse koiFishResponse = auctionSessionService.markKoiFishAsReturned(id, deliveryStatusUpdateDTO);
+        return ResponseEntity.ok(koiFishResponse);
+    }
+
+
 
 }

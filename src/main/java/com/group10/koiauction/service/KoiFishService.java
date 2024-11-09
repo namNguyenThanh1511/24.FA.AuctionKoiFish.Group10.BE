@@ -1,11 +1,12 @@
 package com.group10.koiauction.service;
 
 import com.group10.koiauction.entity.Account;
+import com.group10.koiauction.entity.AuctionSession;
 import com.group10.koiauction.entity.KoiFish;
 import com.group10.koiauction.entity.Variety;
-import com.group10.koiauction.entity.enums.KoiStatusEnum;
-import com.group10.koiauction.entity.enums.VarietyStatusEnum;
+import com.group10.koiauction.entity.enums.*;
 import com.group10.koiauction.mapper.KoiMapper;
+import com.group10.koiauction.model.request.DeliveryStatusUpdateDTO;
 import com.group10.koiauction.model.request.HealthStatusRequest;
 import com.group10.koiauction.model.request.KoiFishRequest;
 
@@ -14,6 +15,7 @@ import com.group10.koiauction.model.response.HealthStatusResponse;
 import com.group10.koiauction.model.response.KoiFishResponse;
 import com.group10.koiauction.model.response.KoiFishResponsePagination;
 import com.group10.koiauction.repository.AccountRepository;
+import com.group10.koiauction.repository.AuctionSessionRepository;
 import com.group10.koiauction.repository.KoiFishRepository;
 import com.group10.koiauction.repository.VarietyRepository;
 
@@ -40,6 +42,8 @@ public class KoiFishService {
 
     @Autowired
     AccountUtils accountUtils;
+    @Autowired
+    private AuctionSessionRepository auctionSessionRepository;
 
     public KoiFishResponse createKoiFish(KoiFishRequest koiFishRequest) {
         KoiFish koiFish = koiMapper.toKoiFish(koiFishRequest);
@@ -72,9 +76,9 @@ public class KoiFishService {
         return koiFishResponseList;
     }
 
-    public KoiFishResponsePagination getAllKoiFishPagination(int page , int size) {
+    public KoiFishResponsePagination getAllKoiFishPagination(int page, int size) {
 
-        Page<KoiFish> koiFishPage = koiFishRepository.findAll(PageRequest.of(page , size));
+        Page<KoiFish> koiFishPage = koiFishRepository.findAll(PageRequest.of(page, size));
         List<KoiFishResponse> koiFishResponseList = new ArrayList<>();
         for (KoiFish koiFish : koiFishPage.getContent()) {
             KoiFishResponse koiFishResponse = getKoiMapperResponse(koiFish);
@@ -89,11 +93,11 @@ public class KoiFishService {
         return koiFishResponsePagination;
     }
 
-    public List<KoiFishResponse> getAllKoiFishByCurrentBreeder(String status){
+    public List<KoiFishResponse> getAllKoiFishByCurrentBreeder(String status) {
         List<KoiFish> koiFishList;
-        if(status.equals("")){
-            koiFishList = koiFishRepository.findKoiFishByBreederExceptStatus(accountUtils.getCurrentAccount().getUser_id(),KoiStatusEnum.IS_DELETED);
-        }else{
+        if (status.equals("")) {
+            koiFishList = koiFishRepository.findKoiFishByBreederExceptStatus(accountUtils.getCurrentAccount().getUser_id(), KoiStatusEnum.IS_DELETED);
+        } else {
             koiFishList = koiFishRepository.findKoiFishByBreederAndStatus(accountUtils.getCurrentAccount().getUser_id(), getKoiStatusEnum(status));
         }
         List<KoiFishResponse> koiFishResponseList = new ArrayList<>();
@@ -103,10 +107,56 @@ public class KoiFishService {
         return koiFishResponseList;
     }
 
-    public KoiFishResponsePagination getAllKoiFishOfCurrentBreederPagination(int page , int size) {
+    public KoiFishResponsePagination getAllKoiFishOfCurrentBreederPagination(int page, int size) {
         Account koiBreeder = accountUtils.getCurrentAccount();
-        Pageable pageable = PageRequest.of(page,size);
-        Page<KoiFish> koiFishPage = koiFishRepository.findKoiFishByBreederPaginationExceptStatus(koiBreeder.getUser_id(),KoiStatusEnum.IS_DELETED,pageable);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<KoiFish> koiFishPage = koiFishRepository.findKoiFishByBreederPaginationExceptStatus(koiBreeder.getUser_id(), KoiStatusEnum.IS_DELETED, pageable);
+        List<KoiFishResponse> koiFishResponseList = new ArrayList<>();
+        for (KoiFish koiFish : koiFishPage.getContent()) {
+            KoiFishResponse koiFishResponse = getKoiMapperResponse(koiFish);
+            koiFishResponseList.add(koiFishResponse);
+        }
+        KoiFishResponsePagination koiFishResponsePagination = new KoiFishResponsePagination();
+        koiFishResponsePagination.setKoiFishResponseList(koiFishResponseList);
+        koiFishResponsePagination.setPageNumber(koiFishPage.getNumber());
+        koiFishResponsePagination.setTotalPages(koiFishPage.getTotalPages());
+        koiFishResponsePagination.setTotalElements(koiFishPage.getTotalElements());
+        koiFishResponsePagination.setNumberOfElements(koiFishPage.getNumberOfElements());
+        return koiFishResponsePagination;
+    }
+
+
+    public AuctionSession getCurrentAuctionSessionOfKoiFish(KoiFish koiFish) {
+        Set<AuctionSession> auctionSessionSet = koiFish.getAuctionSessionSet();
+        for (AuctionSession auctionSession : auctionSessionSet) {
+            AuctionSessionStatus auctionSessionStatus = auctionSession.getStatus();
+            DeliveryStatus deliveryStatus = auctionSession.getDeliveryStatus();
+            if(auctionSessionStatus.equals(AuctionSessionStatus.CANCELLED)
+                    || deliveryStatus.equals(DeliveryStatus.DELIVERED_CANCELLED)){
+                return null;
+            }
+            return auctionSession;
+        }
+        return null;
+    }
+
+    public KoiFishResponsePagination getAllKoiFishOfCurrentBreederPaginationWithFilter(KoiStatusEnum status,
+                                                                                       KoiSexEnum sex,
+                                                                                       Double minSizeCm,
+                                                                                       Double maxSizeCm,
+                                                                                       Double minWeightKg,
+                                                                                       Double maxWeightKg,
+                                                                                       Double upperEstimatedValue,
+                                                                                       Double lowerEstimatedValue,
+                                                                                       Set<String> varietiesName,
+                                                                                       int page,
+                                                                                       int size) {
+        Account koiBreeder = accountUtils.getCurrentAccount();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<KoiFish> koiFishPage = koiFishRepository.filterKoiFish(status, sex, minSizeCm,maxSizeCm, minWeightKg,maxWeightKg,
+                upperEstimatedValue,
+                lowerEstimatedValue, varietiesName, koiBreeder, KoiStatusEnum.IS_DELETED,
+                pageable);
         List<KoiFishResponse> koiFishResponseList = new ArrayList<>();
         for (KoiFish koiFish : koiFishPage.getContent()) {
             KoiFishResponse koiFishResponse = getKoiMapperResponse(koiFish);
@@ -239,7 +289,6 @@ public class KoiFishService {
             case "isdeleted" -> KoiStatusEnum.IS_DELETED;
             case "pendingauction" -> KoiStatusEnum.PENDING_AUCTION;
             case "selling" -> KoiStatusEnum.SELLING;
-            case "waitingforpayment" -> KoiStatusEnum.WAITING_FOR_PAYMENT;
             case "sold" -> KoiStatusEnum.SOLD;
             case "unavailable" -> KoiStatusEnum.UNAVAILABLE;
             default -> throw new EntityNotFoundException("Invalid status");
@@ -260,7 +309,7 @@ public class KoiFishService {
     public KoiFishResponse getKoiMapperResponse(KoiFish koiFish) {
         KoiFishResponse koiFishResponse = koiMapper.toKoiFishResponse(koiFish);
         koiFishResponse.setBreeder_id(koiFish.getAccount().getUser_id());
-        koiFishResponse.setVarietiesID(getVarietiesIdOfKoi(koiFish));// return varieties of KoiFish which is
+        koiFishResponse.setVarieties(koiFish.getVarieties());// return varieties of KoiFish which is
         // currently ACTIVE
         koiFishResponse.setHealthNote(koiFish.getHealth_note());
         return koiFishResponse;

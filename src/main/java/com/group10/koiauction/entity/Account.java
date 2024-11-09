@@ -63,6 +63,8 @@ public class Account implements UserDetails {
     @Column(name = "balance",nullable = false)
     private double balance;
 
+    String fcmToken;
+
     @OneToMany(mappedBy = "account")
     @JsonIgnore
     Set<KoiFish> koiFishSet;

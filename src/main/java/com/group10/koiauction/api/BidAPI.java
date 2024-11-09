@@ -27,7 +27,7 @@ public class BidAPI {
 
     @PostMapping("/buyNow")
     public ResponseEntity buyNow(@RequestBody BuyNowRequestDTO buyNowRequestDTO) {
-        bidService.buyNow(buyNowRequestDTO);
+        bidService.buyNow1(buyNowRequestDTO);
         return ResponseEntity.ok("Buy successful");
     }
 

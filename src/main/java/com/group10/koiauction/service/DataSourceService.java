@@ -270,7 +270,7 @@ public class DataSourceService {
             throw new BidException("Your account does not have enough money to bid ! " + "You currently have : " + memberAccount.getBalance() + " But required " + memberLostAmount);
         }
 
-        if (bidRequestDTO.getBidAmount() >= auctionSession.getBuyNowPrice()) {//khi đấu giá vượt quá Buy Now ->
+        if (currentBidAmount >= auctionSession.getBuyNowPrice()) {//khi đấu giá vượt quá Buy Now ->
             // chuyển sang buy now , ko tính là bid nữa
             throw new RuntimeException("You can buy now this fish");
         }
@@ -290,7 +290,7 @@ public class DataSourceService {
         transaction.setCreateAt(new Date());
         transaction.setFrom(memberAccount);
         transaction.setType(TransactionEnum.BID);
-        transaction.setAmount(bidRequestDTO.getBidAmount());
+        transaction.setAmount(memberLostAmount);
         transaction.setDescription("Bidding (-)  " + memberLostAmount);
         transaction.setStatus(TransactionStatus.SUCCESS);
 
@@ -364,7 +364,7 @@ public class DataSourceService {
 
     public void createVarietyCollections() {
         createVarietyRequest("Kohaku");
-        createVarietyRequest("Sowa");
+        createVarietyRequest("Showa");
         createVarietyRequest("Ochibashigure");
         createVarietyRequest("Hirenaga");
         createVarietyRequest("Tancho");
@@ -460,12 +460,12 @@ public class DataSourceService {
 
         createAuctionSessionRequestDTO(
                 "Kohaku Special Auction",
-                3000,
+                2000,
                 5000,
-                100,
+                0,
+                LocalDateTime.now().plusMinutes(2),
                 LocalDateTime.now().plusMinutes(5),
-                LocalDateTime.now().plusMinutes(10),
-                AuctionSessionType.ASCENDING,
+                AuctionSessionType.FIXED_PRICE,
                 500,
                 auctionRequestRepository.findAuctionRequestByTitle("Kohaku Auction").getAuction_request_id(),
                 accountRepository.findAccountByUsername("staff").getUser_id());
@@ -591,7 +591,7 @@ public class DataSourceService {
         auctionSessionService.closeAuctionSession(auctionSessionRepository.findAuctionSessionByTitle("Kikokuryu Exclusive Auction"));
     }
 
-    public void collectorBid() {
+    public void pastBid() {
         Long kikokuryuAuctionId = auctionSessionRepository.findAuctionSessionByTitle("Kikokuryu Exclusive Auction").getAuctionSessionId();
         Long hiUtsuriAuctionId = auctionSessionRepository.findAuctionSessionByTitle("Hi Utsuri Special Auction").getAuctionSessionId();
         Long shusuiAuctionId = auctionSessionRepository.findAuctionSessionByTitle("Shusui Auction Event").getAuctionSessionId();

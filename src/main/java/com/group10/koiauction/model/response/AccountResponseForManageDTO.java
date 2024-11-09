@@ -2,10 +2,17 @@ package com.group10.koiauction.model.response;
 
 import com.group10.koiauction.entity.enums.AccountRoleEnum;
 import com.group10.koiauction.entity.enums.AccountStatusEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.Date;
 
 @Data
-public class AccountResponse {
+@AllArgsConstructor
+@NoArgsConstructor
+public class AccountResponseForManageDTO {
+
     private long user_id;
     private String username;
     private String firstName;
@@ -16,7 +23,8 @@ public class AccountResponse {
     private AccountStatusEnum status;
     private AccountRoleEnum roleEnum;
     private double balance;
-    private String token;
-    private String fcmToken;
+    private Date createdAt;
+    private Date updatedAt;
+
 
 }

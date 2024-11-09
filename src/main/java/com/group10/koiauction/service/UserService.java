@@ -11,8 +11,7 @@ import com.group10.koiauction.entity.enums.WithDrawRequestEnum;
 import com.group10.koiauction.mapper.AccountMapper;
 import com.group10.koiauction.model.request.ApproveWithDrawRequestDTO;
 import com.group10.koiauction.model.request.WithDrawRequestDTO;
-import com.group10.koiauction.model.response.AccountResponse;
-import com.group10.koiauction.model.response.BalanceResponseDTO;
+import com.group10.koiauction.model.response.*;
 import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.repository.PaymentRepository;
 import com.group10.koiauction.repository.TransactionRepository;
@@ -20,11 +19,16 @@ import com.group10.koiauction.repository.WithDrawRequestRepository;
 import com.group10.koiauction.utilities.AccountUtils;
 import lombok.With;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import shaded_package.org.joda.time.LocalDate;
 
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -110,7 +114,7 @@ public class UserService {
     public WithDrawRequest createWithDrawRequest(WithDrawRequestDTO withDrawRequestDTO) {
         WithDrawRequest withDrawRequest = new WithDrawRequest();
         Account account = accountUtils.getCurrentAccount();
-        if(withDrawRequestDTO.getAmount() > account.getBalance()) {
+        if (withDrawRequestDTO.getAmount() > account.getBalance()) {
             throw new RuntimeException("Amount exceeds balance");
         }
         withDrawRequest.setAmount(withDrawRequestDTO.getAmount());
@@ -119,6 +123,7 @@ public class UserService {
         withDrawRequest.setBankName(withDrawRequestDTO.getBankName());
         withDrawRequest.setStatus(WithDrawRequestEnum.PENDING);
         withDrawRequest.setUser(accountUtils.getCurrentAccount());
+        withDrawRequest.setCreatedAt(LocalDateTime.now());
         try {
             withDrawRequest = withDrawRequestRepository.save(withDrawRequest);
         } catch (Exception e) {
@@ -128,13 +133,13 @@ public class UserService {
         return withDrawRequest;
     }
 
-    public WithDrawRequest approveWithDrawRequest(Long withDrawRequestId , ApproveWithDrawRequestDTO approveWithDrawRequestDTO) {
+    public WithDrawRequest approveWithDrawRequest(Long withDrawRequestId, ApproveWithDrawRequestDTO approveWithDrawRequestDTO) {
         WithDrawRequest withDrawRequest =
-                withDrawRequestRepository.findById(withDrawRequestId).orElseThrow(()->new RuntimeException("withdraw " +
+                withDrawRequestRepository.findById(withDrawRequestId).orElseThrow(() -> new RuntimeException("withdraw " +
                         "request not found"));
         Account receiver = withDrawRequest.getUser();
         Account staff = accountUtils.getCurrentAccount();
-        try{
+        try {
             withDrawRequest.setStatus(WithDrawRequestEnum.APPROVED);
             withDrawRequest.setStaff(staff);
             withDrawRequest.setResponseNote(approveWithDrawRequestDTO.getResponseNote());
@@ -142,10 +147,11 @@ public class UserService {
             withDrawRequest = withDrawRequestRepository.save(withDrawRequest);
             Transaction transaction = new Transaction();
             transaction.setCreateAt(new Date());
-            transaction.setType(TransactionEnum.WITHDRAW_SUCCESS);
+            transaction.setType(TransactionEnum.WITHDRAW_FUNDS);
+            transaction.setStatus(TransactionStatus.SUCCESS);
             transaction.setAmount(withDrawRequest.getAmount());
             transaction.setFrom(withDrawRequest.getUser());
-            transaction.setDescription("Withdraw (-) : "+withDrawRequest.getAmount());
+            transaction.setDescription("Withdraw (-) : " + withDrawRequest.getAmount());
             transaction.setWithdrawRequest(withDrawRequest);
             receiver.setBalance(receiver.getBalance() - withDrawRequest.getAmount());
             accountRepository.save(receiver);
@@ -156,14 +162,14 @@ public class UserService {
         return null;
     }
 
-    public WithDrawRequest rejectWithDrawRequest(Long withDrawRequestId ,
-                                            ApproveWithDrawRequestDTO approveWithDrawRequestDTO) {
+    public WithDrawRequest rejectWithDrawRequest(Long withDrawRequestId,
+                                                 ApproveWithDrawRequestDTO approveWithDrawRequestDTO) {
         WithDrawRequest withDrawRequest =
-                withDrawRequestRepository.findById(withDrawRequestId).orElseThrow(()->new RuntimeException("withdraw " +
+                withDrawRequestRepository.findById(withDrawRequestId).orElseThrow(() -> new RuntimeException("withdraw " +
                         "request not found"));
         Account receiver = withDrawRequest.getUser();
         Account staff = accountUtils.getCurrentAccount();
-        try{
+        try {
             withDrawRequest.setStatus(WithDrawRequestEnum.REJECTED);
             withDrawRequest.setStaff(staff);
             withDrawRequest.setResponseNote(approveWithDrawRequestDTO.getResponseNote());
@@ -174,6 +180,79 @@ public class UserService {
         }
         return null;
     }
+
+    public WithDrawRequestResponsePaginationDTO getWithDrawRequestPagination(int page, int size, Long userId) {
+        WithDrawRequestResponsePaginationDTO withDrawRequestResponsePaginationDTO = new WithDrawRequestResponsePaginationDTO();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<WithDrawRequest> withDrawRequestPage =
+                withDrawRequestRepository.findWithDrawRequestByCustomerIdPagination(userId, pageable);
+        List<WithDrawRequestResponseDTO> withDrawRequestResponseDTOList = new ArrayList<>();
+        for (WithDrawRequest withDrawRequest : withDrawRequestPage.getContent()) {
+            WithDrawRequestResponseDTO withDrawRequestResponseDTO = getWithDrawRequestResponseDTO(withDrawRequest);
+            withDrawRequestResponseDTOList.add(withDrawRequestResponseDTO);
+        }
+        withDrawRequestResponsePaginationDTO.setWithDrawRequestResponseDTOList(withDrawRequestResponseDTOList);
+        withDrawRequestResponsePaginationDTO.setPageNumber(withDrawRequestPage.getNumber());
+        withDrawRequestResponsePaginationDTO.setTotalElements(withDrawRequestPage.getTotalElements());
+        withDrawRequestResponsePaginationDTO.setTotalPages(withDrawRequestPage.getTotalPages());
+        return withDrawRequestResponsePaginationDTO;
+    }
+
+    public WithDrawRequestResponsePaginationDTO getWithDrawRequestOfCurrentUserPagination(int page, int size) {
+        Account currentUser = accountUtils.getCurrentAccount();
+        WithDrawRequestResponsePaginationDTO withDrawRequestResponsePaginationDTO = new WithDrawRequestResponsePaginationDTO();
+        Pageable pageable = PageRequest.of(page, size);
+        Page<WithDrawRequest> withDrawRequestPage =
+                withDrawRequestRepository.findWithDrawRequestByCurrentUserPagination(currentUser.getUser_id(),pageable);
+        List<WithDrawRequestResponseDTO> withDrawRequestResponseDTOList = new ArrayList<>();
+        for (WithDrawRequest withDrawRequest : withDrawRequestPage.getContent()) {
+            WithDrawRequestResponseDTO withDrawRequestResponseDTO = getWithDrawRequestResponseDTO(withDrawRequest);
+            withDrawRequestResponseDTOList.add(withDrawRequestResponseDTO);
+        }
+        withDrawRequestResponsePaginationDTO.setWithDrawRequestResponseDTOList(withDrawRequestResponseDTOList);
+        withDrawRequestResponsePaginationDTO.setPageNumber(withDrawRequestPage.getNumber());
+        withDrawRequestResponsePaginationDTO.setTotalElements(withDrawRequestPage.getTotalElements());
+        withDrawRequestResponsePaginationDTO.setTotalPages(withDrawRequestPage.getTotalPages());
+        return withDrawRequestResponsePaginationDTO;
+    }
+
+    public WithDrawRequestResponseDTO getWithDrawRequestResponseDTO(WithDrawRequest withDrawRequest) {
+        WithDrawRequestResponseDTO withDrawRequestResponseDTO = new WithDrawRequestResponseDTO();
+        withDrawRequestResponseDTO.setId(withDrawRequest.getId());
+        withDrawRequestResponseDTO.setAmount(withDrawRequest.getAmount());
+        withDrawRequestResponseDTO.setBankAccountName(withDrawRequest.getBankAccountName());
+        withDrawRequestResponseDTO.setBankAccountNumber(withDrawRequest.getBankAccountNumber());
+        withDrawRequestResponseDTO.setBankName(withDrawRequest.getBankName());
+        withDrawRequestResponseDTO.setStatus(withDrawRequest.getStatus());
+        withDrawRequestResponseDTO.setResponseNote(withDrawRequest.getResponseNote());
+        withDrawRequestResponseDTO.setImage_url(withDrawRequest.getImage_url());
+        withDrawRequestResponseDTO.setCreatedAt(withDrawRequest.getCreatedAt());
+        Account user = withDrawRequest.getUser();
+        Account staff = withDrawRequest.getStaff();
+        AccountResponseSimplifiedDTO userResponseSimplifiedDTO = new AccountResponseSimplifiedDTO();
+        AccountResponseSimplifiedDTO staffResponseSimplifiedDTO = new AccountResponseSimplifiedDTO();
+        if (user == null) {
+            userResponseSimplifiedDTO = null;
+        } else {
+
+            userResponseSimplifiedDTO.setId(user.getUser_id());
+            userResponseSimplifiedDTO.setUsername(user.getUsername());
+        }
+
+        if (staff == null) {
+            staffResponseSimplifiedDTO = null;
+        } else {
+
+            staffResponseSimplifiedDTO.setId(staff.getUser_id());
+            staffResponseSimplifiedDTO.setUsername(staff.getUsername());
+        }
+
+        withDrawRequestResponseDTO.setUser(userResponseSimplifiedDTO);
+        withDrawRequestResponseDTO.setStaff(staffResponseSimplifiedDTO);
+
+        return withDrawRequestResponseDTO;
+    }
+
 
     public BalanceResponseDTO getCurrentUserBalance() {
         Account account = accountUtils.getCurrentAccount();
@@ -196,4 +275,5 @@ public class UserService {
         }
         return params;
     }
+
 }

@@ -2,6 +2,7 @@ package com.group10.koiauction.service;
 
 import com.group10.koiauction.entity.enums.AccountRoleEnum;
 import com.group10.koiauction.entity.enums.AuctionSessionStatus;
+import com.group10.koiauction.entity.enums.TransactionEnum;
 import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.repository.AuctionSessionRepository;
 import com.group10.koiauction.repository.BidRepository;
@@ -50,7 +51,8 @@ public class StatisticService {
         List<Object[]> topBidderNumberOfBid = bidRepository.findTopBidderNumberOfBid(2);
         List<Object[]> topVarieties = bidRepository.findTopVarieties(5);
         List<Object[]> allAuctionSessionRevenue = transactionRepository.findRevenueOfAuctionSession();
-        List<Object[]> systemRevenue = transactionRepository.calculateSystemRevenue();
+        List<Object[]> dailySystemRevenue = transactionRepository.calculateDailySystemRevenue(TransactionEnum.FEE_TRANSFER);
+        List<Object[]> monthlySystemRevenue = transactionRepository.calculateMonthLySystemRevenue(TransactionEnum.FEE_TRANSFER);
 
         List<Map<String,Object>> topAuctionSessionList = new ArrayList<>();
         List<Map<String,Object>> topAuctionSessionNumberOfBidList = new ArrayList<>();
@@ -58,7 +60,8 @@ public class StatisticService {
         List<Map<String,Object>> topBidderNumberOfBidList = new ArrayList<>();
         List<Map<String,Object>> topVarietiesList = new ArrayList<>();
         List<Map<String,Object>> allAuctionSessionRevenueList = new ArrayList<>();
-        List<Map<String,Object>> systemRevenueList = new ArrayList<>();
+        List<Map<String,Object>> dailySystemRevenueList = new ArrayList<>();
+        List<Map<String,Object>> monthlySystemRevenueList = new ArrayList<>();
 
         for(Object[] row : topAuctionSession){
             Map<String,Object> rowMap = new HashMap<>();
@@ -102,12 +105,20 @@ public class StatisticService {
             rowMap.put("Total revenue",row[1]);
             allAuctionSessionRevenueList.add(rowMap);
         }
-        for (Object[] row : systemRevenue){
+        for (Object[] row : dailySystemRevenue){
+            Map<String,Object> rowMap = new HashMap<>();
+            rowMap.put("Year",row[0]);
+            rowMap.put("Month",row[1]);
+            rowMap.put("Day",row[2]);
+            rowMap.put("Balance",row[3]);
+            dailySystemRevenueList.add(rowMap);
+        }
+        for (Object[] row : monthlySystemRevenue){
             Map<String,Object> rowMap = new HashMap<>();
             rowMap.put("Year",row[0]);
             rowMap.put("Month",row[1]);
             rowMap.put("Balance",row[2]);
-            systemRevenueList.add(rowMap);
+            monthlySystemRevenueList.add(rowMap);
         }
 
 
@@ -127,7 +138,8 @@ public class StatisticService {
         map.put("Top Bidder Number of Bids",topBidderNumberOfBidList);
         map.put("Top Varieties",topVarietiesList);
         map.put("Auction Session Revenue",allAuctionSessionRevenueList);
-        map.put("System Revenue",systemRevenueList);
+        map.put("Daily System Revenue",dailySystemRevenueList);
+        map.put("Monthly System Revenue",monthlySystemRevenueList);
         return map;
 
     }
