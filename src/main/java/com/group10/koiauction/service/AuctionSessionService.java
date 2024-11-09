@@ -80,6 +80,9 @@ public class AuctionSessionService {
 
 
     public AuctionSessionResponsePrimaryDataDTO createAuctionSession(AuctionSessionRequestDTO auctionSessionRequestDTO) {
+        if(auctionSessionRequestDTO.getEndDate().isBefore(auctionSessionRequestDTO.getStartDate())) {
+            throw new IllegalArgumentException("End date cannot be before start date");
+        }
         AuctionSession auctionSession = auctionSessionMapper.toAuctionSession(auctionSessionRequestDTO);
         AuctionRequest auctionRequest = getAuctionRequestByID(auctionSessionRequestDTO.getAuction_request_id());
         auctionSession.setCurrentPrice(auctionSession.getStartingPrice());
@@ -289,7 +292,7 @@ public class AuctionSessionService {
         Account winner = auctionSession.getWinner();
         AuctionSessionStatus auctionSessionStatus = auctionSession.getStatus();
         Transaction transaction = new Transaction();
-        SystemProfit systemProfit = new SystemProfit();
+//        SystemProfit systemProfit = new SystemProfit();
         double serviceFeePercent = ServiceFeePercent.SERVICE_FEE_PERCENT;
         double profit = 0;
         double koiBreederAmount = 0;
@@ -308,13 +311,13 @@ public class AuctionSessionService {
         transaction.setAmount(profit);
         transaction.setDescription("System take (+) " + profit + " as service fee");
 
-        systemProfit.setBalance(bidService.increasedBalance(manager, profit));
-        systemProfit.setDate(new Date());
-        systemProfit.setDescription("System revenue increased (+) " + profit);
-        transaction.setSystemProfit(systemProfit);
+//        systemProfit.setBalance(bidService.increasedBalance(manager, profit));
+//        systemProfit.setDate(new Date());
+//        systemProfit.setDescription("System revenue increased (+) " + profit);
+//        transaction.setSystemProfit(systemProfit);
         transaction.setAuctionSession(auctionSession);
         transaction.setStatus(TransactionStatus.SUCCESS);
-        systemProfit.setTransaction(transaction);
+//        systemProfit.setTransaction(transaction);
 
         Transaction transaction2 = new Transaction();
         Account koiBreeder = auctionSession.getKoiFish().getAccount();
@@ -342,7 +345,7 @@ public class AuctionSessionService {
         AuctionSession auctionSession =
                 auctionSessionRepository.findById(auctionSessionId).orElseThrow(() -> new EntityNotFoundException(
                         "Auction session with ID: " + auctionSessionId + " not found"));
-        if(  auctionSession.getDeliveryStatus() == null ||!(auctionSession.getStatus().equals(AuctionSessionStatus.COMPLETED_WITH_BUYNOW)
+        if(!(auctionSession.getStatus().equals(AuctionSessionStatus.COMPLETED_WITH_BUYNOW)
                 || auctionSession.getStatus().equals(AuctionSessionStatus.DRAWN)
                 || auctionSession.getStatus().equals(AuctionSessionStatus.COMPLETED))) {
             throw new IllegalArgumentException("Auction session with ID: " + auctionSessionId + " have not been completed yet to deliver ");
@@ -353,7 +356,7 @@ public class AuctionSessionService {
 
         try {
             auctionSession = auctionSessionRepository.save(auctionSession);
-
+            updateKoiStatus(auctionSession.getKoiFish().getKoi_id(),auctionSession.getDeliveryStatus());
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
@@ -404,6 +407,23 @@ public class AuctionSessionService {
             throw new RuntimeException(e.getMessage());
         }
         return getAuctionSessionResponsePrimaryDataDTO(auctionSession);
+    }
+
+    public KoiFishResponse markKoiFishAsReturned(Long auctionSessionId,DeliveryStatusUpdateDTO deliveryStatusUpdateDTO) {
+        AuctionSession auctionSession = auctionSessionRepository.findById(auctionSessionId).orElseThrow(()-> new EntityNotFoundException("Auction session not found"));
+        KoiFish koiFish = auctionSession.getKoiFish();
+        if(koiFish.getKoiStatus().equals(KoiStatusEnum.RETURNING)){
+            koiFish.setKoiStatus(KoiStatusEnum.AVAILABLE);
+        }else{
+            throw new IllegalArgumentException("Auction session with ID : "+  auctionSession.getAuctionSessionId() + " must be mark as cancelled first");
+        }
+        try{
+            koiFishRepository.save(koiFish);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+
+        return koiFishService.getKoiMapperResponse(koiFish);
     }
 
     @Transactional

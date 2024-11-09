@@ -172,4 +172,9 @@ public class AuthenticationAPI {
         AccountResponseForManagePagination members = authenticationService.getAllMemberAccountsPagination(page, size);
         return ResponseEntity.ok(members);
     }
+    @PatchMapping("/account/fcm")
+    public ResponseEntity updateFCM(@RequestBody UpdateFCMRequestDTO updateFCMRequestDTO) {
+        AccountResponse response = authenticationService.updateFCM(updateFCMRequestDTO);
+        return ResponseEntity.ok(response);
+    }
 }

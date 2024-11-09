@@ -112,10 +112,19 @@ public class AuctionRequestService {
 
     public AuctionRequestResponse approveAuctionRequest(Long id, ResponseAuctionRequestDTO responseAuctionRequestDTO) {
         AuctionRequest auctionRequest = getAuctionRequestById(id);
+        AuctionRequestStatusEnum lastStatus = null;
+        if(auctionRequest.getStatus()!= null){
+           lastStatus= auctionRequest.getStatus();
+        }
         Account account = accountUtils.getCurrentAccount();
         auctionRequest.setUpdatedDate(new Date());
         auctionRequest.setStatus(account.getRoleEnum() == AccountRoleEnum.STAFF ?
                 AuctionRequestStatusEnum.ACCEPTED_BY_STAFF : AuctionRequestStatusEnum.APPROVED_BY_MANAGER);//
+        if(auctionRequest.getStatus().equals(AuctionRequestStatusEnum.APPROVED_BY_MANAGER)){
+            if(!lastStatus.equals(AuctionRequestStatusEnum.ACCEPTED_BY_STAFF)){
+                throw new IllegalArgumentException("This request must be verified by staff first");
+            }
+        }
         // update status
         // updateKoiStatus(auctionRequest.getKoiFish().getKoi_id(),auctionRequest.getStatus());
         auctionRequest.setAccount(auctionRequest.getAccount());

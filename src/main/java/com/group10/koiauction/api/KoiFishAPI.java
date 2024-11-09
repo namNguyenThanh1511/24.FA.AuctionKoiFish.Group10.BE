@@ -122,11 +122,7 @@ public class KoiFishAPI {
         return ResponseEntity.ok(healthStatusResponse);
     }
 
-    @PutMapping("/return/{id}")
-    public ResponseEntity<KoiFishResponse> markKoiFishAsReturned(@PathVariable Long id , @RequestBody DeliveryStatusUpdateDTO deliveryStatusUpdateDTO){
-        KoiFishResponse koiFishResponse = koiFishService.markKoiFishAsReturned(id, deliveryStatusUpdateDTO);
-        return ResponseEntity.ok(koiFishResponse);
-    }
+
 
 
 

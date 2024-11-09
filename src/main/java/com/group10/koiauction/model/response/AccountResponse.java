@@ -17,5 +17,6 @@ public class AccountResponse {
     private AccountRoleEnum roleEnum;
     private double balance;
     private String token;
+    private String fcmToken;
 
 }

@@ -2,6 +2,7 @@ package com.group10.koiauction.service;
 
 import com.group10.koiauction.entity.enums.AccountRoleEnum;
 import com.group10.koiauction.entity.enums.AuctionSessionStatus;
+import com.group10.koiauction.entity.enums.TransactionEnum;
 import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.repository.AuctionSessionRepository;
 import com.group10.koiauction.repository.BidRepository;
@@ -50,8 +51,8 @@ public class StatisticService {
         List<Object[]> topBidderNumberOfBid = bidRepository.findTopBidderNumberOfBid(2);
         List<Object[]> topVarieties = bidRepository.findTopVarieties(5);
         List<Object[]> allAuctionSessionRevenue = transactionRepository.findRevenueOfAuctionSession();
-        List<Object[]> dailySystemRevenue = transactionRepository.calculateDailySystemRevenue();
-        List<Object[]> monthlySystemRevenue = transactionRepository.calculateMonthLySystemRevenue();
+        List<Object[]> dailySystemRevenue = transactionRepository.calculateDailySystemRevenue(TransactionEnum.FEE_TRANSFER);
+        List<Object[]> monthlySystemRevenue = transactionRepository.calculateMonthLySystemRevenue(TransactionEnum.FEE_TRANSFER);
 
         List<Map<String,Object>> topAuctionSessionList = new ArrayList<>();
         List<Map<String,Object>> topAuctionSessionNumberOfBidList = new ArrayList<>();
