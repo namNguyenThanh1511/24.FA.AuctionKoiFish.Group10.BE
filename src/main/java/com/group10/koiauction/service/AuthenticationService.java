@@ -6,15 +6,9 @@ import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.entity.enums.AccountRoleEnum;
 import com.group10.koiauction.entity.enums.AccountStatusEnum;
 import com.group10.koiauction.mapper.AccountMapper;
-import com.group10.koiauction.model.request.CreateBreederAccountRequest;
-import com.group10.koiauction.model.request.CreateStaffAccountRequest;
-import com.group10.koiauction.model.request.LoginAccountRequest;
-import com.group10.koiauction.model.request.RegisterAccountRequest;
+import com.group10.koiauction.model.request.*;
 import com.group10.koiauction.exception.DuplicatedEntity;
 import com.group10.koiauction.exception.EntityNotFoundException;
-import com.group10.koiauction.model.request.RegisterMemberRequest;
-import com.group10.koiauction.model.request.UpdateProfileRequestDTO;
-import com.group10.koiauction.model.request.ResetPasswordRequestDTO;
 import com.group10.koiauction.model.response.*;
 import com.group10.koiauction.repository.AccountRepository;
 import com.group10.koiauction.utilities.AccountUtils;
@@ -104,6 +98,7 @@ public class AuthenticationService implements UserDetailsService {
             throw e;
         }
     }
+
     public AccountResponse registerMember(RegisterMemberRequest registerAccountRequest) {
         Account newAccount = modelMapper.map(registerAccountRequest, Account.class);// Account.class : tự động new Account() rồi mapping
         String trimmedUsername = registerAccountRequest.getUsername().trim();
@@ -159,13 +154,13 @@ public class AuthenticationService implements UserDetailsService {
 
     }
 
-    public AccountResponse loginGoogle(String token){
-        try{
+    public AccountResponse loginGoogle(String token) {
+        try {
             AccountResponse accountResponse = new AccountResponse();
             FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(token);
             String email = decodedToken.getEmail();
             Account account = accountRepository.findAccountByEmail(email);
-            if(account == null){
+            if (account == null) {
                 Account newAccount = new Account();
                 newAccount.setEmail(email);
                 newAccount.setFirstName(decodedToken.getName());
@@ -176,13 +171,13 @@ public class AuthenticationService implements UserDetailsService {
                 newAccount.setBalance(0);
                 accountRepository.save(newAccount);
 //                return accountMapper.toAccountResponse(newAccount);
-            }else{
+            } else {
                 accountResponse = accountMapper.toAccountResponse(account);
                 accountResponse.setToken(tokenService.generateToken(account));
                 return accountResponse;
             }
 
-        }catch (FirebaseAuthException e){
+        } catch (FirebaseAuthException e) {
             e.printStackTrace();
         }
         return null;
@@ -217,8 +212,9 @@ public class AuthenticationService implements UserDetailsService {
         AccountResponseForManageDTO accountResponseForManageDTO = accountMapper.toAccountResponseForManageDTO(target);
         accountResponseForManageDTO.setCreatedAt(target.getCreatedDate());
         accountResponseForManageDTO.setUpdatedAt(target.getUpdatedDate());
-        return  accountResponseForManageDTO ;
+        return accountResponseForManageDTO;
     }
+
     public Account updateAccount(Long id, RegisterAccountRequest account) {
         try {
             Account target = getAccountById(id);
@@ -242,7 +238,8 @@ public class AuthenticationService implements UserDetailsService {
         }
 
     }
-    public AccountResponse getAccountProfile(){
+
+    public AccountResponse getAccountProfile() {
         Account account = accountUtils.getCurrentAccount();
         AccountResponse accountResponse = modelMapper.map(account, AccountResponse.class);
         return accountResponse;
@@ -251,8 +248,7 @@ public class AuthenticationService implements UserDetailsService {
     public AccountResponse updateAccountProfile(Long id, UpdateProfileRequestDTO updateProfileRequestDTO) {
         Account target = getAccountById(id);
         try {
-            if (updateProfileRequestDTO.getUsername() != null && !updateProfileRequestDTO.getUsername().equals(target.getUsername()))
-            {
+            if (updateProfileRequestDTO.getUsername() != null && !updateProfileRequestDTO.getUsername().equals(target.getUsername())) {
                 if (accountRepository.existsByUsername(updateProfileRequestDTO.getUsername())) {
                     throw new DuplicatedEntity("username is already been used ");
                 }
@@ -288,8 +284,7 @@ public class AuthenticationService implements UserDetailsService {
     public AccountResponse updateAccountProfileOfCurrentUser(UpdateProfileRequestDTO updateProfileRequestDTO) {
         Account target = accountUtils.getCurrentAccount();
         try {
-            if (updateProfileRequestDTO.getUsername() != null && !updateProfileRequestDTO.getUsername().equals(target.getUsername()))
-            {
+            if (updateProfileRequestDTO.getUsername() != null && !updateProfileRequestDTO.getUsername().equals(target.getUsername())) {
                 if (accountRepository.existsByUsername(updateProfileRequestDTO.getUsername())) {
                     throw new DuplicatedEntity("username is already been used ");
                 }
@@ -393,14 +388,14 @@ public class AuthenticationService implements UserDetailsService {
 
     public void forgotPassword(String email) {
         Account account = accountRepository.findAccountByEmail(email);
-        if(account == null) {
+        if (account == null) {
             throw new EntityNotFoundException("Account not found");
         }
         String token = tokenService.generateToken(account);
         EmailDetail emailDetail = new EmailDetail();
         emailDetail.setAccount(account);//set receiver
         emailDetail.setSubject("Reset password");
-        emailDetail.setLink("http://www.koiauctionsystem.store/reset-password?token="+token);
+        emailDetail.setLink("http://www.koiauctionsystem.store/reset-password?token=" + token);
         emailService.sentEmail(emailDetail);
 
     }
@@ -408,7 +403,7 @@ public class AuthenticationService implements UserDetailsService {
     public void resetPassword(ResetPasswordRequestDTO resetPasswordRequestDTO) {
         Account account = accountUtils.getCurrentAccount();
         account.setPassword(passwordEncoder.encode(resetPasswordRequestDTO.getPassword()));
-        try{
+        try {
             accountRepository.save(account);
         } catch (RuntimeException e) {
             throw new RuntimeException(e);
@@ -426,6 +421,7 @@ public class AuthenticationService implements UserDetailsService {
         AccountResponse accountResponse = accountMapper.toAccountResponse(target);
         return accountResponse;
     }
+
     public Account getAccountById(Long id) {
         Account account = accountRepository.findByUser_id(id);
         if (account == null) {
@@ -435,7 +431,7 @@ public class AuthenticationService implements UserDetailsService {
     }
 
     public List<Account> getAllBreederAccounts() {
-    return accountRepository.findAccountsByRoleEnum(AccountRoleEnum.KOI_BREEDER);
+        return accountRepository.findAccountsByRoleEnum(AccountRoleEnum.KOI_BREEDER);
     }
 
     public List<Account> getAllStaffAccounts() {
@@ -544,6 +540,9 @@ public class AuthenticationService implements UserDetailsService {
         response.setStatus(account.getStatus());
         response.setRoleEnum(account.getRoleEnum());
         response.setBalance(account.getBalance());
+        if (account.getFcmToken() != null) {
+            response.setFcmToken(account.getFcmToken());
+        }
         return response;
     }
 
@@ -556,6 +555,18 @@ public class AuthenticationService implements UserDetailsService {
             case "koibreeder" -> AccountRoleEnum.KOI_BREEDER;
             default -> throw new EntityNotFoundException("Invalid role");
         };
+    }
+
+    public AccountResponse updateFCM(UpdateFCMRequestDTO updateFCMRequestDTO) {
+        Account currentAccount = accountUtils.getCurrentAccount();
+        currentAccount.setFcmToken(updateFCMRequestDTO.getFcmToken());
+        try {
+            currentAccount = accountRepository.save(currentAccount);
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage());
+        }
+        return mapToAccountResponse(currentAccount);
+
     }
 
 
