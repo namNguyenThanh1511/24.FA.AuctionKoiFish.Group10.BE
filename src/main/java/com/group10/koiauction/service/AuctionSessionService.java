@@ -1,5 +1,6 @@
 package com.group10.koiauction.service;
 
+import com.group10.koiauction.constant.MappingURL;
 import com.group10.koiauction.constant.ServiceFeePercent;
 import com.group10.koiauction.entity.*;
 import com.group10.koiauction.entity.enums.*;
@@ -74,6 +75,9 @@ public class AuctionSessionService {
     @Autowired
     private BidRepository bidRepository;
 
+    @Autowired
+    EmailService emailService;
+
 
     public AuctionSessionResponsePrimaryDataDTO createAuctionSession(AuctionSessionRequestDTO auctionSessionRequestDTO) {
         AuctionSession auctionSession = auctionSessionMapper.toAuctionSession(auctionSessionRequestDTO);
@@ -90,6 +94,26 @@ public class AuctionSessionService {
         try {
             auctionSession = auctionSessionRepository.save(auctionSession);
             scheduleActivationJob(auctionSession);
+
+            // Create and send the email to the staff directly here
+            EmailDetail emailDetail = new EmailDetail();
+            emailDetail.setAccount(auctionSession.getKoiFish().getAccount());
+            emailDetail.setSubject("New Auction Session Created");
+
+            // Set the link to the auction session (you can adjust the URL path)
+            String auctionLink = MappingURL.BASE_URL_LOCAL + "auctions/" + auctionSession.getAuctionSessionId();
+            emailDetail.setLink(auctionLink);
+
+            // Create a copy of the variables so they are final or effectively final in the lambda expression
+            final EmailDetail finalEmailDetail = emailDetail;
+            final AuctionSession finalAuctionSession = auctionSession;
+
+            // Sending the email asynchronously
+            Runnable runnable = () -> {
+                emailService.sendAuctionSessionCreatedEmail(finalEmailDetail, finalAuctionSession); // Use the effectively final variables
+            };
+            new Thread(runnable).start();
+
         } catch (Exception e) {
             if (e.getMessage().contains("UK9849ywhqdd6e9e0q2gla07c7o")) {
                 throw new DuplicatedEntity("auction request with id " + auctionSessionRequestDTO.getAuction_request_id() + " already been used in another auction session");
