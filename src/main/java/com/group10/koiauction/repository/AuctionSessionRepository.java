@@ -61,6 +61,11 @@ public interface AuctionSessionRepository extends JpaRepository<AuctionSession, 
             "AND b.bidAt = (SELECT MAX(b2.bidAt) FROM Bid b2 WHERE b2.auctionSession.auctionSessionId = a.auctionSessionId AND b2.member.user_id = :userId)")
     Page<AuctionSession> findLatestBidAuctionSessionsByUserId(@Param("userId") Long userId, Pageable pageable);
 
+    @Query("SELECT a FROM AuctionSession a WHERE a.winner.user_id = :userId")
+    Page<AuctionSession> findWonAuctionSessionsByUserId(@Param("userId") Long userId, Pageable pageable);
+
+
+
 
     @Query("SELECT U FROM AuctionSession U  WHERE  U.title = :title")
     AuctionSession findAuctionSessionByTitle(@Param("title") String title);
