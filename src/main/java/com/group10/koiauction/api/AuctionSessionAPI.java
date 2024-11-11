@@ -116,6 +116,13 @@ public class AuctionSessionAPI {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/my-won-auctions")
+    public ResponseEntity<AuctionSessionResponsePagination> getWonAuctionSessionsForCurrentUser(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        AuctionSessionResponsePagination response = auctionSessionService.getWonAuctionSessionsByCurrentUser(page, size);
+        return ResponseEntity.ok(response);
+    }
     @PutMapping("/end-session/{id}")
     public ResponseEntity<AuctionSessionResponsePrimaryDataDTO> processAuctionSession(@PathVariable Long id) {
         AuctionSessionResponsePrimaryDataDTO auctionSessionResponsePrimaryDataDTO = auctionSessionService.processAuctionSessionById(id);

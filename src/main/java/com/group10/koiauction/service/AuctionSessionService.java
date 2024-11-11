@@ -805,6 +805,24 @@ public class AuctionSessionService {
                 auctionSessionsPage.getTotalPages()
         );
     }
+    public AuctionSessionResponsePagination getWonAuctionSessionsByCurrentUser(int page, int size) {
+        Long currentUserId = accountUtils.getCurrentAccount().getUser_id();
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<AuctionSession> auctionSessionsPage = auctionSessionRepository.findWonAuctionSessionsByUserId(currentUserId, pageable);
+
+        List<AuctionSessionResponsePrimaryDataDTO> responseList = auctionSessionsPage.stream()
+                .map(this::getAuctionSessionResponsePrimaryDataDTO)
+                .collect(Collectors.toList());
+
+        return new AuctionSessionResponsePagination(
+                responseList,
+                auctionSessionsPage.getNumber(),
+                auctionSessionsPage.getSize(),
+                auctionSessionsPage.getTotalElements(),
+                auctionSessionsPage.getTotalPages()
+        );
+    }
 
     private AuctionSessionResponsePrimaryDataDTO convertToAuctionSessionResponsePrimaryDataDTO(AuctionSession auctionSession) {
         AuctionSessionResponsePrimaryDataDTO responseDTO = new AuctionSessionResponsePrimaryDataDTO();
