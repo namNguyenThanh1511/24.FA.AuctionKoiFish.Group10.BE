@@ -1,6 +1,7 @@
 package com.group10.koiauction.service;
 
 
+import com.group10.koiauction.constant.MappingURL;
 import com.group10.koiauction.entity.AuctionSession;
 import com.group10.koiauction.model.response.EmailDetail;
 import jakarta.mail.MessagingException;
@@ -16,6 +17,8 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
@@ -117,6 +120,88 @@ public class EmailService {
             javaMailSender.send(mimeMessage);
         } catch (MessagingException e) {
             System.out.println("Error sending auction session email");
+        }
+    }
+
+    public void sendAuctionWinnerEmail(EmailDetail emailDetail, AuctionSession auctionSession) {
+        try {
+            Context context = new Context();
+
+            // Auction details
+            context.setVariable("winnerName", auctionSession.getWinner().getFirstName() + " " + auctionSession.getWinner().getLastName());
+            context.setVariable("auctionName", auctionSession.getTitle());
+
+            // Format winning bid to VND
+            NumberFormat vndFormat = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+            String formattedWinningBid = vndFormat.format(auctionSession.getCurrentPrice());
+            context.setVariable("winningBid", formattedWinningBid);
+
+            context.setVariable("auctionType", auctionSession.getAuctionType());
+
+            ZonedDateTime vietnamCurrentTime = LocalDateTime.now().atZone(ZoneId.of("Asia/Ho_Chi_Minh"));
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            context.setVariable("endDate", vietnamCurrentTime.format(formatter));
+
+            // Link to the auction session details
+            String auctionLink = MappingURL.BASE_URL_LOCAL + "auctions/" + auctionSession.getAuctionSessionId();
+            context.setVariable("auctionLink", auctionLink);
+
+            // Process the template
+            String template = templateEngine.process("auction-winner-notification", context);
+
+            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage);
+
+            mimeMessageHelper.setFrom("customerserviceinkmelo@gmail.com");
+            mimeMessageHelper.setTo(emailDetail.getAccount().getEmail());
+            mimeMessageHelper.setSubject("Congratulations on Winning the Auction!");
+            mimeMessageHelper.setText(template, true);
+
+            javaMailSender.send(mimeMessage);
+        } catch (MessagingException e) {
+            System.out.println("Error sending auction winner notification email");
+        }
+    }
+
+    public void sendBuyNowSuccessEmail(EmailDetail emailDetail, AuctionSession auctionSession) {
+        try {
+            // Create context for Thymeleaf template engine
+            Context context = new Context();
+
+            // Add user and product details to the context
+            context.setVariable("userName", emailDetail.getAccount().getFirstName() + " " + emailDetail.getAccount().getLastName());
+            context.setVariable("auctionSession", auctionSession.getTitle());
+
+            // Format Buy Now price to VND
+            NumberFormat vndFormat = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+            String formattedPrice = vndFormat.format(auctionSession.getBuyNowPrice());
+            context.setVariable("buyNowPrice", formattedPrice);
+
+            // Add purchase date
+            ZonedDateTime vietnamCurrentTime = LocalDateTime.now().atZone(ZoneId.of("Asia/Ho_Chi_Minh"));
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            context.setVariable("purchaseDate", vietnamCurrentTime.format(formatter));
+
+            // Prepare email template
+            String template = templateEngine.process("buy-now-success", context);
+
+            // Link to the auction session details
+            String auctionLink = MappingURL.BASE_URL_LOCAL + "auctions/" + auctionSession.getAuctionSessionId();
+            context.setVariable("auctionLink", auctionLink);
+
+            // Create MIME message and set up its properties
+            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage);
+
+            mimeMessageHelper.setFrom("customerserviceinkmelo@gmail.com");
+            mimeMessageHelper.setTo(emailDetail.getAccount().getEmail());
+            mimeMessageHelper.setSubject("Buy Now Transaction Successful!");
+            mimeMessageHelper.setText(template, true);
+
+            // Send email
+            javaMailSender.send(mimeMessage);
+        } catch (MessagingException e) {
+            System.out.println("Error sending Buy Now success email");
         }
     }
 

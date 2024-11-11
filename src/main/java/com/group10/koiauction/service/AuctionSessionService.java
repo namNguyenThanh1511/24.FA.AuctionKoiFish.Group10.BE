@@ -122,6 +122,20 @@ public class AuctionSessionService {
             };
             new Thread(runnable).start();
 
+            // Send email to the staff
+            EmailDetail staffEmailDetail = new EmailDetail();
+            staffEmailDetail.setAccount(auctionSession.getStaff() ); // Get staff account info
+            staffEmailDetail.setSubject("You have been assigned to a new Auction Session");
+
+            // Set the link to the auction session for staff
+            staffEmailDetail.setLink(auctionLink);
+
+            // Send email to staff asynchronously
+            Runnable staffRunnable = () -> {
+                emailService.sendAuctionSessionCreatedEmail(staffEmailDetail, finalAuctionSession); // Same method for staff email
+            };
+            new Thread(staffRunnable).start();
+
         } catch (Exception e) {
             if (e.getMessage().contains("UK9849ywhqdd6e9e0q2gla07c7o")) {
                 throw new DuplicatedEntity("auction request with id " + auctionSessionRequestDTO.getAuction_request_id() + " already been used in another auction session");
@@ -241,6 +255,14 @@ public class AuctionSessionService {
                     target = auctionSessionRepository.save(target);
                     updateKoiStatus(target.getKoiFish().getKoi_id(), target.getStatus());
                     returnMoneyAfterClosedAuctionSession(target);
+
+                    // Gửi email cho người thắng nếu có
+                    if (target.getWinner() != null) {
+                        EmailDetail emailDetail = new EmailDetail();
+                        emailDetail.setAccount(target.getWinner());
+                        emailService.sendAuctionWinnerEmail(emailDetail, target);
+                    }
+
                     return getAuctionSessionResponsePrimaryDataDTO(target);
                 }
                 target.setWinner(getAuctionSessionWinner(target));
@@ -249,6 +271,14 @@ public class AuctionSessionService {
                 auctionSessionRepository.save(target);
                 updateKoiStatus(target.getKoiFish().getKoi_id(), target.getStatus());
                 returnMoneyAfterClosedAuctionSession(target);
+
+                // Gửi email cho người thắng nếu có
+                if (target.getWinner() != null) {
+                    EmailDetail emailDetail = new EmailDetail();
+                    emailDetail.setAccount(target.getWinner());
+                    emailService.sendAuctionWinnerEmail(emailDetail, target);
+                }
+
             } catch (Exception e) {
                 throw new RuntimeException(e.getMessage());
             }
@@ -280,6 +310,14 @@ public class AuctionSessionService {
                     auctionSessionRepository.save(target);
                     updateKoiStatus(target.getKoiFish().getKoi_id(), target.getStatus());
                     returnMoneyAfterClosedAuctionSession(target);
+
+                    // Gửi email cho người thắng nếu có
+                    if (target.getWinner() != null) {
+                        EmailDetail emailDetail = new EmailDetail();
+                        emailDetail.setAccount(target.getWinner());
+                        emailService.sendAuctionWinnerEmail(emailDetail, target);
+                    }
+
                     return;
                 }
                 target.setWinner(getAuctionSessionWinner(target));
@@ -288,6 +326,14 @@ public class AuctionSessionService {
                 auctionSessionRepository.save(target);
                 updateKoiStatus(target.getKoiFish().getKoi_id(), target.getStatus());
                 returnMoneyAfterClosedAuctionSession(target);
+
+                // Gửi email cho người thắng nếu có
+                if (target.getWinner() != null) {
+                    EmailDetail emailDetail = new EmailDetail();
+                    emailDetail.setAccount(target.getWinner());
+                    emailService.sendAuctionWinnerEmail(emailDetail, target);
+                }
+
             } catch (Exception e) {
                 throw new RuntimeException(e.getMessage());
             }
@@ -939,6 +985,13 @@ public class AuctionSessionService {
             auctionSession.setWinner(winner);
             auctionSession.setStatus(AuctionSessionStatus.COMPLETED);
             auctionSessionRepository.save(auctionSession);
+
+            // Send email to the winner
+            if (auctionSession.getWinner() != null) {
+                EmailDetail emailDetail = new EmailDetail();
+                emailDetail.setAccount(auctionSession.getWinner());
+                emailService.sendAuctionWinnerEmail(emailDetail, auctionSession);
+            }
 
             // Additional actions after the auction is complete
             createTransactionsAfterAuctionSessionComplete(auctionSession);
