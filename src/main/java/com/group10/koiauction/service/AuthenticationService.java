@@ -527,6 +527,17 @@ public class AuthenticationService implements UserDetailsService {
         );
     }
 
+    public List<AccountResponseSimplifiedDTO> getAllKoiBreederSimplifiedAccounts() {
+        List<Account> accountList = accountRepository.findAccountsByRoleEnum(AccountRoleEnum.KOI_BREEDER);
+        List<AccountResponseSimplifiedDTO> accountResponseList = new ArrayList<>();
+        for (Account account : accountList) {
+            AccountResponseSimplifiedDTO responseSimplifiedDTO = new AccountResponseSimplifiedDTO();
+            responseSimplifiedDTO.setId(account.getUser_id());
+            responseSimplifiedDTO.setUsername(account.getUsername());
+            accountResponseList.add(responseSimplifiedDTO);
+        }
+        return accountResponseList;
+    }
 
     private AccountResponse mapToAccountResponse(Account account) {
         AccountResponse response = new AccountResponse();
