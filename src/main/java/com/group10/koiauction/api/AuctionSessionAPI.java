@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -36,6 +37,9 @@ public class AuctionSessionAPI {
     @Autowired
     private AuctionSessionService auctionSessionService;
 
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
     @GetMapping("/{id}")
     public ResponseEntity getAuctionSession(@PathVariable Long id) {
         AuctionSessionResponsePrimaryDataDTO response = auctionSessionService.getAuctionSessionResponsePrimaryDataDTO(id);
@@ -45,6 +49,7 @@ public class AuctionSessionAPI {
     @PostMapping("")
     public ResponseEntity<AuctionSessionResponsePrimaryDataDTO> createAuctionSession(@RequestBody AuctionSessionRequestDTO auctionSessionRequestDTO) {
         AuctionSessionResponsePrimaryDataDTO auctionSessionResponseDTO = auctionSessionService.createAuctionSession(auctionSessionRequestDTO);
+        messagingTemplate.convertAndSend("/topic/auctionSession", "CREATED NEW AUCTION SESSION");
         return ResponseEntity.ok(auctionSessionResponseDTO);
     }
 

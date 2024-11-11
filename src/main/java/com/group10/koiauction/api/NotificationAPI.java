@@ -19,7 +19,7 @@ public class NotificationAPI {
     @Autowired
     private AuthenticationService authenticationService;
 
-    @PostMapping("notification")
+    @PostMapping("")
     public void sendNotification(@RequestBody NotificationFCM notificationFCM) {
         notificationService.sendNotification(notificationFCM);
     }
