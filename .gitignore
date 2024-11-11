@@ -34,4 +34,6 @@ build/
 
 # Ignore application.properties
 src/main/resources/application.properties
+
 /src/main/resources/swp391-koiauctionsystem-firebase-adminsdk-vvwkt-394c02f3fa.json
+
