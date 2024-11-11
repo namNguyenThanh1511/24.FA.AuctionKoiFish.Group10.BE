@@ -6,7 +6,6 @@ import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import com.group10.koiauction.entity.Account;
 import com.group10.koiauction.model.NotificationFCM;
-import org.mockserver.model.Not;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -39,6 +38,23 @@ public class NotificationService {
         Notification notificationFireBase = Notification.builder()
                 .setTitle(notificationFCM.getTitle())
                 .setBody(notificationFCM.getMessage())
+                .build();
+        Message notificationFireBaseMessage =
+                Message.builder()
+                        .setNotification(notificationFireBase)
+                        .setToken(account.getFcmToken())//to identify receiver
+                        .build();
+        try{
+            firebaseMessaging.send(notificationFireBaseMessage);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    public void sendNotificationToAccountCustom(String title , String body, String image_url , Account account) {
+        Notification notificationFireBase = Notification.builder()
+                .setTitle(title)
+                .setBody(body)
+                .setImage(image_url)
                 .build();
         Message notificationFireBaseMessage =
                 Message.builder()

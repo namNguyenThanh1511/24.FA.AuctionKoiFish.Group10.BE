@@ -144,6 +144,12 @@ public class AuthenticationAPI {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/breederSimplified")
+    public ResponseEntity<List<AccountResponseSimplifiedDTO>> getKoiBreederSimplifiedAccounts(){
+        List<AccountResponseSimplifiedDTO> response = authenticationService.getAllKoiBreederSimplifiedAccounts();
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/members")
     public List<Account> getMemberAccounts(){
         return authenticationService.getAllMemberAccounts();

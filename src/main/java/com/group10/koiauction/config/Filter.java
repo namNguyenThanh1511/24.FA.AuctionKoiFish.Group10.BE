@@ -42,7 +42,10 @@ public class Filter extends OncePerRequestFilter {
             "/api/register-member",
             "/api/forgot-password",
             "/api/login-google",
-            "/api/dataSource"
+            "/api/dataSource",
+            "/api/auctionSession/search",
+            "/api/breederSimplified",
+            "/websocket/**"
 //            "/api/account/{id}",
 //            "/api/account/update-profile/{id}",
 //
