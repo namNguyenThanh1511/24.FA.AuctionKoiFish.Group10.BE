@@ -135,6 +135,20 @@ public class AuctionSessionService {
             };
             new Thread(runnable).start();
 
+            // Send email to the staff
+            EmailDetail staffEmailDetail = new EmailDetail();
+            staffEmailDetail.setAccount(auctionSession.getStaff() ); // Get staff account info
+            staffEmailDetail.setSubject("You have been assigned to a new Auction Session");
+
+            // Set the link to the auction session for staff
+            staffEmailDetail.setLink(auctionLink);
+
+            // Send email to staff asynchronously
+            Runnable staffRunnable = () -> {
+                emailService.sendAuctionSessionCreatedEmail(staffEmailDetail, finalAuctionSession); // Same method for staff email
+            };
+            new Thread(staffRunnable).start();
+
         } catch (Exception e) {
             auctionRequestService.revertApproveAuctionRequest(auctionSessionRequestDTO.getAuction_request_id());
             if (e.getMessage().contains("UK9849ywhqdd6e9e0q2gla07c7o")) {
@@ -256,6 +270,14 @@ public class AuctionSessionService {
                     target = auctionSessionRepository.save(target);
                     updateKoiStatus(target.getKoiFish().getKoi_id(), target.getStatus());
                     returnMoneyAfterClosedAuctionSession(target);
+
+                    // Gửi email cho người thắng nếu có
+                    if (target.getWinner() != null) {
+                        EmailDetail emailDetail = new EmailDetail();
+                        emailDetail.setAccount(target.getWinner());
+                        emailService.sendAuctionWinnerEmail(emailDetail, target);
+                    }
+
                     return getAuctionSessionResponsePrimaryDataDTO(target);
                 }
                 target.setWinner(getAuctionSessionWinnerAscending(target));
@@ -264,6 +286,14 @@ public class AuctionSessionService {
                 auctionSessionRepository.save(target);
                 updateKoiStatus(target.getKoiFish().getKoi_id(), target.getStatus());
                 returnMoneyAfterClosedAuctionSession(target);
+
+                // Gửi email cho người thắng nếu có
+                if (target.getWinner() != null) {
+                    EmailDetail emailDetail = new EmailDetail();
+                    emailDetail.setAccount(target.getWinner());
+                    emailService.sendAuctionWinnerEmail(emailDetail, target);
+                }
+
             } catch (Exception e) {
                 throw new RuntimeException(e.getMessage());
             }
@@ -296,6 +326,15 @@ public class AuctionSessionService {
                     auctionSessionRepository.save(target);
                     updateKoiStatus(target.getKoiFish().getKoi_id(), target.getStatus());
                     returnMoneyAfterClosedAuctionSession(target);
+
+                    // Gửi email cho người thắng nếu có
+                    if (target.getWinner() != null) {
+                        EmailDetail emailDetail = new EmailDetail();
+                        emailDetail.setAccount(target.getWinner());
+                        emailService.sendAuctionWinnerEmail(emailDetail, target);
+                    }
+
+
                     Set<Account> participants = bidService.getAllParticipantsOfAuctionSession(target);
                     for (Account participant : participants) {
                         notificationService.sendNotificationToAccountCustom(
@@ -307,6 +346,7 @@ public class AuctionSessionService {
                             "Auction Session Result Notification",
                             "You are a winner of "+"Auction Session Title : " + target.getTitle() + "#" + target.getAuctionSessionId()+"Please check won auction session in My-Auction navigation",
                             "https://www.freeiconspng.com/thumbs/auction-icon/auction-icon-9.png", target.getWinner());
+
                     return;
                 }
                 target.setWinner(getAuctionSessionWinnerAscending(target));
@@ -315,6 +355,16 @@ public class AuctionSessionService {
                 auctionSessionRepository.save(target);
                 updateKoiStatus(target.getKoiFish().getKoi_id(), target.getStatus());
                 returnMoneyAfterClosedAuctionSession(target);
+
+
+                // Gửi email cho người thắng nếu có
+                if (target.getWinner() != null) {
+                    EmailDetail emailDetail = new EmailDetail();
+                    emailDetail.setAccount(target.getWinner());
+                    emailService.sendAuctionWinnerEmail(emailDetail, target);
+                }
+
+
                 Set<Account> participants = bidService.getAllParticipantsOfAuctionSession(target);
                 for (Account participant : participants) {
                     notificationService.sendNotificationToAccountCustom(
@@ -326,6 +376,7 @@ public class AuctionSessionService {
                         "Auction Session Result Notification",
                         "You are a winner of "+"Auction Session Title : " + target.getTitle() + "#" + target.getAuctionSessionId()+"Please check won auction session in My-Auction navigation",
                         "https://www.freeiconspng.com/thumbs/auction-icon/auction-icon-9.png", target.getWinner());
+
             } catch (Exception e) {
                 throw new RuntimeException(e.getMessage());
             }
@@ -995,6 +1046,13 @@ public class AuctionSessionService {
             auctionSession.setWinner(winner);
             auctionSession.setStatus(AuctionSessionStatus.COMPLETED);
             auctionSessionRepository.save(auctionSession);
+
+            // Send email to the winner
+            if (auctionSession.getWinner() != null) {
+                EmailDetail emailDetail = new EmailDetail();
+                emailDetail.setAccount(auctionSession.getWinner());
+                emailService.sendAuctionWinnerEmail(emailDetail, auctionSession);
+            }
 
             // Additional actions after the auction is complete
             createTransactionsAfterAuctionSessionComplete(auctionSession);

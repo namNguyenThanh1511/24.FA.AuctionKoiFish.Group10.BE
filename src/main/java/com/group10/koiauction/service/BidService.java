@@ -6,6 +6,7 @@ import com.group10.koiauction.entity.enums.*;
 import com.group10.koiauction.exception.BidException;
 import com.group10.koiauction.exception.EntityNotFoundException;
 import com.group10.koiauction.mapper.BidMapper;
+import com.group10.koiauction.model.response.EmailDetail;
 import com.group10.koiauction.repository.BidRepository;
 import com.group10.koiauction.model.request.BidRequestDTO;
 import com.group10.koiauction.model.request.BuyNowRequestDTO;
@@ -49,6 +50,10 @@ public class BidService {
 
     @Autowired
     private AuctionSessionService auctionSessionService;
+
+    @Autowired
+
+    EmailService emailService;
 
     @Autowired
     private NotificationService notificationService;
@@ -381,6 +386,14 @@ public class BidService {
             auctionSessionService.updateKoiStatus(auctionSession.getKoiFish().getKoi_id(), auctionSession.getStatus());
             auctionSessionRepository.save(auctionSession);
             auctionSessionService.closeAuctionSessionWhenBuyNow(auctionSession);
+
+
+            // Send Buy Now Success Email
+            EmailDetail emailDetail = new EmailDetail(); // Populate this with the correct email details for the user
+            emailDetail.setAccount(accountUtils.getCurrentAccount());
+            emailService.sendBuyNowSuccessEmail(emailDetail, auctionSession);
+
+
             Set<Account> participants = getAllParticipantsOfAuctionSession(auctionSession);
             for (Account participant : participants) {
                 notificationService.sendNotificationToAccountCustom(
