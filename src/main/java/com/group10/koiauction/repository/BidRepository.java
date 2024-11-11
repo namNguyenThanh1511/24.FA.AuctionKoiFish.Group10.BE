@@ -93,6 +93,8 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
             "LIMIT :top")
     List<Object[]> findTopVarieties(@Param("top") int top);
 
+    @Query("SELECT distinct b.member from Bid b WHERE b.auctionSession.auctionSessionId = :auctionSessionId ")
+    Set<Account> getAllParticipantsOfAuctionSession(@Param("auctionSessionId") Long auctionSessionId);
 
 //    @Query("SELECT AVG(bid_count) FROM " +
 //            "( SELECT b.auctionSession.auctionSessionId , COUNT(b.id) as bid_count " +

@@ -129,11 +129,9 @@ public class AuctionRequestService {
         // updateKoiStatus(auctionRequest.getKoiFish().getKoi_id(),auctionRequest.getStatus());
         auctionRequest.setAccount(auctionRequest.getAccount());
         auctionRequest.setResponse_note(responseAuctionRequestDTO.getResponseNote());
-
         auctionRequest.setAuctionRequestProcessSet(getAuctionRequestProcesses(auctionRequest, account, new Date()));
-
         try {
-            auctionRequestRepository.save(auctionRequest);
+            auctionRequest = auctionRequestRepository.save(auctionRequest);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
