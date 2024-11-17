@@ -35,7 +35,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Object[]> calculateDailySystemRevenue(@Param("feeTransfer") TransactionEnum feeTransfer);
 
     @Query("SELECT YEAR(t.createAt),MONTH(t.createAt),SUM(t.amount) FROM Transaction t WHERE t.type = :feeTransfer GROUP BY YEAR" +
-            "(t.createAt),MONTH(t.createAt),DAY(t.createAt) ")
+            "(t.createAt),MONTH(t.createAt)")
     List<Object[]> calculateMonthLySystemRevenue(@Param("feeTransfer") TransactionEnum feeTransfer);
 
     @Query("SELECT t FROM Transaction t WHERE "
